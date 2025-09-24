@@ -1,266 +1,252 @@
 from collections import defaultdict
+import networkx as nx
+from networkx.algorithms import bipartite
+from collections import defaultdict
+import community
+from utils import CacheManager
+from cdlib import algorithms
+from tqdm.auto import tqdm
+
 
 class DataProcessor:
     @staticmethod
-    def extract_equipment_data(equipments):
-        equipment_names = []
-        equipment_recipes = []
-        equipment_data = {}
-        recipe_ids = []
-        unique_resource_ids = set()
+    def find_optimized_equipment_groups(
+        equipments,
+        min_shared_resources=2,
+        excluded_resource_ids=None,
+        resolution=1.0,
+        min_group_size=2,
+        max_group_size=8,
+        efficiency_threshold=0.3,
+    ):
+        """
+        Find equipment groups optimized for resource sharing and bulk efficiency,
+        while excluding specific resources from the sharing calculation.
 
-        for equipment in equipments:
-            equipment_name = equipment["name"]
-            equipment_names.append(equipment_name)
-            recipe = equipment.get("recipe", [])
-            ids = [item["item_ankama_id"] for item in recipe]
-            recipe_ids.append(ids)
-            equipment_recipes.append(recipe)
-            equipment_data[equipment_name] = equipment
-            
-            for item in recipe:
-                if item["item_subtype"] == "resources":
-                    unique_resource_ids.add(item["item_ankama_id"])
-
-        return equipment_names, equipment_recipes, equipment_data, recipe_ids, unique_resource_ids
-
-    @staticmethod
-    def calculate_similarity_score(recipe1, recipe2):
-        """
-        Calcule le score de similarité entre deux recettes
-        Utilise le coefficient de Jaccard: |A ∩ B| / |A ∪ B|
-        """
-        # Extraire les IDs des ressources des deux recettes
-        resources1 = {item["item_ankama_id"] for item in recipe1 if item["item_subtype"] == "resources"}
-        resources2 = {item["item_ankama_id"] for item in recipe2 if item["item_subtype"] == "resources"}
-        
-        # Éviter la division par zéro
-        if not resources1 and not resources2:
-            return 0
-        
-        # Calculer le coefficient de Jaccard
-        intersection = resources1 & resources2
-        union = resources1 | resources2
-        
-        return len(intersection) / len(union)
-    
-    @staticmethod
-    def calculate_weighted_similarity_score(recipe1, recipe2):
-        """
-        Calcule un score de similarité pondéré qui tient compte des quantités
-        Les ressources qui apparaissent en grande quantité ont plus de poids
-        """
-        # Créer des dictionnaires de quantité par ressource
-        quantities1 = {}
-        quantities2 = {}
-        
-        for item in recipe1:
-            if item["item_subtype"] == "resources":
-                item_id = item["item_ankama_id"]
-                quantities1[item_id] = quantities1.get(item_id, 0) + item["quantity"]
-        
-        for item in recipe2:
-            if item["item_subtype"] == "resources":
-                item_id = item["item_ankama_id"]
-                quantities2[item_id] = quantities2.get(item_id, 0) + item["quantity"]
-        
-        # Éviter la division par zéro
-        if not quantities1 and not quantities2:
-            return 0
-        
-        # Calculer la similarité pondérée
-        common_resources = set(quantities1.keys()) & set(quantities2.keys())
-        total_resources = set(quantities1.keys()) | set(quantities2.keys())
-        
-        if not total_resources:
-            return 0
-        
-        # Pondération basée sur les quantités minimales
-        weighted_intersection = sum(min(quantities1.get(r, 0), quantities2.get(r, 0)) for r in common_resources)
-        weighted_union = sum(max(quantities1.get(r, 0), quantities2.get(r, 0)) for r in total_resources)
-        
-        return weighted_intersection / weighted_union if weighted_union > 0 else 0
-    
-    @staticmethod
-    def build_similarity_graph_with_scores(equipment_names, equipment_recipes, min_similarity=0.3):
-        """
-        Construit un graphe de similarité avec des scores basés sur la similarité des recettes
-        """
-        graph = defaultdict(list)
-        similarity_scores = {}
-        
-        for i in range(len(equipment_names)):
-            for j in range(i + 1, len(equipment_names)):
-                # Calculer le score de similarité
-                similarity = DataProcessor.calculate_weighted_similarity_score(
-                    equipment_recipes[i], equipment_recipes[j]
-                )
-                
-                # Ajouter une arête si la similarité dépasse le seuil
-                if similarity >= min_similarity:
-                    graph[equipment_names[i]].append((equipment_names[j], similarity))
-                    graph[equipment_names[j]].append((equipment_names[i], similarity))
-                    similarity_scores[(equipment_names[i], equipment_names[j])] = similarity
-        
-        return graph, similarity_scores
-
-    @staticmethod
-    def find_optimal_clusters(graph, equipment_names, min_cluster_size=2):
-        """
-        Trouve des clusters optimaux en utilisant un algorithme glouton
-        qui maximise la similarité moyenne à l'intérieur des clusters
-        """
-        clusters = []
-        visited = set()
-        
-        # Trier les équipements par degré de connectivité (nombre de voisins)
-        sorted_equipments = sorted(
-            equipment_names,
-            key=lambda x: len(graph.get(x, [])),
-            reverse=True
-        )
-        
-        for equipment in sorted_equipments:
-            if equipment in visited:
-                continue
-                
-            # Créer un nouveau cluster autour de cet équipement
-            cluster = [equipment]
-            visited.add(equipment)
-            
-            # Trouver tous les voisins non visités avec une similarité élevée
-            neighbors = graph.get(equipment, [])
-            sorted_neighbors = sorted(neighbors, key=lambda x: x[1], reverse=True)
-            
-            for neighbor, similarity in sorted_neighbors:
-                if neighbor not in visited:
-                    cluster.append(neighbor)
-                    visited.add(neighbor)
-            
-            # Ne garder que les clusters d'une taille minimale
-            if len(cluster) >= min_cluster_size:
-                clusters.append(cluster)
-        
-        return clusters
-
-    @staticmethod
-    def evaluate_cluster_quality(cluster, equipment_names, equipment_recipes, resource_names):
-        """
-        Évalue la qualité d'un cluster basée sur:
-        1. Le pourcentage de ressources partagées
-        2. L'économie d'échelle potentielle
-        3. La similarité moyenne entre les équipements
-        """
-        # Calculer toutes les ressources du cluster
-        all_resources = defaultdict(int)
-        equipment_resources = []
-        
-        for eq_name in cluster:
-            index = equipment_names.index(eq_name)
-            resources = {}
-            for item in equipment_recipes[index]:
-                if item["item_subtype"] == "resources":
-                    item_id = item["item_ankama_id"]
-                    quantity = item["quantity"]
-                    resources[item_id] = quantity
-                    all_resources[item_id] += quantity
-            equipment_resources.append(resources)
-        
-        # Calculer le pourcentage de ressources partagées
-        shared_resources = 0
-        for resource_id, total_quantity in all_resources.items():
-            # Une ressource est considérée comme partagée si elle apparaît dans au moins 2 équipements
-            count = sum(1 for resources in equipment_resources if resource_id in resources)
-            if count >= 2:
-                shared_resources += total_quantity
-        
-        total_resources = sum(all_resources.values())
-        sharing_percentage = (shared_resources / total_resources) * 100 if total_resources > 0 else 0
-        
-        # Calculer la similarité moyenne dans le cluster
-        total_similarity = 0
-        pair_count = 0
-        
-        for i in range(len(cluster)):
-            for j in range(i + 1, len(cluster)):
-                idx_i = equipment_names.index(cluster[i])
-                idx_j = equipment_names.index(cluster[j])
-                similarity = DataProcessor.calculate_weighted_similarity_score(
-                    equipment_recipes[idx_i], equipment_recipes[idx_j]
-                )
-                total_similarity += similarity
-                pair_count += 1
-        
-        avg_similarity = total_similarity / pair_count if pair_count > 0 else 0
-        
-        # Calculer l'économie potentielle (réduction des doublons)
-        economy_score = sharing_percentage / 100
-        
-        return {
-            'sharing_percentage': sharing_percentage,
-            'avg_similarity': avg_similarity,
-            'economy_score': economy_score,
-            'total_resources': total_resources,
-            'shared_resources': shared_resources,
-            'unique_resources': len(all_resources)
-        }
-    @staticmethod
-    def calculate_cluster_resources(cluster, equipment_names, equipment_recipes, resource_names):
-        """
-        Calculate the total resources needed for a cluster of equipment.
-        Returns equipment details, sorted ingredients, and total resources.
-        
         Args:
-            cluster: List of equipment names in the cluster
-            equipment_names: List of all equipment names
-            equipment_recipes: List of all equipment recipes
-            resource_names: Dictionary mapping resource IDs to resource names
-        
-        Returns:
-            tuple: (equipment_details, sorted_ingredients, total_resources)
+            equipments: List of equipment dictionaries
+            min_shared_resources: Minimum number of non-excluded shared resources required
+            excluded_resource_ids: Set of resource IDs to exclude from sharing calculation
+            resolution: Community detection resolution parameter
+            min_group_size: Minimum equipment per group
+            max_group_size: Maximum equipment per group
+            efficiency_threshold: Minimum resource sharing efficiency required
         """
-        equipment_details = []
-        cluster_resources = defaultdict(int)
-        
-        # Process each equipment in the cluster
-        for eq_name in cluster:
-            if eq_name in equipment_names:
-                index = equipment_names.index(eq_name)
-                recipe = equipment_recipes[index]
-                
-                # Collect equipment details
-                eq_detail = {
-                    'name': eq_name,
-                    'ingredients': []
-                }
-                
-                # Process each ingredient
-                for item in recipe:
-                    if item["item_subtype"] == "resources":
-                        resource_id = item["item_ankama_id"]
-                        quantity = item["quantity"]
-                        
-                        # Get resource name from ID, or use ID if name not found
-                        resource_name = resource_names.get(resource_id, f"Resource_{resource_id}")
-                        
-                        # Add to equipment details
-                        eq_detail['ingredients'].append({
-                            'name': resource_name,
-                            'quantity': quantity
-                        })
-                        
-                        # Add to total cluster resources
-                        cluster_resources[resource_name] += quantity
-                
-                equipment_details.append(eq_detail)
-        
-        # Sort ingredients by quantity (descending)
-        sorted_ingredients = sorted(
-            cluster_resources.items(), 
-            key=lambda x: x[1], 
-            reverse=True
+        if excluded_resource_ids is None:
+            excluded_resource_ids = set()
+
+        # Create the bipartite graph
+        B = DataProcessor().create_bipartite_graph(equipments)
+
+        # Get all equipment nodes
+        equipment_nodes = {
+            n for n, attr in B.nodes(data=True) if attr["bipartite"] == 0
+        }
+
+        # Project the bipartite graph to equipment graph with weights
+        equipment_graph = bipartite.weighted_projected_graph(B, equipment_nodes)
+
+        # Use Louvain community detection
+        partition = community.best_partition(equipment_graph, resolution=resolution, randomize=True)
+
+        # Group equipment nodes by community
+        communities = {}
+        for node, community_id in partition.items():
+            communities.setdefault(community_id, []).append(node)
+
+        # Map equipment ids back to equipment details
+        equipment_dict = {equip["ankama_id"]: equip for equip in equipments}
+        groups = []
+        print(f"Found {len(communities)} communities.")
+
+        for community_id, equip_ids in tqdm(
+            communities.items(),
+            desc="Processing communities",
+            total=len(communities),
+            unit="community",
+            leave=True,
+        ):
+            group_equipments = []
+            for equip_id in equip_ids:
+                if isinstance(equip_id, str):
+                    try:
+                        equip_id_int = int(equip_id)
+                        if equip_id_int in equipment_dict:
+                            group_equipments.append(equipment_dict[equip_id_int])
+                    except ValueError:
+                        continue
+                elif equip_id in equipment_dict:
+                    group_equipments.append(equipment_dict[equip_id])
+
+            # Skip if group doesn't meet size requirements
+            if not (min_group_size <= len(group_equipments) <= max_group_size):
+                continue
+
+            # Calculate shared resources (excluding specified resources)
+            shared_count, total_shared, efficiency = (
+                DataProcessor.calculate_shared_resources(
+                    group_equipments, excluded_resource_ids
+                )
+            )
+
+            # Calculate total ingredients needed for the group
+            total_ingredients = DataProcessor.calculate_total_ingredients(
+                group_equipments
+            )
+
+            # Apply multiple filters
+            if (
+                shared_count >= min_shared_resources
+                and efficiency >= efficiency_threshold
+            ):
+                groups.append(
+                    {
+                        "equipments": group_equipments,
+                        "shared_resources_count": shared_count,
+                        "total_shared_resources": total_shared,
+                        "sharing_efficiency": efficiency,
+                        "total_ingredients": total_ingredients,
+                        "unique_ingredients_count": len(total_ingredients),
+                        "total_items_needed": sum(
+                            ingredient["total_quantity"]
+                            for ingredient in total_ingredients.values()
+                        ),
+                    }
+                )
+
+        # Sort groups by sharing efficiency (descending)
+        groups.sort(key=lambda x: x["sharing_efficiency"], reverse=True)
+
+        return groups
+
+    @staticmethod
+    def calculate_total_ingredients(group_equipments):
+        """
+        Calculate the total ingredients needed for all equipment in the group.
+        Returns a dictionary with resource_id as key and aggregated ingredient info as value.
+        """
+        ingredients = defaultdict(
+            lambda: {
+                "name": None,
+                "total_quantity": 0,
+                "used_in_equipments": [],
+                "quantity_per_equipment": {},
+            }
         )
-        
-        total_resources = sum(cluster_resources.values())
-        
-        return equipment_details, sorted_ingredients, total_resources
+
+        for equipment in group_equipments:
+            for resource in equipment["recipe"]:
+                resource_id = resource["item_ankama_id"]
+                quantity = resource["quantity"]
+
+                # Update ingredient information
+                ingredients[resource_id]["total_quantity"] += quantity
+                ingredients[resource_id]["used_in_equipments"].append(equipment["name"])
+                ingredients[resource_id]["quantity_per_equipment"][
+                    equipment["name"]
+                ] = quantity
+
+                # Get resource name if not already set
+                if ingredients[resource_id]["name"] is None:
+                    ingredients[resource_id]["name"] = CacheManager.get_resource_name(
+                        resource_id
+                    )
+
+        return dict(ingredients)
+
+    @staticmethod
+    def calculate_shared_resources(group_equipments, excluded_resource_ids):
+        """
+        Calculate shared resources for a group, excluding specified resources.
+        Returns:
+            - Count of shared resources (excluding excluded ones)
+            - Total shared resources (including excluded ones)
+            - Sharing efficiency (shared_count / total_unique_resources)
+        """
+        resource_usage = defaultdict(int)
+        all_resources = set()
+
+        for equipment in group_equipments:
+            for resource in equipment["recipe"]:
+                resource_id = resource["item_ankama_id"]
+                resource_usage[resource_id] += 1
+                all_resources.add(resource_id)
+
+        # Calculate shared resources (excluding specified ones)
+        shared_resources = {
+            rid: count
+            for rid, count in resource_usage.items()
+            if count > 1 and rid not in excluded_resource_ids
+        }
+
+        # Calculate total shared resources (including excluded ones)
+        total_shared_resources = {
+            rid: count for rid, count in resource_usage.items() if count > 1
+        }
+
+        # Calculate sharing efficiency
+        total_unique = len(all_resources)
+        shared_count = len(shared_resources)
+        efficiency = shared_count / total_unique if total_unique > 0 else 0
+
+        return shared_count, len(total_shared_resources), efficiency
+
+    @staticmethod
+    def print_optimized_groups(groups, excluded_resource_ids=None):
+        """
+        Print optimized groups with resource sharing information.
+        """
+        if excluded_resource_ids is None:
+            excluded_resource_ids = set()
+
+        print("OPTIMIZED EQUIPMENT GROUPS")
+        print("=" * 50)
+        print(f"Excluded resources from sharing calculation: {excluded_resource_ids}")
+        print(f"Total groups found: {len(groups)}")
+        print("\n")
+
+        for i, group in enumerate(groups):
+            print(f"Group {i+1}:")
+            print(f"  - Equipment count: {len(group['equipments'])}")
+            print(
+                f"  - Shared resources (non-excluded): {group['shared_resources_count']}"
+            )
+            print(f"  - Total shared resources: {group['total_shared_resources']}")
+            print(f"  - Sharing efficiency: {group['sharing_efficiency']:.2%}")
+
+            # List equipment in this group
+            print("  - Equipment:")
+            for equip in group["equipments"]:
+                print(f"      {equip['name']} (Level: {equip['level']})")
+
+            # List shared resources (excluding specified ones)
+            shared_resources = DataProcessor().get_shared_resources(
+                group["equipments"], excluded_resource_ids
+            )
+            if shared_resources:
+                print("  - Shared resources (non-excluded):")
+                for resource_id, count in shared_resources.items():
+                    resource_name = CacheManager.get_resource_name(resource_id)
+                    print(f"      {resource_name} (used by {count} equipment)")
+
+            print()
+
+    @staticmethod
+    def get_shared_resources(group_equipments, excluded_resource_ids):
+        """
+        Get shared resources for a group, excluding specified resources.
+        """
+        resource_usage = defaultdict(int)
+
+        for equipment in group_equipments:
+            for resource in equipment["recipe"]:
+                resource_id = resource["item_ankama_id"]
+                resource_usage[resource_id] += 1
+
+        # Return only shared resources that aren't excluded
+        return {
+            rid: count
+            for rid, count in resource_usage.items()
+            if count > 1 and rid not in excluded_resource_ids
+        }
+

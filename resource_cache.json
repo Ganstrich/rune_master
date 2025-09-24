@@ -1,218 +1,4486 @@
 {
-  "2564": "Sourcils de Tronknyde",
-  "2566": "Tranche Magique de Krambwork",
-  "2571": "Patte de Tofukaz",
-  "2584": "Main de Boo",
-  "2585": "C\u0153ur de Boue du Boo",
-  "8730": "Coccyx du Corailleur",
-  "13339": "Sceau Royal Contrefait",
-  "2588": "Aile de dragodinde",
-  "8732": "Corail Koura\u00e7ao",
-  "8731": "Corail Magistral",
-  "8734": "Corail Passaoh",
-  "8736": "C\u0153ur de pierre poli",
-  "8738": "Sacrum magistral",
-  "8739": "Hum\u00e9rus du Sparo",
-  "8740": "Chicot du Flib",
-  "11814": "Moustache de Boostache",
-  "2599": "Pic de dragodinde",
-  "8744": "Pince de Crustorail",
-  "11815": "Boostoplasme",
-  "2598": "Queue de dragodinde sauvage",
-  "8747": "P\u00e9tale Passaoh",
-  "8748": "P\u00e9tale Morito",
-  "8749": "Bulbe Koura\u00e7ao",
-  "8745": "P\u00e9tale Koura\u00e7ao",
-  "8752": "Bulbe Morito",
-  "2610": "Carapace Rouge",
-  "8755": "Touffe rousse du Flib",
-  "2611": "Carapace Jaune",
-  "8758": "Morceau de cale\u00e7on de Gourlo",
-  "2617": "Tranche de Nodkoko",
-  "8761": "Poudre explosive",
-  "2619": "Lait de Tortue",
-  "2621": "Barbe du Chouque",
-  "2624": "Feuille de Tikoko",
-  "2625": "Poup\u00e9e Vaudou Eth",
-  "2627": "Poup\u00e9e Vaudou Sarbak",
-  "2628": "Poup\u00e9e Vaudou Ark",
-  "1612": "Racine d'Abraknyde Sombre",
-  "1613": "\u00c9caille de Chef Crocodaille",
-  "2645": "Groin de Dragon Cochon",
-  "2647": "Oreille de M\u00e9dibwork",
-  "2648": "Griffes de Kwak",
-  "2150": "Graine de Scorbute",
-  "1129": "Coquille de Dragoeuf Ardoise",
-  "1141": "Plume du Kwak de Terre",
-  "1142": "Bec du Kwak de Terre",
-  "14459": "Moustaches de Tiwabbit",
-  "14462": "Os de Wabbit Squelette",
-  "14463": "Cr\u00e2ne de Wabbit Squelette",
-  "1664": "Dent de Crocodaille",
-  "16002": "Patte de Kankreblath",
-  "14466": "Bandeau de Black Wabbit Squelette",
-  "642": "Cocon de Ver \u00e0 Soie",
-  "2179": "Dent de dragodinde",
-  "646": "Poils de Black Tiwabbit",
-  "14471": "Casque de Wobot",
-  "648": "Aile de Bourdard",
-  "14473": "Boulon Wabbit",
-  "650": "Duvet de Bourdard",
-  "3208": "Slip de Bwork Archer",
-  "1675": "Os Surprise du Chafer Fantassin",
-  "649": "Poils de Wo Wabbit",
-  "1678": "Noix de Grokoko Traumatis\u00e9e",
-  "14470": "Poil de Wobot Kiafin",
-  "14490": "Lunettes de Tiwobot",
-  "1696": "\u00c9toffe de Choudini",
-  "9381": "Fleur de Gloutoblop",
-  "9382": "Fleur de Blopignon",
-  "9383": "Racine de Tronkoblop",
-  "9384": "Fleur de Blop Griotte Royal",
-  "9385": "Fleur de Blop Coco Royal",
-  "9386": "Fleur de Blop Indigo Royal",
-  "9388": "Feuille de Blop Royal",
-  "13489": "Miroir de Dopeul",
-  "13491": "Relique Familiale",
-  "17075": "Canif Rouill\u00e9",
-  "8385": "Peau de Shin Larve",
-  "13505": "Bourse Suspecte",
-  "8386": "Dent de Shin Larve",
-  "8388": "Peau de Bworkette",
-  "8389": "Poil de Bworkette",
-  "2242": "Gel\u00e9e Fraise Royale",
-  "2241": "Gel\u00e9e Menthe Royale",
-  "8394": "M\u00e9ga Pierre du Craqueleur L\u00e9gendaire",
-  "2250": "Bois de Tronknyde",
-  "2252": "Dent en Or de Craqueleur",
-  "8397": "Poil du Wa Wabbit",
-  "2259": "Pic de Lance de Gobet",
-  "2268": "Scalp de Bwork Archer",
-  "2273": "Tissu Pourpre",
-  "2279": "Canine Vampiresque",
-  "27368": "La cambriole pour les Nuls",
-  "748": "Magn\u00e9site",
-  "749": "Bak\u00e9l\u00e9lite",
-  "750": "Kouartz",
-  "12015": "Bec du Kwakwa",
-  "2288": "Patte de Wabbit",
-  "757": "Gel\u00e9e Bleuet",
-  "2301": "Moustache de Kol\u00e9rat",
-  "2302": "Langue d'\u00c9toile",
-  "2305": "Fragment de Pierre Pointue",
-  "21256": "Griffe de Dragoeuf Alb\u00e2tre",
-  "2320": "Collier Cass\u00e9 de Macien",
-  "2321": "Babines de Macien",
-  "21264": "\u00c9toffe de Draegnerys",
-  "16148": "Poil d'Abrakne",
-  "16150": "Racine d'Abraknyde V\u00e9n\u00e9rable",
-  "16154": "\u00c9corce d'Abrakne Sombre",
-  "13596": "Peau de Larve Dor\u00e9e",
-  "8482": "Peau de Rat",
-  "8995": "\u00c9toffe de Gourlo le Terrible",
-  "8483": "Peau de Ramane d'\u00c9goutant",
-  "16166": "Lamelle de Champa Marron",
-  "13098": "Casque du Chafer Primitif",
-  "12075": "Fiole de fum\u00e9e de Nelween",
-  "12076": "Duvet de Nelween",
-  "8496": "Racine d'Abraknyde Ancestral",
-  "305": "Dent de Wabbit",
-  "16180": "Soie Baveuse",
-  "308": "Coquille de Dragoeuf Calcaire",
-  "313": "Or",
-  "315": "Diamant",
-  "8002": "\u00c9toffe de Dok Alako",
-  "842": "Coquille de Dragoeuf Argile",
-  "843": "Coquille de Dragoeuf Charbon",
-  "6476": "Griffe de Robionicle",
-  "845": "\u0152uf de Dragoeuf Argile",
-  "6478": "Makroute D\u00e9chiquet\u00e9",
-  "847": "\u0152uf de Dragoeuf Calcaire",
-  "844": "\u0152uf de Dragoeuf Ardoise",
-  "13140": "Serrure du Coffre des Forgerons",
-  "16218": "Dent de Gargant\u00fbl",
-  "1890": "Poil de V\u00e9tauran",
-  "1891": "Peau de serpentin",
-  "360": "Oreilles du Tiwabbit",
-  "8557": "Plume de Batofu",
-  "368": "Gel\u00e9e \u00e0 la Fraise",
-  "369": "Gel\u00e9e \u00e0 la Menthe",
-  "8050": "Peau de Koalak Immature",
-  "370": "Gel\u00e9e Bleuet Royale",
-  "372": "Bandeau du Black Tiwabbit",
-  "7030": "Peau de Krambwork",
-  "887": "Cuir de Ouassingue",
-  "886": "Cuir de Bouftou Royal",
-  "8061": "Poils de Koalak Reinette",
-  "382": "Longue-vue de Gob-Trotteur",
-  "2436": "Gel\u00e9e Citron",
-  "901": "Cuir du Cochon de Lait",
-  "2437": "Gel\u00e9e Citron Royale",
-  "392": "Noix de P\u00e9can",
-  "13713": "Dent de Larve Saphir",
-  "13714": "Dent de Larve Rubis",
-  "8084": "Peau de Piralak",
-  "406": "Estomac de Wo Wabbit",
-  "920": "Bois Ancestral",
-  "409": "Poils de Barbe du Bwork Mage",
-  "410": "Livre du Bwork Mage",
-  "413": "Bec du Kwak de Vent",
-  "414": "Plume du Kwak de Glace",
-  "15263": "Rose des sables",
-  "13728": "Paupi\u00e8re d'\u00c9toile",
-  "417": "Boue du Boo",
-  "418": "Poils de Barbe du Grand Pa Wabbit",
-  "13731": "Pierre M\u00e9dicinale",
-  "2464": "Queue de Boostache Pr\u00e9pub\u00e8re",
-  "13729": "Papier Charbon",
-  "8102": "Pierre du Craqueleur L\u00e9gendaire",
-  "15271": "Tourmaline",
-  "429": "Mis\u00e9ricorde du Chafer d'\u00c9lite",
-  "11696": "Cagoule du Kanniboul Ebil",
-  "2481": "Cha\u00eene de Robot Fl\u00e9au",
-  "2482": "Charni\u00e8re Cass\u00e9e",
-  "435": "Racine d'Abraknyde",
-  "1456": "Ailes de Scarafeuille Blanc",
-  "433": "F\u00e9mur du Chafer Archer",
-  "2486": "Coque Endommag\u00e9e",
-  "3001": "\u00c9pauli\u00e8re de Bwork",
-  "3002": "Botte trou\u00e9e de M\u00e9gabwork",
-  "18366": "Sable Fin",
-  "18367": "Boule de Boul\u00e9pique",
-  "2496": "Queue de Rat d'Hyoactif",
-  "12737": "Galet cramoisi",
-  "18369": "Queue de Scordion Bleu",
-  "18371": "Carapace du Mantiscore",
-  "448": "Silex",
-  "2500": "Kol\u00e9rat Mort",
-  "2502": "Papatte de Croc Gland",
-  "2504": "Langue de Craquelope",
-  "12744": "Substrat de Bosquet",
-  "12745": "Substrat de Bocage",
-  "14282": "Boules de Kanniboul",
-  "14284": "Flamme Spectrale",
-  "2508": "Venin de Serpentin",
-  "8141": "Ailes du Scarafeuille Noir",
-  "14280": "Pic de dragodinde dor\u00e9e",
-  "464": "Ambre d'Abraknyde",
-  "18385": "C\u0153ur du Mantiscore",
-  "466": "Saphir",
-  "465": "Cristal",
-  "8157": "P\u00e9tale Magique du Tournesol Affam\u00e9",
-  "8158": "Plume Graisseuse du Tofu Ventripotent",
-  "480": "Minerai \u00c9trange",
-  "2528": "Ongle de Kanigrou",
-  "8161": "Ailes du Scarabosse Dor\u00e9",
-  "485": "Slip en cuir du Chafer Lancier",
-  "997": "Noix de Kokoko",
-  "8681": "Peau de Raul Mops",
-  "1002": "Tronc de Kokoko",
-  "18411": "\u0152il de L\u00e9olhy\u00e8ne",
-  "2540": "Substrat de Futaie",
-  "8137": "Visc\u00e8res du Scarabosse Dor\u00e9",
-  "2543": "Substrat de Fascine",
-  "2550": "\u00c9toffe de Foufayteur",
-  "2551": "Oreille de Foufayteur",
-  "2552": "\u0152il de Kanigrou",
-  "2555": "Courroie en cuir"
+  "757": {
+    "ankama_id": 757,
+    "name": "Gel\u00e9e Bleuet",
+    "description": "Cette gel\u00e9e est particuli\u00e8rement collante, un peu comme une Bloqueuse enrag\u00e9e. \u00c9trangement, elle colle particuli\u00e8rement bien les plumes de Tofus. On se demande bien \u00e0 quoi cela peut servir...",
+    "type": {
+      "name": "Gel\u00e9e",
+      "id": 185
+    },
+    "level": 54,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/110042-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/110042-128.png"
+    }
+  },
+  "368": {
+    "ankama_id": 368,
+    "name": "Gel\u00e9e \u00e0 la Fraise",
+    "description": "Cette d\u00e9licieuse gel\u00e9e \u00e0 la fraise a rendu plus d'un aventurier un peu trop gourmand malade. Comme le dit si bien le fameux dicton, \"tout est poison, rien n'est poison, c'est la dose qui compte\". Dans le cas de la gel\u00e9e \u00e0 la fraise, \u00e9vitez l'overdose.",
+    "type": {
+      "name": "Gel\u00e9e",
+      "id": 185
+    },
+    "level": 58,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/110040-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/110040-128.png"
+    }
+  },
+  "369": {
+    "ankama_id": 369,
+    "name": "Gel\u00e9e \u00e0 la Menthe",
+    "description": "Cette d\u00e9licieuse gel\u00e9e \u00e0 la menthe a rendu plus d'un aventurier un peu trop gourmand malade. Elle a un effet apaisant sur le moral de toute votre \u00e9quipe si vous la consommez en cas de mauvaise haleine.",
+    "type": {
+      "name": "Gel\u00e9e",
+      "id": 185
+    },
+    "level": 56,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/110041-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/110041-128.png"
+    }
+  },
+  "9388": {
+    "ankama_id": 9388,
+    "name": "Feuille de Blop Royal",
+    "description": "Une fois s\u00e9ch\u00e9e, roul\u00e9e, puis fum\u00e9e, cette feuille peut d\u00e9clencher chez les plus faibles, d'importantes hallucinations, et une incroyable envie de se soulager. Une consommation excessive entra\u00eene une mort subite.",
+    "type": {
+      "name": "Plante",
+      "id": 113
+    },
+    "level": 60,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/36013-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/36013-128.png"
+    }
+  },
+  "2558": {
+    "ankama_id": 2558,
+    "name": "Blop mort",
+    "description": "Vous avez bien fait de le ramasser, il est intact. Mort, mais intact.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 44,
+    "pods": 10,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15568-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15568-128.png"
+    }
+  },
+  "15263": {
+    "ankama_id": 15263,
+    "name": "Rose des sables",
+    "description": "Elle n'est pas rouge, mais elle ne fanera pas.",
+    "type": {
+      "name": "Pierre pr\u00e9cieuse",
+      "id": 66
+    },
+    "level": 10,
+    "pods": 0,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/50720-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/50720-128.png"
+    }
+  },
+  "14635": {
+    "ankama_id": 14635,
+    "name": "P\u00e9pite",
+    "description": "Elle scintille comme les yeux de l'amour de votre vie. Elle cr\u00e9pite comme un boudin qui grille.",
+    "type": {
+      "name": "Pierre pr\u00e9cieuse",
+      "id": 66
+    },
+    "level": 1,
+    "pods": 0,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/50718-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/50718-128.png"
+    }
+  },
+  "2321": {
+    "ankama_id": 2321,
+    "name": "Babines de Macien",
+    "description": "Vous avez l'impression que ces babines pourraient suinter de la bave ind\u00e9finiment. Peut-\u00eatre parce que cet animal est r\u00e9put\u00e9 pour sa gourmandise \u00e9ternelle.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 66,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15463-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15463-128.png"
+    }
+  },
+  "18368": {
+    "ankama_id": 18368,
+    "name": "\u00c9cailles d'Ouroboulos",
+    "description": "Ces \u00e9cailles sont parfaites pour la cr\u00e9ation d'armures : \u00e0 la fois l\u00e9g\u00e8res et r\u00e9sistantes. De ce fait, elles rentrent aussi dans la fabrication des maillots de bain de combat, pour se battre tout en bronzant.",
+    "type": {
+      "name": "Peau",
+      "id": 77
+    },
+    "level": 80,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/59653-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/59653-128.png"
+    }
+  },
+  "8002": {
+    "ankama_id": 8002,
+    "name": "\u00c9toffe de Dok Alako",
+    "description": "Cette \u00e9toffe semble impr\u00e9gn\u00e9e d'une magie ancestrale difficilement pr\u00e9visible et ma\u00eetrisable. Encore un point commun avec la personne qui partage votre vie.",
+    "type": {
+      "name": "\u00c9toffe",
+      "id": 9
+    },
+    "level": 74,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/55720-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/55720-128.png"
+    }
+  },
+  "748": {
+    "ankama_id": 748,
+    "name": "Magn\u00e9site",
+    "description": "Cet alliage original est presque magique, il brille et vibre la nuit, ce qui peut \u00eatre suffisant pour effrayer un Bwork un peu trop cr\u00e9dule.",
+    "type": {
+      "name": "Alliage",
+      "id": 153
+    },
+    "level": 60,
+    "pods": 30,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/40659-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/40659-128.png"
+    },
+    "recipe": [
+      {
+        "item_ankama_id": 441,
+        "item_subtype": "resources",
+        "quantity": 10
+      },
+      {
+        "item_ankama_id": 312,
+        "item_subtype": "resources",
+        "quantity": 10
+      },
+      {
+        "item_ankama_id": 442,
+        "item_subtype": "resources",
+        "quantity": 10
+      },
+      {
+        "item_ankama_id": 443,
+        "item_subtype": "resources",
+        "quantity": 10
+      }
+    ]
+  },
+  "8388": {
+    "ankama_id": 8388,
+    "name": "Peau de Bworkette",
+    "description": "La Bworkette vous a laiss\u00e9 lui arracher un morceau de peau en \u00e9change de votre cl\u00e9mence. Mais elle a oubli\u00e9 de vous dire qu'elle a pr\u00e9venu son grand fr\u00e8re le Bworker, qui se fera un plaisir de vous arracher la v\u00f4tre.",
+    "type": {
+      "name": "Peau",
+      "id": 77
+    },
+    "level": 50,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/59615-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/59615-128.png"
+    }
+  },
+  "418": {
+    "ankama_id": 418,
+    "name": "Poils de Barbe du Grand Pa Wabbit",
+    "description": "Le Grand Pa Wabbit poss\u00e8de une barbe postiche qui sent tr\u00e8s mauvais, un peu comme le P\u00e8re Nowel, mais en pire. \u00c0 force de baver sans cesse devant les Grand Ma Wabbit, ses poils de barbe ont fini par s'impr\u00e9gner de sa bave aux pouvoirs m\u00e9connus.",
+    "type": {
+      "name": "Poil",
+      "id": 36
+    },
+    "level": 56,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/54114-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/54114-128.png"
+    }
+  },
+  "2482": {
+    "ankama_id": 2482,
+    "name": "Charni\u00e8re Cass\u00e9e",
+    "description": "L'usure caus\u00e9e par les nombreuses ouvertures et fermetures cons\u00e9cutives du couvercle de la malle a finalement eu raison de cette pauvre charni\u00e8re de s\u00e9curit\u00e9. \u00c7a a d\u00fb \u00eatre tr\u00e8s douloureux.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 56,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15942-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15942-128.png"
+    }
+  },
+  "13491": {
+    "ankama_id": 13491,
+    "name": "Relique Familiale",
+    "description": "De nombreuses hypoth\u00e8ses circulent \u00e0 propos de cette relique transmise de g\u00e9n\u00e9ration en g\u00e9n\u00e9ration. S'agit-il d'un collier de nouilles maudit fabriqu\u00e9 par un \u00e9colier pour la f\u00eate des m\u00e8res, d'un \u00e9lastique de slip douteux vol\u00e9 dans une tombe par un profanateur de s\u00e9pulture, ou bien d'un chapelet de crottes de nez fossilis\u00e9es ? Bien malin qui saurait le dire.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 46,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15094-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15094-128.png"
+    }
+  },
+  "2540": {
+    "ankama_id": 2540,
+    "name": "Substrat de Futaie",
+    "description": "Des Iops ont eu l'id\u00e9e d'en manger, pensant que \u00e7a les rendrait plus fut\u00e9s. Une seule chose est certaine : ils sont toujours aussi nuls en orthographe.",
+    "type": {
+      "name": "Substrat",
+      "id": 62
+    },
+    "level": 60,
+    "pods": 10,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/26017-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/26017-128.png"
+    },
+    "recipe": [
+      {
+        "item_ankama_id": 7652,
+        "item_subtype": "resources",
+        "quantity": 1
+      },
+      {
+        "item_ankama_id": 16492,
+        "item_subtype": "resources",
+        "quantity": 1
+      }
+    ]
+  },
+  "395": {
+    "ankama_id": 395,
+    "name": "Tr\u00e8fle \u00e0 5 feuilles",
+    "description": "Ce tr\u00e8fle constitue un \u00e9l\u00e9ment essentiel de la nourriture des Tabis. Les \u00e9leveurs font tout de m\u00eame attention dans la mesure o\u00f9 le Tr\u00e8fle \u00e0 5 feuilles provoque des ballonnements.",
+    "type": {
+      "name": "Plante",
+      "id": 113
+    },
+    "level": 40,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/36067-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/36067-128.png"
+    }
+  },
+  "14945": {
+    "ankama_id": 14945,
+    "name": "Vieille Partition",
+    "description": "Cette partition d\u00e9gage la m\u00eame odeur de poussi\u00e8re et d'usure que votre beau-p\u00e8re, la mauvaise humeur en moins.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 46,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15851-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15851-128.png"
+    }
+  },
+  "8385": {
+    "ankama_id": 8385,
+    "name": "Peau de Shin Larve",
+    "description": "Cette peau de Shin Larve est encore plus gluante et collante que vous ne l'imaginiez. Elle vous rappelle la derni\u00e8re princesse que vous avez d\u00e9livr\u00e9e.",
+    "type": {
+      "name": "Peau",
+      "id": 77
+    },
+    "level": 50,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/59614-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/59614-128.png"
+    }
+  },
+  "8738": {
+    "ankama_id": 8738,
+    "name": "Sacrum magistral",
+    "description": "Alors que le Corailleur vous offrait un os de son post\u00e9rieur, le Corailleur Magistral vous permet quant \u00e0 lui de prendre possession d'une autre partie de son anatomie, mais \u00e0 peu pr\u00e8s dans le m\u00eame secteur.",
+    "type": {
+      "name": "Os",
+      "id": 2
+    },
+    "level": 50,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/47011-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/47011-128.png"
+    }
+  },
+  "16219": {
+    "ankama_id": 16219,
+    "name": "Fil de N\u00e9fileuse",
+    "description": "Les tailleurs les plus renomm\u00e9s s'arrachent cette mati\u00e8re premi\u00e8re, et pour cause : les v\u00eatements confectionn\u00e9s dans une \u00e9toffe en fil de n\u00e9fileuse amincissent la silhouette, ce qui leur garantit un certain succ\u00e8s. Ils donnent aussi de l'urticaire, mais ne faut-il pas souffrir pour avoir l'air fin ?",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 86,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/164065-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/164065-128.png"
+    }
+  },
+  "2622": {
+    "ankama_id": 2622,
+    "name": "Boulet de Canondorf",
+    "description": "Nul ne sait si c'est gr\u00e2ce \u00e0 son expertise dans le maniement des gros boulets, ou bien parce qu'il en est lui-m\u00eame un, que Canondorf est devenu le canonnier attitr\u00e9 de l'\u00e9quipage du Chouque.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 90,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/164079-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/164079-128.png"
+    }
+  },
+  "479": {
+    "ankama_id": 479,
+    "name": "Ivoire",
+    "description": "L'Ivoire est tr\u00e8s recherch\u00e9 par les collectionneurs pour sa blancheur l\u00e9gendaire, et par les Forgerons pour sa capacit\u00e9 \u00e0 rendre les armes mortelles. Ce qui est certain, c'est que dans la r\u00e9gion d'Amakna, l'Ivoire a vraiment la c\u00f4te.",
+    "type": {
+      "name": "Os",
+      "id": 2
+    },
+    "level": 80,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/47088-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/47088-128.png"
+    }
+  },
+  "25760": {
+    "ankama_id": 25760,
+    "name": "Vieux Bouquin de Rat Li",
+    "description": "Jaloux de l'\u00e9rudition de certaines rates bontariennes, le Rat Li s'est mis \u00e0 d\u00e9vorer les ouvrages les plus volumineux de la biblioth\u00e8que de Br\u00e2kmar. Apr\u00e8s plusieurs indigestions, il s'est finalement rendu compte qu'il lui suffisait de lire les pages pour s'instruire, plut\u00f4t que de les grignoter comme du vieux fromage.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 110,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/165025-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/165025-128.png"
+    }
+  },
+  "20815": {
+    "ankama_id": 20815,
+    "name": "\u00c9clat du Mawabouaino",
+    "description": "Un \u00e9clat si intense que les Waddicts affirment qu'il d\u00e9passe les 200% de cacao. Mais bon, peut-on se fier \u00e0 des Waddicts ?",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 60,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/50730-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/50730-128.png"
+    }
+  },
+  "20814": {
+    "ankama_id": 20814,
+    "name": "Patte de Twakeuf",
+    "description": "Elle ne vous portera pas chance, mais pas malchance non plus, c'est seulement une patte quoi...",
+    "type": {
+      "name": "Patte",
+      "id": 61
+    },
+    "level": 50,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/59668-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/59668-128.png"
+    }
+  },
+  "20819": {
+    "ankama_id": 20819,
+    "name": "Dent de Waddict",
+    "description": "Une dent rong\u00e9e par la gourmandise, qu'on pr\u00e9f\u00e8re voir hors d'une bouche.",
+    "type": {
+      "name": "Os",
+      "id": 2
+    },
+    "level": 53,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/47865-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/47865-128.png"
+    }
+  },
+  "20816": {
+    "ankama_id": 20816,
+    "name": "\u0152il Bionique",
+    "description": "Un \u0153il modifi\u00e9 qui permet de d\u00e9tecter tout objet ou individu qui contient du chocolat.",
+    "type": {
+      "name": "\u0152il",
+      "id": 89
+    },
+    "level": 51,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/59669-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/59669-128.png"
+    }
+  },
+  "20820": {
+    "ankama_id": 20820,
+    "name": "Pompon Brun\u00e2tre",
+    "description": "Issu de la queue d'un Waddict, la couleur brune de ce pompon viendrait de la quantit\u00e9 ph\u00e9nom\u00e9nale de chocolat que ceux-ci ingurgitent, enfin il para\u00eet ...",
+    "type": {
+      "name": "Queue",
+      "id": 143
+    },
+    "level": 54,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/59667-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/59667-128.png"
+    }
+  },
+  "2275": {
+    "ankama_id": 2275,
+    "name": "Cuir de Porkass",
+    "description": "Chass\u00e9 par de nombreux ennemis, le Porkass a failli dispara\u00eetre de la cha\u00eene alimentaire. On dit qu'il a fallu accoupler des sangliers et des cochons de lait pour entendre \u00e0 nouveau des grognements stridents dans les basses plaines de Cania. La v\u00e9ritable raison du retour des Porkass est probablement tout autre... La d\u00e9esse Eboren serait-elle responsable ? Peu importe. Depuis leur r\u00e9apparition, les Porkass en veulent au monde entier. Quel sale caract\u00e8re.",
+    "type": {
+      "name": "Cuir",
+      "id": 109
+    },
+    "level": 46,
+    "pods": 3,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/56429-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/56429-128.png"
+    }
+  },
+  "2480": {
+    "ankama_id": 2480,
+    "name": "Slip en cuir de Porkass",
+    "description": "\"Un Porkass sans Slip est un Porkass Mort\", telle \u00e9tait l'expression favorite de Dame Harre, F\u00e9ca adepte du voyeurisme et du bizutage. Son passe-temps pr\u00e9f\u00e9r\u00e9 \u00e9tait d'obliger ses \"amis\" \u00e0 enfiler sur la t\u00eate le Slip pas tr\u00e8s propre du Porkass.",
+    "type": {
+      "name": "V\u00eatement",
+      "id": 51
+    },
+    "level": 46,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/56508-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/56508-128.png"
+    }
+  },
+  "2484": {
+    "ankama_id": 2484,
+    "name": "Trident Cass\u00e9",
+    "description": "Voici un petit souvenir de votre ami Porkass. En esp\u00e9rant qu'il ne vous en tienne pas rigueur au point de vous traquer \u00e0 travers les plaines. Caract\u00e9riel comme un cochon, il en est bien capable, m\u00e9fiez-vous.",
+    "type": {
+      "name": "Ressource de combat",
+      "id": 101
+    },
+    "level": 46,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15512-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15512-128.png"
+    }
+  },
+  "12737": {
+    "ankama_id": 12737,
+    "name": "Galet cramoisi",
+    "description": "Ce caillou permet de faire de tr\u00e8s bons ricochets sur les lacs ou les cr\u00e2nes des plus faibles que vous.",
+    "type": {
+      "name": "Galet",
+      "id": 186
+    },
+    "level": 50,
+    "pods": 10,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15290-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15290-128.png"
+    }
+  },
+  "305": {
+    "ankama_id": 305,
+    "name": "Dent de Wabbit",
+    "description": "Ab\u00eem\u00e9es \u00e0 force de ronger des cawottes, les dents de Wabbit sont tout de m\u00eame tr\u00e8s utiles lors de la confection de potions gr\u00e2ce \u00e0 leurs propri\u00e9t\u00e9s revigorantes.",
+    "type": {
+      "name": "Os",
+      "id": 2
+    },
+    "level": 44,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/47758-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/47758-128.png"
+    }
+  },
+  "2288": {
+    "ankama_id": 2288,
+    "name": "Patte de Wabbit",
+    "description": "Bon nombre de touristes vont sur l'\u00eele des Wabbits essentiellement pour se munir d'une Patte de Wabbit car elle porte bonheur. Malheureusement, \u00e7a n'est pas le cas, mais il ne faut pas le dire, le tourisme en serait fort p\u00e9nalis\u00e9.",
+    "type": {
+      "name": "Patte",
+      "id": 61
+    },
+    "level": 48,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/103440-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/103440-128.png"
+    }
+  },
+  "14463": {
+    "ankama_id": 14463,
+    "name": "Cr\u00e2ne de Wabbit Squelette",
+    "description": "Ce cr\u00e2ne est la pi\u00e8ce dominante du Wabbit Squelette que vous tentez de reconstituer chez vous.",
+    "type": {
+      "name": "Os",
+      "id": 2
+    },
+    "level": 52,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/47828-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/47828-128.png"
+    }
+  },
+  "8398": {
+    "ankama_id": 8398,
+    "name": "\u00c9toffe du Wa Wabbit",
+    "description": "Personne ne sait r\u00e9ellement d'o\u00f9 le Wa Wabbit a sorti cette \u00e9toffe, et il semblerait que personne ne cherche \u00e0 savoir \u00e9galement. \u00c0 la fois inqui\u00e9tante et troublante, l'origine de cette \u00e9toffe reste un des plus grands myst\u00e8res de tout Amakna.",
+    "type": {
+      "name": "\u00c9toffe",
+      "id": 9
+    },
+    "level": 60,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/55723-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/55723-128.png"
+    }
+  },
+  "2618": {
+    "ankama_id": 2618,
+    "name": "Kokopaille",
+    "description": "Pour siroter quelque chose de frais, rien de mieux qu'une paille color\u00e9e. Il n'y a plus qu'\u00e0 trouver un trou dans la Nodkoko.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 50,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15433-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15433-128.png"
+    }
+  },
+  "13714": {
+    "ankama_id": 13714,
+    "name": "Dent de Larve Rubis",
+    "description": "Un collier de ces dents constitue le bijou id\u00e9al pour vos noces de rubis.",
+    "type": {
+      "name": "Os",
+      "id": 2
+    },
+    "level": 49,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/47802-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/47802-128.png"
+    }
+  },
+  "413": {
+    "ankama_id": 413,
+    "name": "Bec du Kwak de Vent",
+    "description": "Ce bec extraordinairement solide permet au Kwak du Vent de se prendre des vents sans broncher, juste pour le plaisir de se prendre des vents sans broncher. Les kwaks du vent sont d\u00e9cid\u00e9ment bien \u00e9tranges...",
+    "type": {
+      "name": "Os",
+      "id": 2
+    },
+    "level": 44,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/47110-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/47110-128.png"
+    }
+  },
+  "1664": {
+    "ankama_id": 1664,
+    "name": "Dent de Crocodaille",
+    "description": "Quand un Crocodaille a une dent contre vous, la meilleure solution consiste \u00e0 la lui arracher avec vigueur et d\u00e9termination, tel un dentiste rigoureux.",
+    "type": {
+      "name": "Os",
+      "id": 2
+    },
+    "level": 46,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/47234-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/47234-128.png"
+    }
+  },
+  "8389": {
+    "ankama_id": 8389,
+    "name": "Poil de Bworkette",
+    "description": "La Bworkette a la peau lisse, sauf sous les aisselles. Il faut bien que les g\u00e2teaux qu'elle roule sous ses aisselles soient assaisonn\u00e9s de temps en temps.",
+    "type": {
+      "name": "Poil",
+      "id": 36
+    },
+    "level": 50,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/54665-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/54665-128.png"
+    }
+  },
+  "14278": {
+    "ankama_id": 14278,
+    "name": "Cha\u00eenes Bris\u00e9es",
+    "description": "Faites comme les Forgerons Sombres, brisez les cha\u00eenes qui vous maintiennent dans l'esclavage d'une vie \u00e9triqu\u00e9e, d\u00e9sob\u00e9issez \u00e0 vos ma\u00eetres, semez le chaos partout o\u00f9 vous passez ! R\u00e9voltez-vous ! Et si par malheur vous veniez \u00e0 tr\u00e9passer, ces cha\u00eenes vous seront tr\u00e8s utiles pour hanter ceux que vous avez d\u00e9test\u00e9 de votre vivant.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 47,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15245-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15245-128.png"
+    }
+  },
+  "8141": {
+    "ankama_id": 8141,
+    "name": "Ailes du Scarafeuille Noir",
+    "description": "Contrairement \u00e0 ce que certains aventuriers peuvent penser, les ailes du Scarafeuille Noir ne sont pas noires, mais blanches. Encore un myst\u00e8re de la nature qui alimente les d\u00e9bats mouvement\u00e9s de la taverne.",
+    "type": {
+      "name": "Aile",
+      "id": 142
+    },
+    "level": 44,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/104729-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/104729-128.png"
+    }
+  },
+  "13140": {
+    "ankama_id": 13140,
+    "name": "Serrure du Coffre des Forgerons",
+    "description": "Vous vous apercevez que cette serrure, r\u00e9cup\u00e9r\u00e9e parmi les miettes que vous avez faites du Coffre des Forgerons pour r\u00e9cup\u00e9rer son tr\u00e9sor, n'\u00e9tait pas verrouill\u00e9e. Visiblement vous n'avez qu'un credo : cogner d'abord, r\u00e9fl\u00e9chir ensuite. Iop serait fier de vous.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 50,
+    "pods": 5,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15799-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15799-128.png"
+    }
+  },
+  "1777": {
+    "ankama_id": 1777,
+    "name": "Bout de Blop Indigo",
+    "description": "Difficile d'en voir le bout.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 26,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15288-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15288-128.png"
+    }
+  },
+  "2479": {
+    "ankama_id": 2479,
+    "name": "Fl\u00e9au de Robot Fl\u00e9au",
+    "description": "En voyant la taille de ce fl\u00e9au, on peut se demander \u00e0 quoi jouent r\u00e9ellement les Brigandins avec leurs automates.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 56,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15945-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15945-128.png"
+    }
+  },
+  "13730": {
+    "ankama_id": 13730,
+    "name": "Graine de la Discorde",
+    "description": "R\u00e9pandues par les semeurs de troubles et par le dieu Mikart, ces graines donnent naissance \u00e0 des pommes de discorde, \u00e0 la peau verd\u00e2tre et au go\u00fbt d\u00e9testable. Les boulangers sombres en garnissent les tartes qu'ils se balancent \u00e0 la figure.",
+    "type": {
+      "name": "Graine",
+      "id": 171
+    },
+    "level": 41,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/58472-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/58472-128.png"
+    }
+  },
+  "14460": {
+    "ankama_id": 14460,
+    "name": "Branche de Tiwabbit Kiafin",
+    "description": "En fixant un Dofus au bout de cette branche et en l'attachant au-dessus de la t\u00eate d'un Astrubien r\u00e9calcitrant, vous pourrez le faire avancer contre vents et mar\u00e9es jusqu'au bout du Monde des Douze.",
+    "type": {
+      "name": "Bois",
+      "id": 12
+    },
+    "level": 44,
+    "pods": 5,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/38681-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/38681-128.png"
+    }
+  },
+  "11695": {
+    "ankama_id": 11695,
+    "name": "Carniflore",
+    "description": "Cette jolie fleur t\u00e9moigne de la sensibilit\u00e9 de son ancien propri\u00e9taire. M\u00eame le plus f\u00e9roce des Kannibouls peut avoir un c\u00f4t\u00e9 fleur bleue !",
+    "type": {
+      "name": "Fleur",
+      "id": 37
+    },
+    "level": 60,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/35636-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/35636-128.png"
+    }
+  },
+  "7905": {
+    "ankama_id": 7905,
+    "name": "Laine du Boufcoul",
+    "description": "Cette laine ressemble \u00e0 s'y m\u00e9prendre \u00e0 de la laine de Bouftou et pourtant il n'en est rien, puisqu'elle ne sent pas mauvais.",
+    "type": {
+      "name": "Laine",
+      "id": 154
+    },
+    "level": 96,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/57001-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/57001-128.png"
+    }
+  },
+  "7906": {
+    "ankama_id": 7906,
+    "name": "Corne du Boufcoul",
+    "description": "Une vieille l\u00e9gende explique que la poudre extraite de ces cornes aurait des vertus aphrodisiaques. Cette m\u00eame l\u00e9gende pr\u00e9cise qu'elle peut \u00e9galement \u00eatre source d'effets secondaires assez surprenants. Une raison de plus pour essayer.",
+    "type": {
+      "name": "Os",
+      "id": 2
+    },
+    "level": 96,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/47009-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/47009-128.png"
+    }
+  },
+  "2448": {
+    "ankama_id": 2448,
+    "name": "Cervelle de Bouftou des Cavernes",
+    "description": "Aucun doute, cette cervelle provient bien du Bouftou des Cavernes. Bien cuisin\u00e9, ce plat est le pr\u00e9f\u00e9r\u00e9 de tous les petits Iops qui veulent devenir grands et forts. \u00c7a rend aussi intelligent, mais si on le disait aux enfants Iops, ils en mangeraient beaucoup moins.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 96,
+    "pods": 5,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15492-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15492-128.png"
+    }
+  },
+  "8403": {
+    "ankama_id": 8403,
+    "name": "Tresse du Koulosse",
+    "description": "Cette \u00e9norme tresse a \u00e9t\u00e9 confectionn\u00e9e par le Koulosse en personne. Avec le temps, elle est devenue presque aussi rigide qu'un bloc de pierre. Elle est cependant encore gorg\u00e9e d'un liquide gluant et naus\u00e9abond qui attire les moskitos. Le plus surprenant dans tout cela, c'est que cette tresse allait tr\u00e8s bien \u00e0 son propri\u00e9taire. Comme un gros ploukosse, vous avez eu l'id\u00e9e saugrenue de la lui voler.",
+    "type": {
+      "name": "Poil",
+      "id": 36
+    },
+    "level": 100,
+    "pods": 10,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15753-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15753-128.png"
+    }
+  },
+  "2543": {
+    "ankama_id": 2543,
+    "name": "Substrat de Fascine",
+    "description": "\u00c0 d\u00e9faut de combler les lacunes en sciences, cette potion comblera convenablement le foss\u00e9 qui s\u00e9pare l'apprenti du disciple.",
+    "type": {
+      "name": "Substrat",
+      "id": 62
+    },
+    "level": 80,
+    "pods": 10,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/26018-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/26018-128.png"
+    },
+    "recipe": [
+      {
+        "item_ankama_id": 7652,
+        "item_subtype": "resources",
+        "quantity": 1
+      },
+      {
+        "item_ankama_id": 16493,
+        "item_subtype": "resources",
+        "quantity": 1
+      }
+    ]
+  },
+  "18369": {
+    "ankama_id": 18369,
+    "name": "Queue de Scordion Bleu",
+    "description": "Les habitants de Saharach ont pris l'habitude de mettre des queues de Scordion Bleu dans leur bouteille d'alcool pour faire peur aux touristes. Heureusement, apr\u00e8s quelques heures pass\u00e9es dans l'alcool, le venin contenu dans cette queue dispara\u00eet totalement.",
+    "type": {
+      "name": "Queue",
+      "id": 143
+    },
+    "level": 80,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/65770-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/65770-128.png"
+    }
+  },
+  "8763": {
+    "ankama_id": 8763,
+    "name": "Moustache du Mufafah",
+    "description": "Plus fournie que celle des poissons chatons, la moustache du Mufafah peut servir \u00e0 faire des pinceaux pour le peintre Marylork.",
+    "type": {
+      "name": "Poil",
+      "id": 36
+    },
+    "level": 100,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15015-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15015-128.png"
+    }
+  },
+  "13731": {
+    "ankama_id": 13731,
+    "name": "Pierre M\u00e9dicinale",
+    "description": "Une l\u00e9gende raconte que pour trouver les pierres m\u00e9dicinales les plus efficaces, les Dok Alakos ont creus\u00e9 si longtemps qu'ils ont fini par cr\u00e9er de v\u00e9ritables ravins dans la montagne. Les seuls \u00e0 prendre cette histoire au s\u00e9rieux sont les enfants Koalaks et les Enutrofs.",
+    "type": {
+      "name": "Pierre brute",
+      "id": 91
+    },
+    "level": 74,
+    "pods": 5,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/51496-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/51496-128.png"
+    }
+  },
+  "18370": {
+    "ankama_id": 18370,
+    "name": "Queue de Fennex",
+    "description": "Les poils de cette queue sont souvent utilis\u00e9s dans la fabrication des meilleurs pinceaux. De quoi transformer n'importe quelle peinture d'enfant en chef-d'\u0153uvre... Du moins aux yeux de leurs parents.",
+    "type": {
+      "name": "Queue",
+      "id": 143
+    },
+    "level": 80,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/65771-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/65771-128.png"
+    }
+  },
+  "1613": {
+    "ankama_id": 1613,
+    "name": "\u00c9caille de Chef Crocodaille",
+    "description": "Ce fragment de carapace servira certainement \u00e0 cr\u00e9er de belles bottes.",
+    "type": {
+      "name": "Peau",
+      "id": 77
+    },
+    "level": 69,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/59547-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/59547-128.png"
+    }
+  },
+  "13729": {
+    "ankama_id": 13729,
+    "name": "Papier Charbon",
+    "description": "Les Dopeuls utilisent ce papier noir\u00e2tre pour cr\u00e9er des copies de tout ce qui leur tombe sous la main. Des motifs grav\u00e9s sur les vieilles pierres aux graffitis obsc\u00e8nes sur les murs des latrines, tout y passe. Une telle fr\u00e9n\u00e9sie est-elle \u00e0 mettre sur le compte de l'instinct de reproduction ? Il est possible qu'elle refl\u00e8te simplement une duplicit\u00e9 sans limite.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 41,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15816-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15816-128.png"
+    }
+  },
+  "8758": {
+    "ankama_id": 8758,
+    "name": "Morceau de cale\u00e7on de Gourlo",
+    "description": "Il n'a jamais \u00e9t\u00e9 possible de retrouver un cale\u00e7on de Gourlo intact. \u00c0 force de jouer avec la poudre, il en vient toujours \u00e0 y mettre le feu.",
+    "type": {
+      "name": "V\u00eatement",
+      "id": 51
+    },
+    "level": 70,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15012-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15012-128.png"
+    }
+  },
+  "409": {
+    "ankama_id": 409,
+    "name": "Poils de Barbe du Bwork Mage",
+    "description": "Ces poils roux sentent tr\u00e8s mauvais lorsqu'il pleut, pour des raisons assez obscures. Cependant, les Bworks Mages semblent tirer une partie de leurs pouvoirs magiques de ces poils de barbe, ce qui pourrait int\u00e9resser certains alchimistes.",
+    "type": {
+      "name": "Poil",
+      "id": 36
+    },
+    "level": 45,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/54131-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/54131-128.png"
+    }
+  },
+  "846": {
+    "ankama_id": 846,
+    "name": "\u0152uf de Dragoeuf Charbon",
+    "description": "Cet \u0153uf \u00e9trange donnera naissance \u00e0 un joli petit Dragoeuf une fois qu'il sera couv\u00e9 par une Femelle Dragoeuf Charbon. En attendant, \u00e9vitez de le tenir au chaud contre vous, on ne sait pas ce qu'il pourrait arriver...",
+    "type": {
+      "name": "\u0152uf",
+      "id": 122
+    },
+    "level": 74,
+    "pods": 5,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/105206-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/105206-128.png"
+    }
+  },
+  "18371": {
+    "ankama_id": 18371,
+    "name": "Carapace du Mantiscore",
+    "description": "Autrefois utilis\u00e9e dans la confection d'armure, elle sert aujourd'hui de projectile dans les courses de chars \u00e0 voile.",
+    "type": {
+      "name": "Carapace",
+      "id": 0
+    },
+    "level": 80,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/107738-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/107738-128.png"
+    }
+  },
+  "749": {
+    "ankama_id": 749,
+    "name": "Bak\u00e9l\u00e9lite",
+    "description": "Cet alliage n'est pas des plus solide, mais correctement aiguis\u00e9, il devient aussi tranchant que la Lame d'un Chafer.",
+    "type": {
+      "name": "Alliage",
+      "id": 153
+    },
+    "level": 80,
+    "pods": 40,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/40487-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/40487-128.png"
+    },
+    "recipe": [
+      {
+        "item_ankama_id": 441,
+        "item_subtype": "resources",
+        "quantity": 10
+      },
+      {
+        "item_ankama_id": 442,
+        "item_subtype": "resources",
+        "quantity": 10
+      },
+      {
+        "item_ankama_id": 443,
+        "item_subtype": "resources",
+        "quantity": 10
+      },
+      {
+        "item_ankama_id": 445,
+        "item_subtype": "resources",
+        "quantity": 10
+      }
+    ]
+  },
+  "27368": {
+    "ankama_id": 27368,
+    "name": "La cambriole pour les Nuls",
+    "description": "Un ancien ouvrage transmis de g\u00e9n\u00e9ration en g\u00e9n\u00e9ration au sein du clan Bloopeur. De nombreuses techniques ancestrales y sont d\u00e9taill\u00e9es, telles que l'occultation flatulente de ma\u00eetre Entourloopeur ou encore le fameux retourne-slip aveuglant, mis au point par le tristement c\u00e9l\u00e8bre Dooble Woopeur.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 50,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/24292-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/24292-128.png"
+    }
+  },
+  "27366": {
+    "ankama_id": 27366,
+    "name": "Griffe de Grolours",
+    "description": "Les grolours, ces colosses badauds ayant \u00e9lu domicile au sein de la multitude de conif\u00e8res aur\u00e9olant la colonie d'Albuera, passent le plus clair de leur temps \u00e0 errer \u00e0 la recherche d'une pitance capable de satisfaire leur app\u00e9tit colossal. Ils investissent ainsi de nombreuses heures \u00e0 gratter l'\u00e9corce des pins \u00e0 l'aide de leurs longues griffes recourb\u00e9es, \u00e0 la recherche des larves juteuses et somnolentes qui se dissimulent par-dessous.",
+    "type": {
+      "name": "Os",
+      "id": 2
+    },
+    "level": 50,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/47881-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/47881-128.png"
+    }
+  },
+  "27362": {
+    "ankama_id": 27362,
+    "name": "Pom de Pin",
+    "description": "Cette pom a d\u00fb tomber d'un arbre, et non d'un monstre. De ce fait, pourquoi l'avez-vous ramass\u00e9e ? Vous avez l'air malin, avec toute cette s\u00e8ve qui vous colle aux doigts.",
+    "type": {
+      "name": "Plante",
+      "id": 113
+    },
+    "level": 50,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/36659-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/36659-128.png"
+    }
+  },
+  "27363": {
+    "ankama_id": 27363,
+    "name": "Fourrure de Timongouste",
+    "description": "Cette fourrure imperm\u00e9able permet aux timongoustes de se mouvoir sous l'eau sans effort. Si l'envie vous prend de tondre l'un des leurs comme un bouftou, jetez-le donc \u00e0 l'eau : vous serez \u00e0 m\u00eame de constater la v\u00e9racit\u00e9 de cette information.",
+    "type": {
+      "name": "Poil",
+      "id": 36
+    },
+    "level": 50,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/54716-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/54716-128.png"
+    }
+  },
+  "13608": {
+    "ankama_id": 13608,
+    "name": "Poils de Kerubim",
+    "description": "Ce ne sont pas des poils de Chacha que vous avez l\u00e0, mais des poils d'Ecaflip. Et pas de n'importe quel Ecaflip : ils ont \u00e9t\u00e9 cultiv\u00e9s par l'illustre Kerubim Cr\u00e9pin, qui les a fait pousser lui-m\u00eame. Comme il est peu probable qu'il vous les r\u00e9clame, \u00e0 vous de leur trouver une utilit\u00e9.",
+    "type": {
+      "name": "Poil",
+      "id": 36
+    },
+    "level": 10,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/54685-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/54685-128.png"
+    }
+  },
+  "8749": {
+    "ankama_id": 8749,
+    "name": "Bulbe Koura\u00e7ao",
+    "description": "Le Palmifleur ne na\u00eet pas d'une graine mais d'un bulbe que l'on trempe dans l'alcool. Pourquoi ? Parce que !",
+    "type": {
+      "name": "Plante",
+      "id": 113
+    },
+    "level": 43,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/36003-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/36003-128.png"
+    }
+  },
+  "16148": {
+    "ankama_id": 16148,
+    "name": "Poil d'Abrakne",
+    "description": "Ce poil est naturellement couvert de r\u00e9sine. Ainsi, vous n'avez pas besoin de colle pour le faire tenir sur votre cr\u00e2ne d\u00e9garni ou dans le creux de votre main.",
+    "type": {
+      "name": "Poil",
+      "id": 36
+    },
+    "level": 46,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/54703-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/54703-128.png"
+    }
+  },
+  "1773": {
+    "ankama_id": 1773,
+    "name": "Bout de Blop Reinette",
+    "description": "Difficile d'en voir le bout.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 26,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15284-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15284-128.png"
+    }
+  },
+  "1612": {
+    "ankama_id": 1612,
+    "name": "Racine d'Abraknyde Sombre",
+    "description": "Cette racine provient du cadavre d'un Abraknyde Sombre.",
+    "type": {
+      "name": "Racine",
+      "id": 195
+    },
+    "level": 78,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/98232-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/98232-128.png"
+    }
+  },
+  "8061": {
+    "ankama_id": 8061,
+    "name": "Poils de Koalak Reinette",
+    "description": "Ces poils sont recouverts de pollen de Blop, ce qui leur donne un go\u00fbt d\u00e9lectable, mais une odeur d\u00e9plorable.",
+    "type": {
+      "name": "Poil",
+      "id": 36
+    },
+    "level": 84,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/54661-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/54661-128.png"
+    }
+  },
+  "14472": {
+    "ankama_id": 14472,
+    "name": "B\u00e2ton de Blanc Pa Wabbit",
+    "description": "\u00c0 votre grande d\u00e9ception, ce b\u00e2ton n'est pas magique. Les Blancs Pa Wabbit s'en servent simplement pour marcher sans boiter. Mais il leur permet \u00e9galement d'avoir l'air un minimum s\u00e9rieux lorsqu'ils se mettent \u00e0 gesticuler pour lancer un sort.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 80,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/4117-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/4117-128.png"
+    }
+  },
+  "2273": {
+    "ankama_id": 2273,
+    "name": "Tissu Pourpre",
+    "description": "L\u00e9ger et doux au toucher, voil\u00e0 ce que l'on peut dire de cet \u00e9trange tissu pourpre. Il est \u00e9crit sur une \u00e9tiquette \u00e0 l'int\u00e9rieur \"made in taille one\".",
+    "type": {
+      "name": "\u00c9toffe",
+      "id": 9
+    },
+    "level": 86,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/55427-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/55427-128.png"
+    }
+  },
+  "2647": {
+    "ankama_id": 2647,
+    "name": "Oreille de M\u00e9dibwork",
+    "description": "Les M\u00e9dibworks ont besoin de mati\u00e8re premi\u00e8re pour fabriquer leurs implants. \u00c0 premi\u00e8re vue, cette oreille a \u00e9t\u00e9 arrach\u00e9e \u00e0 un cochon de lait sans son accord.",
+    "type": {
+      "name": "Oreille",
+      "id": 118
+    },
+    "level": 86,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/106623-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/106623-128.png"
+    }
+  },
+  "14468": {
+    "ankama_id": 14468,
+    "name": "Barbe du Wa Wobot",
+    "description": "Cette barbe ira \u00e0 merveille avec votre panoplie de Nowel. Voil\u00e0 de quoi effrayer encore davantage les enfants !",
+    "type": {
+      "name": "Poil",
+      "id": 36
+    },
+    "level": 80,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/54694-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/54694-128.png"
+    }
+  },
+  "1676": {
+    "ankama_id": 1676,
+    "name": "Osier Enchant\u00e9",
+    "description": "Ce morceau d'Osier enchant\u00e9 devrait permettre de fabriquer une magnifique corbeille \u00e0 fruits magique, alliant \u00e9l\u00e9gance et puissance, tout le contraire d'une m\u00e9chante Liche.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 86,
+    "pods": 10,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15123-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15123-128.png"
+    }
+  },
+  "2495": {
+    "ankama_id": 2495,
+    "name": "\u0152il de Craquelope",
+    "description": "Cet \u0153il brille la nuit, m\u00eame une fois arrach\u00e9 \u00e0 son propri\u00e9taire. De quoi s'\u00e9clairer \u00e0 moindre frais.",
+    "type": {
+      "name": "\u0152il",
+      "id": 89
+    },
+    "level": 66,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/109520-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/109520-128.png"
+    }
+  },
+  "447": {
+    "ankama_id": 447,
+    "name": "Charbon",
+    "description": "Le Charbon ne dispose d'aucune propri\u00e9t\u00e9 magique particuli\u00e8re, contrairement \u00e0 ce que l'on pourrait croire. Cependant, il a une f\u00e2cheuse tendance \u00e0 attirer la foudre, \u00e0 la contenir, et \u00e0 la lib\u00e9rer au mauvais moment.",
+    "type": {
+      "name": "Minerai",
+      "id": 167
+    },
+    "level": 65,
+    "pods": 5,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/39075-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/39075-128.png"
+    }
+  },
+  "431": {
+    "ankama_id": 431,
+    "name": "Pierre du Craqueleur",
+    "description": "Cette pierre est presque vivante, elle tire sa vie des pierres pr\u00e9cieuses qu'elle renferme. Elle est quasiment incassable, sauf par un Craqueleur. Il n'y a pas mieux pour se faire un bon gros marteau en pierre.",
+    "type": {
+      "name": "Pierre brute",
+      "id": 91
+    },
+    "level": 61,
+    "pods": 5,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/51127-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/51127-128.png"
+    }
+  },
+  "2304": {
+    "ankama_id": 2304,
+    "name": "Fragment de Pierre Polie",
+    "description": "Ce Fragment provient de la fesse gauche d'un Craquelourd. Pour \u00e9clater une Arakne, il n'y a pas mieux, \u00e0 part le Craquelourd en personne peut-\u00eatre.",
+    "type": {
+      "name": "Pierre brute",
+      "id": 91
+    },
+    "level": 65,
+    "pods": 5,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/51454-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/51454-128.png"
+    }
+  },
+  "8102": {
+    "ankama_id": 8102,
+    "name": "Pierre du Craqueleur L\u00e9gendaire",
+    "description": "On dit de cette pierre qu'elle pourrait \u00eatre le c\u0153ur du Craqueleur L\u00e9gendaire. Ce qui est certain, c'est que le Craqueleur L\u00e9gendaire n'avait jamais le c\u0153ur lourd : cette pierre est donc d'une l\u00e9g\u00e8ret\u00e9 incroyable, ce qui permet d'en faire des objets adapt\u00e9s aux personnages qui recherchent avant tout la mobilit\u00e9, l'agilit\u00e9 et la protection. Tout simplement g\u00e9nial.",
+    "type": {
+      "name": "Pierre brute",
+      "id": 91
+    },
+    "level": 70,
+    "pods": 5,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/51457-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/51457-128.png"
+    }
+  },
+  "845": {
+    "ankama_id": 845,
+    "name": "\u0152uf de Dragoeuf Argile",
+    "description": "Cet \u0153uf \u00e9trange donnera naissance \u00e0 un joli petit Dragoeuf une fois qu'il sera couv\u00e9 par une Femelle Dragoeuf Argile. En attendant, \u00e9vitez de le tenir au chaud contre vous, on ne sait pas ce qui pourrait arriver...",
+    "type": {
+      "name": "\u0152uf",
+      "id": 122
+    },
+    "level": 74,
+    "pods": 5,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/105205-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/105205-128.png"
+    }
+  },
+  "12845": {
+    "ankama_id": 12845,
+    "name": "Flocon de Neige",
+    "description": "Ce flocon de neige magique est une ressource indispensable \u00e0 la confection d'objets de Nowel. Malheureusement, il est sans effet pour refroidir les ardeurs de vos pr\u00e9tendants.",
+    "type": {
+      "name": "Nowel",
+      "id": 136
+    },
+    "level": 1,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/153007-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/153007-128.png"
+    }
+  },
+  "8077": {
+    "ankama_id": 8077,
+    "name": "Boomerang du Warko Marron",
+    "description": "Ce morceau de bois d'une forme \u00e9trange a voyag\u00e9 longtemps dans les airs et entre les rangs ennemis avant de se briser. On raconte qu'il revient toujours vers son propri\u00e9taire une fois lanc\u00e9, mais rarement dans ses mains...",
+    "type": {
+      "name": "Ressource de combat",
+      "id": 101
+    },
+    "level": 78,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15724-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15724-128.png"
+    }
+  },
+  "2621": {
+    "ankama_id": 2621,
+    "name": "Barbe du Chouque",
+    "description": "Vous venez d'extraire du menton du Chouque sa Barbe. Bizarrement, les dents sont venues avec. C'est \u00e7a d'\u00eatre mort depuis longtemps, on perd des bouts.",
+    "type": {
+      "name": "Poil",
+      "id": 36
+    },
+    "level": 90,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15606-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15606-128.png"
+    }
+  },
+  "2150": {
+    "ankama_id": 2150,
+    "name": "Graine de Scorbute",
+    "description": "Ces graines ont \u00e9t\u00e9 fabriqu\u00e9es \u00e0 partir de venin de Scorbute. En avaler une seule est mortel. En avaler deux vous tuera quelques secondes apr\u00e8s avoir \u00e9t\u00e9 transform\u00e9 en mort-vivant.",
+    "type": {
+      "name": "Graine",
+      "id": 171
+    },
+    "level": 66,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/58405-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/58405-128.png"
+    }
+  },
+  "842": {
+    "ankama_id": 842,
+    "name": "Coquille de Dragoeuf Argile",
+    "description": "Cette coquille est presque incassable, cependant, en la polissant pendant des g\u00e9n\u00e9rations, les meilleurs Bijoutiers peuvent utiliser ses facult\u00e9s magiques pour confectionner des amulettes aux pouvoirs exceptionnels.",
+    "type": {
+      "name": "Coquille",
+      "id": 137
+    },
+    "level": 70,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/111202-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/111202-128.png"
+    }
+  },
+  "2627": {
+    "ankama_id": 2627,
+    "name": "Poup\u00e9e Vaudou Sarbak",
+    "description": "Une force se d\u00e9gage de cette Poup\u00e9e, mais vous avez l'\u00e9trange sensation qu'elle \u00e9coute quelqu'un.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 60,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15612-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15612-128.png"
+    }
+  },
+  "2436": {
+    "ankama_id": 2436,
+    "name": "Gel\u00e9e Citron",
+    "description": "Ce pot de Gel\u00e9e Citron a une apparence \u00e9trange. Selon Elrik Ola, cette gel\u00e9e proviendrait de chez lui. Plus pr\u00e9cis\u00e9ment, de l'autre coin de la galaxie. Autant dire que ce n'est pas la porte \u00e0 c\u00f4t\u00e9.",
+    "type": {
+      "name": "Gel\u00e9e",
+      "id": 185
+    },
+    "level": 60,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/110490-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/110490-128.png"
+    }
+  },
+  "2241": {
+    "ankama_id": 2241,
+    "name": "Gel\u00e9e Menthe Royale",
+    "description": "La Gel\u00e9e Menthe Royale a d\u00e9trouss\u00e9 plus d'un aventurier un peu trop entreprenant, la voil\u00e0 enfin an\u00e9antie. Attention, il est d\u00e9conseill\u00e9 de la consommer comme une vulgaire Gel\u00e9e.",
+    "type": {
+      "name": "Gel\u00e9e",
+      "id": 185
+    },
+    "level": 60,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/110408-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/110408-128.png"
+    }
+  },
+  "9381": {
+    "ankama_id": 9381,
+    "name": "Fleur de Gloutoblop",
+    "description": "Le Gloutoblop est tellement affam\u00e9 qu'il serait capable de manger ses propres fleurs. Heureusement, il trouve toujours un aventurier imprudent \u00e0 port\u00e9e de dents.",
+    "type": {
+      "name": "Fleur",
+      "id": 37
+    },
+    "level": 60,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/35007-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/35007-128.png"
+    }
+  },
+  "1770": {
+    "ankama_id": 1770,
+    "name": "Bout de Blop Coco",
+    "description": "Cet extrait de blop sent \u00e0 plein nez la coco. Comment un r\u00e9sidu de monstres peut-il sentir autant ?",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 26,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15281-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15281-128.png"
+    }
+  },
+  "9389": {
+    "ankama_id": 9389,
+    "name": "Feuille de Blop Multicolore Royal",
+    "description": "Cette feuille se nourrit de la mati\u00e8re grise du Blop Multicolore Royal. Heureusement qu'elle n'est pas trop gourmande.",
+    "type": {
+      "name": "Plante",
+      "id": 113
+    },
+    "level": 120,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/36014-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/36014-128.png"
+    }
+  },
+  "9384": {
+    "ankama_id": 9384,
+    "name": "Fleur de Blop Griotte Royal",
+    "description": "Si cette fleur n'\u00e9tait pas royale, vous l'auriez s\u00fbrement jet\u00e9e.",
+    "type": {
+      "name": "Fleur",
+      "id": 37
+    },
+    "level": 60,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/35012-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/35012-128.png"
+    }
+  },
+  "9385": {
+    "ankama_id": 9385,
+    "name": "Fleur de Blop Coco Royal",
+    "description": "Si cette fleur n'\u00e9tait pas royale, vous l'auriez s\u00fbrement jet\u00e9e.",
+    "type": {
+      "name": "Fleur",
+      "id": 37
+    },
+    "level": 60,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/35009-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/35009-128.png"
+    }
+  },
+  "14459": {
+    "ankama_id": 14459,
+    "name": "Moustaches de Tiwabbit",
+    "description": "Au contact de la peau, ces douces moustaches font des chatouilles. Vous aimeriez que celles de vos grand-m\u00e8res en fassent autant.",
+    "type": {
+      "name": "Poil",
+      "id": 36
+    },
+    "level": 45,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/54693-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/54693-128.png"
+    }
+  },
+  "2613": {
+    "ankama_id": 2613,
+    "name": "Carapace Bleue",
+    "description": "Mais o\u00f9 se cache le propri\u00e9taire ? Il doit \u00eatre sous la douche.",
+    "type": {
+      "name": "Carapace",
+      "id": 0
+    },
+    "level": 50,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/24021-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/24021-128.png"
+    }
+  },
+  "2583": {
+    "ankama_id": 2583,
+    "name": "\u0152il de Raul Mops",
+    "description": "Seuls les touristes sont assez stupides pour croire que cet \u0153il appartenait \u00e0 un Raul Mops.",
+    "type": {
+      "name": "\u0152il",
+      "id": 89
+    },
+    "level": 46,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/109589-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/109589-128.png"
+    }
+  },
+  "2648": {
+    "ankama_id": 2648,
+    "name": "Griffes de Kwak",
+    "description": "Le Kwak n'a rien d'un charognard, mais il poss\u00e8de tout de m\u00eame d'\u00e9tranges d\u00e9p\u00f4ts sous ses griffes qu'il ne vaut mieux pas d\u00e9crire.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 44,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15624-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15624-128.png"
+    }
+  },
+  "12016": {
+    "ankama_id": 12016,
+    "name": "Plume du Kwakwa",
+    "description": "Il existe une vieille comptine Osamodas o\u00f9 l'on parle d'une plume de Kwakwa kaki coll\u00e9e au kwukwu. Malheureusement, les paroles ne disent pas ce qu'est un kwukwu ni o\u00f9 l'on peut le trouver...",
+    "type": {
+      "name": "Plume",
+      "id": 13
+    },
+    "level": 50,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/53649-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/53649-128.png"
+    }
+  },
+  "2649": {
+    "ankama_id": 2649,
+    "name": "Ver de Terre",
+    "description": "Ce Ver est le plat pr\u00e9f\u00e9r\u00e9 des Kwaks sauvages. Ce qui est plus \u00e9trange, c'est qu'il est rest\u00e9 vivant alors qu'il a \u00e9t\u00e9 extrait de l'Estomac du Kwak.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 44,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15625-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15625-128.png"
+    }
+  },
+  "13365": {
+    "ankama_id": 13365,
+    "name": "Galet Saisonnier",
+    "description": "Cette pierre est ti\u00e8de au printemps, chaude en \u00e9t\u00e9, fra\u00eeche en automne et glac\u00e9e en hiver. Certains trouvent cela incroyable, tandis que d'autres s'en pr\u00e9occupent comme de leur premi\u00e8re panoplie.",
+    "type": {
+      "name": "Galet",
+      "id": 186
+    },
+    "level": 50,
+    "pods": 10,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/152006-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/152006-128.png"
+    }
+  },
+  "2650": {
+    "ankama_id": 2650,
+    "name": "Ver d'Eau",
+    "description": "Ce Ver est le plat pr\u00e9f\u00e9r\u00e9 des Kwaks sauvages. Ce qui est plus \u00e9trange, c'est qu'il est rest\u00e9 vivant alors qu'il a \u00e9t\u00e9 extrait de l'estomac du Kwak.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 44,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15626-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15626-128.png"
+    }
+  },
+  "2481": {
+    "ankama_id": 2481,
+    "name": "Cha\u00eene de Robot Fl\u00e9au",
+    "description": "Ne sous-estimez pas la rugosit\u00e9 de cette cha\u00eene, le moindre coup sur votre arri\u00e8re-train vous emp\u00eacherait de vous asseoir pendant des jours.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 56,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15943-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15943-128.png"
+    }
+  },
+  "1775": {
+    "ankama_id": 1775,
+    "name": "Bout de Blop Griotte",
+    "description": "Difficile d'en voir le bout.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 26,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15286-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15286-128.png"
+    }
+  },
+  "485": {
+    "ankama_id": 485,
+    "name": "Slip en cuir du Chafer Lancier",
+    "description": "Lorsque vient l'hiver, le Chafer Lancier ne sort jamais sans son slip en cuir, qui lui permet de garder ses articulations bien au chaud ou de distraire ses adversaires le cas \u00e9ch\u00e9ant.",
+    "type": {
+      "name": "V\u00eatement",
+      "id": 51
+    },
+    "level": 46,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/56152-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/56152-128.png"
+    }
+  },
+  "8751": {
+    "ankama_id": 8751,
+    "name": "Bulbe Passaoh",
+    "description": "Le Palmifleur ne na\u00eet pas d'une graine mais d'un bulbe que l'on trempe dans l'alcool. Pourquoi ? Parce que !",
+    "type": {
+      "name": "Plante",
+      "id": 113
+    },
+    "level": 43,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/36004-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/36004-128.png"
+    }
+  },
+  "2611": {
+    "ankama_id": 2611,
+    "name": "Carapace Jaune",
+    "description": "Mais o\u00f9 se cache le propri\u00e9taire ? Il fait peut-\u00eatre une sieste \u00e0 l'int\u00e9rieur.",
+    "type": {
+      "name": "Carapace",
+      "id": 0
+    },
+    "level": 50,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/24019-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/24019-128.png"
+    }
+  },
+  "13500": {
+    "ankama_id": 13500,
+    "name": "Dent de Larve \u00c9meraude",
+    "description": "Efficace pour \u00e9loigner aussi bien les mauvais esprits que la mauvaise haleine, cette dent fera un porte-bonheur id\u00e9al pour vos noces d'\u00e9meraude.",
+    "type": {
+      "name": "Os",
+      "id": 2
+    },
+    "level": 47,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/47654-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/47654-128.png"
+    }
+  },
+  "2295": {
+    "ankama_id": 2295,
+    "name": "Fragment d'\u00c9p\u00e9e Reptilienne",
+    "description": "Avec ce Fragment d'Ep\u00e9e accroch\u00e9 \u00e0 votre chemin\u00e9e, vous pourrez vous vanter de dompter le Crocodaille tel l'excentrique Mikoule, plus connu sous le nom de Crocodaille Dandi. Personne ne saura que vous l'avez r\u00e9cup\u00e9r\u00e9 sur le cadavre d'une arakne.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 66,
+    "pods": 10,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15446-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15446-128.png"
+    }
+  },
+  "12432": {
+    "ankama_id": 12432,
+    "name": "Poudre Juv\u00e9nile",
+    "description": "De jeunes Enutrofs d\u00e9bordant d'imagination ont essay\u00e9 de faire commerce de cette poudre en la faisant passer pour de la poudre explosive du Gourlo. Leur arnaque aurait pu marcher, s'ils n'\u00e9taient tomb\u00e9s nez-\u00e0-nez avec un lion affam\u00e9.",
+    "type": {
+      "name": "Poudre",
+      "id": 156
+    },
+    "level": 25,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/48281-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/48281-128.png"
+    }
+  },
+  "12440": {
+    "ankama_id": 12440,
+    "name": "Flaque Juv\u00e9nile",
+    "description": "Voici une excellente munition \u00e0 utiliser lors des batailles de bombes \u00e0 eau.",
+    "type": {
+      "name": "Liquide",
+      "id": 72
+    },
+    "level": 25,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15794-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15794-128.png"
+    }
+  },
+  "12436": {
+    "ankama_id": 12436,
+    "name": "Cendres Juv\u00e9niles",
+    "description": "Si vous esp\u00e9rez qu'une krokille juv\u00e9nile rena\u00eetra de ces cendres, vous allez vivre tr\u00e8s longtemps.",
+    "type": {
+      "name": "Poudre",
+      "id": 156
+    },
+    "level": 25,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/48282-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/48282-128.png"
+    }
+  },
+  "12444": {
+    "ankama_id": 12444,
+    "name": "Fum\u00e9e Juv\u00e9nile",
+    "description": "En collectionnant une grande quantit\u00e9 de cette fum\u00e9e, vous pourrez peut-\u00eatre en faire un rideau.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 25,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15795-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15795-128.png"
+    }
+  },
+  "12428": {
+    "ankama_id": 12428,
+    "name": "Boue Juv\u00e9nile",
+    "description": "Il para\u00eet qu'apr\u00e8s la fermeture de leur commerce, les p\u00e2tissiers Fer et Rho ont eu l'ing\u00e9nieuse id\u00e9e de faire s\u00e9cher cette boue en y laissant des \u00e9clats de krokille pour ensuite la pr\u00e9senter aux dieux du Monde des Douze en pr\u00e9textant qu'ils \u00e9taient les seuls dignes de ce nouveau \"chocolat\". L'histoire ne dit pas quelle fut leur r\u00e9action mais depuis, la d\u00e9esse Eniripsa a pris quelques rondeurs.",
+    "type": {
+      "name": "Liquide",
+      "id": 72
+    },
+    "level": 25,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15793-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15793-128.png"
+    }
+  },
+  "415": {
+    "ankama_id": 415,
+    "name": "Plume du Kwak de Flamme",
+    "description": "Cette plume a la particularit\u00e9 de r\u00e9sister aux flammes. C'est pour cela qu'on ne rencontre jamais de Kwak de Flamme enflamm\u00e9.",
+    "type": {
+      "name": "Plume",
+      "id": 13
+    },
+    "level": 44,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/53111-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/53111-128.png"
+    }
+  },
+  "3001": {
+    "ankama_id": 3001,
+    "name": "\u00c9pauli\u00e8re de Bwork",
+    "description": "L'\u00e9pauli\u00e8re est indispensable pour l'\u00e9ducation des Bworks, bien que chez eux, ce terme n'est pas appropri\u00e9. Ce serait plut\u00f4t de l'entra\u00eenement.",
+    "type": {
+      "name": "V\u00eatement",
+      "id": 51
+    },
+    "level": 50,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15647-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15647-128.png"
+    }
+  },
+  "8730": {
+    "ankama_id": 8730,
+    "name": "Coccyx du Corailleur",
+    "description": "Situ\u00e9 \u00e0 un endroit strat\u00e9gique, cet os permet au Corailleur de s'installer dignement. Maintenant qu'il est mort, vous pouvez toujours vous en servir pour asseoir votre autorit\u00e9 sur ses cong\u00e9n\u00e8res.",
+    "type": {
+      "name": "Os",
+      "id": 2
+    },
+    "level": 44,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/47012-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/47012-128.png"
+    }
+  },
+  "8386": {
+    "ankama_id": 8386,
+    "name": "Dent de Shin Larve",
+    "description": "Personne n'aurait pu croire qu'une Shin Larve avait la bouche remplie de dents. C'est peut-\u00eatre parce que la Shin Larve ne dispose que d'une seule dent.",
+    "type": {
+      "name": "Os",
+      "id": 2
+    },
+    "level": 50,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/47654-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/47654-128.png"
+    }
+  },
+  "8746": {
+    "ankama_id": 8746,
+    "name": "P\u00e9tale Malibout",
+    "description": "La couleur de ce p\u00e9tale t\u00e9moigne de sa provenance douteuse. L'abus d'alcool chez les disciples d'Otoma\u00ef se per\u00e7oit m\u00eame dans leurs cr\u00e9ations.",
+    "type": {
+      "name": "Fleur",
+      "id": 37
+    },
+    "level": 43,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/35005-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/35005-128.png"
+    }
+  },
+  "2486": {
+    "ankama_id": 2486,
+    "name": "Coque Endommag\u00e9e",
+    "description": "Cette coque est le vestige d'un Robot Pousse-Pousse qui a encore pouss\u00e9 le bouchon trop loin.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 56,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15944-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15944-128.png"
+    }
+  },
+  "6476": {
+    "ankama_id": 6476,
+    "name": "Griffe de Robionicle",
+    "description": "Cette griffe d'apparence primitive a pour principale fonction d'arracher la t\u00eate du Robionicle adverse lors des combats ill\u00e9gaux d'automates que les Brigandins organisent entre eux.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 56,
+    "pods": 10,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/47855-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/47855-128.png"
+    }
+  },
+  "2483": {
+    "ankama_id": 2483,
+    "name": "Bidule inutile",
+    "description": "L'ancien propri\u00e9taire de cet objet a tent\u00e9 de lui trouver une utilit\u00e9. Il a voulu s'en servir pour caler un meuble, mais sans succ\u00e8s. Il a m\u00eame tent\u00e9 de l'exposer en tant qu'\u0153uvre d'art contemporain dans son salon, des fois qu'il puisse servir de sujet de conversation, mais en vain. En d\u00e9sespoir de cause, l'objet a simplement \u00e9t\u00e9 abandonn\u00e9 au fin fond d'une malle outill\u00e9e.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 56,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/156005-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/156005-128.png"
+    }
+  },
+  "8397": {
+    "ankama_id": 8397,
+    "name": "Poil du Wa Wabbit",
+    "description": "Le Wa Wabbit est en r\u00e8gle g\u00e9n\u00e9rale assez avare et rechigne \u00e0 partager ses poils. Exceptionnellement, pour r\u00e9compenser votre bravoure (ou acheter votre cl\u00e9mence), il a d\u00e9cid\u00e9 de vous faire don d'une partie de son corps. Touchant.",
+    "type": {
+      "name": "Poil",
+      "id": 36
+    },
+    "level": 60,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/54667-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/54667-128.png"
+    }
+  },
+  "8737": {
+    "ankama_id": 8737,
+    "name": "Boule polie",
+    "description": "De quelle partie de l'anatomie du Craqueboule peut bien venir cette boule ? Et pourquoi est-ce qu'on en retrouve souvent par paire ?",
+    "type": {
+      "name": "Pierre brute",
+      "id": 91
+    },
+    "level": 99,
+    "pods": 5,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/51008-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/51008-128.png"
+    }
+  },
+  "11815": {
+    "ankama_id": 11815,
+    "name": "Boostoplasme",
+    "description": "Nul ne sait comment Boostache s\u00e9cr\u00e8te cette curieuse substance. Tout ce qu'on peut dire, c'est qu'elle est blanche, collante et qu'elle brille dans la nuit...",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 40,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15786-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15786-128.png"
+    }
+  },
+  "8390": {
+    "ankama_id": 8390,
+    "name": "Peau de Cochon de Farle",
+    "description": "Farle \u00e9tait le plus grand \u00e9leveur de cochons et peut-\u00eatre m\u00eame de cochonnes, d'apr\u00e8s les \u00e9leveurs qui jalousaient Shika. Ce qui est certain, c'est qu'il est \u00e0 l'origine des Cochons de Farle, \u00e0 qui il a donn\u00e9 son nom, car il les avait cr\u00e9\u00e9s \u00e0 son image.",
+    "type": {
+      "name": "Peau",
+      "id": 77
+    },
+    "level": 94,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/59616-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/59616-128.png"
+    }
+  },
+  "8391": {
+    "ankama_id": 8391,
+    "name": "Peau de Don Dorgan",
+    "description": "Le Don Dorgan a \u00e9t\u00e9 une fois de plus tr\u00e8s g\u00e9n\u00e9reux avec vous, malgr\u00e9 son terrible caract\u00e8re. Il vous a fait don de sa peau avant de partir en grognant comme un gros Porkass. Quel culot !",
+    "type": {
+      "name": "Peau",
+      "id": 77
+    },
+    "level": 100,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/59617-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/59617-128.png"
+    }
+  },
+  "16217": {
+    "ankama_id": 16217,
+    "name": "Laine de Dardalaine",
+    "description": "Vous pensiez qu'il n'y avait rien de plus irritant que les capes en laine de bouftou ? Attendez d'avoir dormi sous une couverture en laine de Dardalaine.",
+    "type": {
+      "name": "Laine",
+      "id": 154
+    },
+    "level": 86,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/57661-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/57661-128.png"
+    }
+  },
+  "8075": {
+    "ankama_id": 8075,
+    "name": "Boomerang du Dok Alako",
+    "description": "Ce morceau de bois d'une forme \u00e9trange a voyag\u00e9 longtemps dans les airs et entre les rangs ennemis avant de se briser. On raconte qu'il revient toujours vers son propri\u00e9taire une fois lanc\u00e9, mais rarement dans ses mains...",
+    "type": {
+      "name": "Ressource de combat",
+      "id": 101
+    },
+    "level": 74,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15722-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15722-128.png"
+    }
+  },
+  "18385": {
+    "ankama_id": 18385,
+    "name": "C\u0153ur du Mantiscore",
+    "description": "Ce c\u0153ur est impr\u00e9gn\u00e9 d'\u00e9pice, ce qui fait de lui un mets particuli\u00e8rement piquant et raffin\u00e9. Il est recherch\u00e9 par les plus grands cuisiniers du monde qui l'utilisent pour justifier les prix astronomiques de leurs plats.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 80,
+    "pods": 5,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/164118-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/164118-128.png"
+    }
+  },
+  "14490": {
+    "ankama_id": 14490,
+    "name": "Lunettes de Tiwobot",
+    "description": "Le Tiwobot n'y voit pas grand-chose \u00e0 travers ces lunettes. C'est ce qui le rend aussi t\u00e9m\u00e9raire : il n'a pas peur de l'inconnu mais il pourrait \u00eatre pris de terreur \u00e0 la vue de certains adversaires.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 80,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/164022-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/164022-128.png"
+    }
+  },
+  "14471": {
+    "ankama_id": 14471,
+    "name": "Casque de Wobot",
+    "description": "Ce casque a \u00e9t\u00e9 con\u00e7u pour couvrir la totalit\u00e9 d'un cr\u00e2ne de wabbit, r\u00e9put\u00e9 pour \u00eatre plut\u00f4t volumineux, de mani\u00e8re \u00e0 laisser leurs oreilles \u00e0 l'air libre. Mettez-le sur la t\u00eate d'un Iop et il fera une tr\u00e8s bonne imitation de wabbit, \u00e0 condition qu'il n'ait pas la grosse t\u00eate.",
+    "type": {
+      "name": "V\u00eatement",
+      "id": 51
+    },
+    "level": 80,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/164014-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/164014-128.png"
+    }
+  },
+  "14473": {
+    "ankama_id": 14473,
+    "name": "Boulon Wabbit",
+    "description": "La garde rapproch\u00e9e du Wa Wabbit utilise ce genre de boulon comme porte-bonheur. Cela les aiderait \u00e0 garder les pieds sur terre.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 80,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/150007-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/150007-128.png"
+    }
+  },
+  "8753": {
+    "ankama_id": 8753,
+    "name": "Crini\u00e8re fleurie",
+    "description": "Hybridation improbable entre des poils et des p\u00e9tales de fleurs, cette crini\u00e8re est doublement allerg\u00e8ne. Veillez \u00e0 rester \u00e0 distance si vous \u00eates sensible \u00e0 ces deux \u00e9l\u00e9ments sous peine d'expulser votre cerveau en \u00e9ternuant.",
+    "type": {
+      "name": "Plante",
+      "id": 113
+    },
+    "level": 100,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/36002-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/36002-128.png"
+    }
+  },
+  "8736": {
+    "ankama_id": 8736,
+    "name": "C\u0153ur de pierre poli",
+    "description": "La seule chose qui distingue un c\u0153ur de Craqueleur de celui d'un Craqueleur poli est la d\u00e9licatesse avec laquelle l'objet peut s'\u00e9craser sur vos doigts de pied quand vous vous y attendez le moins.",
+    "type": {
+      "name": "Pierre brute",
+      "id": 91
+    },
+    "level": 102,
+    "pods": 5,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/51007-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/51007-128.png"
+    }
+  },
+  "2505": {
+    "ankama_id": 2505,
+    "name": "Baballe",
+    "description": "Pour attirer un Croc Gland dans les mailles de la domestication, lancez-lui une baballe, ils en raffolent. Il ne vous l'avouera pas, mais vous vous serez fait un ami pour la vie.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 64,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/176011-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/176011-128.png"
+    }
+  },
+  "12076": {
+    "ankama_id": 12076,
+    "name": "Duvet de Nelween",
+    "description": "\u00c0 d\u00e9faut d'avoir r\u00e9ussi \u00e0 r\u00e9cup\u00e9rer sa pr\u00e9cieuse fum\u00e9e, vous \u00eates au moins parvenu \u00e0 arracher \u00e0 Nelween une de ses touffes de poils. Elle n'a pas plus de pouvoirs qu'une \u00e9toffe de Croc Gland normal, mais l'aventurier moyen aime ce qui brille et vous devriez pouvoir la revendre \u00e0 bon prix.",
+    "type": {
+      "name": "Poil",
+      "id": 36
+    },
+    "level": 70,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/54683-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/54683-128.png"
+    }
+  },
+  "8086": {
+    "ankama_id": 8086,
+    "name": "Coiffe d\u00e9chiquet\u00e9e de Drakoalak",
+    "description": "Cette \u00e9trange coiffe cachait jadis la calvitie naissante du Drakoalak. Avec un peu de travail, elle pourra peut-\u00eatre bient\u00f4t cacher la v\u00f4tre.",
+    "type": {
+      "name": "V\u00eatement",
+      "id": 51
+    },
+    "level": 94,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15725-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15725-128.png"
+    }
+  },
+  "8755": {
+    "ankama_id": 8755,
+    "name": "Touffe rousse du Flib",
+    "description": "On n'a jamais su si la couleur de cette touffe \u00e9tait naturelle ou si elle \u00e9tait li\u00e9e \u00e0 un feu de broussaille intempestif.",
+    "type": {
+      "name": "Poil",
+      "id": 36
+    },
+    "level": 62,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/54011-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/54011-128.png"
+    }
+  },
+  "1696": {
+    "ankama_id": 1696,
+    "name": "\u00c9toffe de Choudini",
+    "description": "Les tailleurs ont trouv\u00e9 il y a des lustres un moyen de d\u00e9terminer la valeur d'une \u00e9toffe, plus cette derni\u00e8re sent mauvais, plus elle est puissante. Celle-ci sent plus mauvais qu'un p\u00e9diluve d'Enutrofs dans lequel un Chafer aurait lav\u00e9 son slip.",
+    "type": {
+      "name": "\u00c9toffe",
+      "id": 9
+    },
+    "level": 90,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15975-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15975-128.png"
+    }
+  },
+  "12075": {
+    "ankama_id": 12075,
+    "name": "Fiole de fum\u00e9e de Nelween",
+    "description": "Cette fum\u00e9e, recueillie sur la d\u00e9pouille de Nelween, est tr\u00e8s volatile. \u00c9vitez de l'inhaler lors de son utilisation en atelier, elle provoque d\u00e9lires et hallucinations. Non... Non n'y pensez m\u00eame pas !",
+    "type": {
+      "name": "Mat\u00e9riel d'alchimie",
+      "id": 165
+    },
+    "level": 70,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/71059-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/71059-128.png"
+    }
+  },
+  "649": {
+    "ankama_id": 649,
+    "name": "Poils de Wo Wabbit",
+    "description": "Ce poil est si gras qu'il permet de garder les \u00e9toffes imperm\u00e9ables aux intemp\u00e9ries.",
+    "type": {
+      "name": "Poil",
+      "id": 36
+    },
+    "level": 56,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/54197-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/54197-128.png"
+    }
+  },
+  "11696": {
+    "ankama_id": 11696,
+    "name": "Cagoule du Kanniboul Ebil",
+    "description": "Rares sont ceux qui le savent, mais sous son masque, le Kanniboul Ebil porte aussi une cagoule ! Maintenant que vous l'avez entre les mains, vous allez pouvoir le prouver. Reste \u00e0 savoir si l'on vous croira...",
+    "type": {
+      "name": "V\u00eatement",
+      "id": 51
+    },
+    "level": 60,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15784-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15784-128.png"
+    }
+  },
+  "2500": {
+    "ankama_id": 2500,
+    "name": "Kol\u00e9rat Mort",
+    "description": "Vous avez bien fait de le ramasser, il est intact. Mort, mais intact.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 66,
+    "pods": 10,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15524-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15524-128.png"
+    }
+  },
+  "2502": {
+    "ankama_id": 2502,
+    "name": "Papatte de Croc Gland",
+    "description": "Les Papattes de Croc Gland sont assez pris\u00e9es par les gastronomes locaux. Elles poss\u00e8dent des vertus magiques, comme celle de porter chance \u00e0 son possesseur. C'est d\u00e9j\u00e0 pas mal.",
+    "type": {
+      "name": "Patte",
+      "id": 61
+    },
+    "level": 65,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/103526-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/103526-128.png"
+    }
+  },
+  "14921": {
+    "ankama_id": 14921,
+    "name": "\u00c9toffe Myst\u00e9rieuse",
+    "description": "Cette \u00e9toffe poss\u00e8de des propri\u00e9t\u00e9s moulantes et \u00e9lastiques hors du commun. Les rumeurs les plus folles lui accordent des pouvoirs surhumains, comme se faire temporairement oublier de ses beaux-parents ou penser \u00e0 r\u00e9cup\u00e9rer les enfants \u00e0 la sortie de l'\u00e9cole pendant toute une semaine. Ceci explique pourquoi on l'utilise dans la confection d'\u00e9quipements plus ou moins puissants.",
+    "type": {
+      "name": "\u00c9toffe",
+      "id": 9
+    },
+    "level": 1,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15848-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15848-128.png"
+    }
+  },
+  "16009": {
+    "ankama_id": 16009,
+    "name": "\u00c9lixir de Brumen",
+    "description": "Toute la source du pouvoir de Brumen Tinctorias se trouve dans ces \u00e9lixirs qui d\u00e9cuplent sa puissance et son intelligence. Prenez-en bien soin, ils pourraient vous servir plus vite que vous ne le pensez...",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 60,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/164050-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/164050-128.png"
+    }
+  },
+  "8761": {
+    "ankama_id": 8761,
+    "name": "Poudre explosive",
+    "description": "\u00c0 d\u00e9faut de se greffer un canon \u00e0 la place du bras, un pirate ne sort jamais sans son arme. Mais il n'est pas capable de tirer son coup tr\u00e8s vite, car il lui faut \u00e0 chaque fois faire s\u00e9cher sa poudre, signe de sa mauvaise qualit\u00e9.",
+    "type": {
+      "name": "Poudre",
+      "id": 156
+    },
+    "level": 70,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/48001-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/48001-128.png"
+    }
+  },
+  "998": {
+    "ankama_id": 998,
+    "name": "Cale\u00e7on Mignon du Pirate",
+    "description": "Le cale\u00e7on Mignon du Pirate v\u00e9rifie que le ridicule tue quand m\u00eame de temps en temps. Mais il semblerait pourtant qu'il porte chance.",
+    "type": {
+      "name": "V\u00eatement",
+      "id": 51
+    },
+    "level": 90,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15163-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15163-128.png"
+    }
+  },
+  "17075": {
+    "ankama_id": 17075,
+    "name": "Canif Rouill\u00e9",
+    "description": "T\u00e9thanos \u00e9tait un pirate redoutable dont le seul nom provoquait l'effroi de ceux qui l'entendait. Arm\u00e9 de son canif rouill\u00e9, il \u00e9tait l'incarnation vivante de la mort, plus cruel encore que cette derni\u00e8re . Personne ne sait ce qu'il est advenu de lui, mais on peut encore voir certains pirates utiliser un canif rouill\u00e9 pour effrayer leurs adversaires...",
+    "type": {
+      "name": "Ressource de combat",
+      "id": 101
+    },
+    "level": 90,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/164078-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/164078-128.png"
+    }
+  },
+  "16211": {
+    "ankama_id": 16211,
+    "name": "Bourgeon explosif de Damadrya",
+    "description": "Ce bourgeon promet un renouveau certain mais semble aussi tr\u00e8s instable, il est conseill\u00e9 de le ranger dans un endroit qui ne subit pas trop de secousses.",
+    "type": {
+      "name": "Bourgeon",
+      "id": 94
+    },
+    "level": 110,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/164664-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/164664-128.png"
+    }
+  },
+  "14944": {
+    "ankama_id": 14944,
+    "name": "Sueur Froide de Fant\u00f4me",
+    "description": "Aussi brave qu'il fut, le fant\u00f4me prit peur lorsqu'il vit votre visage de pr\u00e8s. Apr\u00e8s avoir re\u00e7u la correction de sa vie, il ne resta de lui que quelques gouttes de sueur.",
+    "type": {
+      "name": "Liquide",
+      "id": 72
+    },
+    "level": 46,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15850-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15850-128.png"
+    }
+  },
+  "8392": {
+    "ankama_id": 8392,
+    "name": "Peau de Don Duss Ang",
+    "description": "Le Don Duss Ang que vous avez d\u00fb peler avec une r\u00e2pe \u00e0 fromage pour obtenir cette peau tr\u00e8s fine, s'en souviendra toute sa vie. On peut supposer qu'il vous en voudra longtemps. Ne comptez plus sur lui pour vous indiquer le bon chemin la prochaine fois que vous vous \u00e9garerez dans son labyrinthe.",
+    "type": {
+      "name": "Peau",
+      "id": 77
+    },
+    "level": 97,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/59618-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/59618-128.png"
+    }
+  },
+  "2645": {
+    "ankama_id": 2645,
+    "name": "Groin de Dragon Cochon",
+    "description": "\u00c0 vue de Groin, le Dragon Cochon n'a pas senti le coup venir. C'est dommage pour lui.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 100,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15620-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15620-128.png"
+    }
+  },
+  "1660": {
+    "ankama_id": 1660,
+    "name": "Ambre d'Abraknyde Sombre",
+    "description": "Cet ambre splendide contient une vilaine bestiole prisonni\u00e8re dans la s\u00e8ve de son ma\u00eetre. Une sorte de sarcophage qui permet \u00e0 l'Abraknyde Sombre de garder de bons souvenirs de ses invocations, une fois celles-ci mortes.",
+    "type": {
+      "name": "Pierre pr\u00e9cieuse",
+      "id": 66
+    },
+    "level": 78,
+    "pods": 5,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/50638-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/50638-128.png"
+    }
+  },
+  "16207": {
+    "ankama_id": 16207,
+    "name": "Sceau Sylvestre",
+    "description": "Les Forestiers au service du roi d'Amakna se reconnaissent \u00e0 leur odeur inimitable, subtil m\u00e9lange d'humus, de musc et de sueur. N'esp\u00e9rez donc pas utiliser ce sceau dans le but de vous faire passer pour l'un d'entre eux : votre piquant parfum d'aventurier vous trahirait.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 90,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/164062-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/164062-128.png"
+    }
+  },
+  "12744": {
+    "ankama_id": 12744,
+    "name": "Substrat de Bosquet",
+    "description": "Kruorre le Chafer Ha\u00ef a \u00e9t\u00e9 asperg\u00e9 quatre fois de ce liquide lorsqu'il \u00e9tait petit et encore ch\u00e9tif. Difficile d'imaginer un meilleur d\u00e9part dans la vie.",
+    "type": {
+      "name": "Substrat",
+      "id": 62
+    },
+    "level": 100,
+    "pods": 10,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/12728-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/12728-128.png"
+    },
+    "recipe": [
+      {
+        "item_ankama_id": 17060,
+        "item_subtype": "resources",
+        "quantity": 1
+      },
+      {
+        "item_ankama_id": 7652,
+        "item_subtype": "resources",
+        "quantity": 1
+      },
+      {
+        "item_ankama_id": 16494,
+        "item_subtype": "resources",
+        "quantity": 1
+      }
+    ]
+  },
+  "8495": {
+    "ankama_id": 8495,
+    "name": "Bourgeon d'Abraknyde Ancestral",
+    "description": "Ce bourgeon dess\u00e9ch\u00e9 a \u00e9t\u00e9 jadis enti\u00e8rement vid\u00e9 de sa s\u00e8ve par une cr\u00e9ature affam\u00e9e. Si vous le plongez dans l'eau, vous pourrez le voir reprendre sa forme initiale, gonfler, puis si vous attendez tr\u00e8s longtemps, pourrir.",
+    "type": {
+      "name": "Bourgeon",
+      "id": 94
+    },
+    "level": 90,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/108755-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/108755-128.png"
+    }
+  },
+  "16152": {
+    "ankama_id": 16152,
+    "name": "Masque Bris\u00e9 d'Araknotron",
+    "description": "L'Araknotron porte un masque pour cacher son identit\u00e9 aux autres araknes. Ce n'est pas seulement lui que vous avez bris\u00e9, mais aussi son r\u00eave de devenir un jour un super-h\u00e9ros reconnu.",
+    "type": {
+      "name": "V\u00eatement",
+      "id": 51
+    },
+    "level": 82,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/164053-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/164053-128.png"
+    }
+  },
+  "16180": {
+    "ankama_id": 16180,
+    "name": "Soie Baveuse",
+    "description": "Pour pouvoir appr\u00e9cier cette mati\u00e8re \u00e0 sa juste valeur, il est n\u00e9cessaire d'avoir une bonne estime de soie.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 90,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/164060-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/164060-128.png"
+    }
+  },
+  "14946": {
+    "ankama_id": 14946,
+    "name": "Cuir de Porsalu",
+    "description": "Comment diff\u00e9rencier un cuir de Porsalu d'un vulgaire cuir de Cochon de lait ? Il suffit de lire l'\u00e9tiquette de provenance, c'est marqu\u00e9 dessus.",
+    "type": {
+      "name": "Cuir",
+      "id": 109
+    },
+    "level": 86,
+    "pods": 3,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15852-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15852-128.png"
+    }
+  },
+  "2620": {
+    "ankama_id": 2620,
+    "name": "Rhum de Qualit\u00e9",
+    "description": "Ce Rhum doit sortir d'une cave tr\u00e8s pris\u00e9e. \u00c0 moins qu'il soit rest\u00e9 dans une poche pendant de bonnes g\u00e9n\u00e9rations.",
+    "type": {
+      "name": "Liquide",
+      "id": 72
+    },
+    "level": 90,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15177-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15177-128.png"
+    }
+  },
+  "13343": {
+    "ankama_id": 13343,
+    "name": "N\u0153ud de Marin",
+    "description": "Tr\u00e8s populaire parmi les matelots, le n\u0153ud de marin a fait chavirer le c\u0153ur de bien des jeunes filles qui r\u00eavaient d'aventure.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 90,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15129-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15129-128.png"
+    }
+  },
+  "429": {
+    "ankama_id": 429,
+    "name": "Mis\u00e9ricorde du Chafer d'\u00c9lite",
+    "description": "On pourrait croire que les Chafers sont des \u00eatres d\u00e9nu\u00e9s de la moindre piti\u00e9. D\u00e9trompez-vous. Prenez le Chafer d'\u00c9lite, par exemple : lorsqu'il terrasse un ennemi d'un grand coup de cimeterre, il prend la peine de l'achever avec la dague qu'il cache dans sa botte. Voil\u00e0 une preuve de compassion qui touche la mis\u00e9ricorde sensible et remue le couteau dans la plaie.",
+    "type": {
+      "name": "Ressource de combat",
+      "id": 101
+    },
+    "level": 46,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/164183-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/164183-128.png"
+    }
+  },
+  "648": {
+    "ankama_id": 648,
+    "name": "Aile de Bourdard",
+    "description": "Cette aile continue de vibrer fr\u00e9n\u00e9tiquement malgr\u00e9 le fait qu'elle ait \u00e9t\u00e9 violemment d\u00e9tach\u00e9e du corps de son propri\u00e9taire. C'est amusant au d\u00e9but, mais cela devient limite ennuyeux quand on en a plein le sac.",
+    "type": {
+      "name": "Aile",
+      "id": 142
+    },
+    "level": 56,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/104750-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/104750-128.png"
+    }
+  },
+  "416": {
+    "ankama_id": 416,
+    "name": "Plume du Kwak de Vent",
+    "description": "Cette plume a la particularit\u00e9 de r\u00e9sister aux bourrasques. C'est pour cela que le Kwak de Vent peut encaisser de multiples vents jour apr\u00e8s jour sans jamais voir son moral ni son ardeur affaiblis.",
+    "type": {
+      "name": "Plume",
+      "id": 13
+    },
+    "level": 44,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/53113-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/53113-128.png"
+    }
+  },
+  "650": {
+    "ankama_id": 650,
+    "name": "Duvet de Bourdard",
+    "description": "\u00c0 l'adolescence, le corps du Bourdard se recouvre progressivement d'un doux duvet, ce qui est paradoxal au comportement agressif qu'il adopte \u00e0 la m\u00eame p\u00e9riode.",
+    "type": {
+      "name": "Poil",
+      "id": 36
+    },
+    "level": 56,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/54709-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/54709-128.png"
+    }
+  },
+  "8059": {
+    "ankama_id": 8059,
+    "name": "Poils de Koalak Griotte",
+    "description": "Ces poils sont recouverts de pollen de Blop, ce qui leur donne un go\u00fbt d\u00e9lectable, mais une odeur d\u00e9plorable.",
+    "type": {
+      "name": "Poil",
+      "id": 36
+    },
+    "level": 84,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/54660-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/54660-128.png"
+    }
+  },
+  "7904": {
+    "ankama_id": 7904,
+    "name": "Fleur de Kaliptus",
+    "description": "Une fois br\u00fbl\u00e9e, cette fleur d\u00e9gage une fum\u00e9e \u00e9paisse aux vertus hallucinog\u00e8nes. M\u00e2ch\u00e9e, elle a tendance \u00e0 rendre impuissant. Consomm\u00e9e en infusion, elle peut engendrer d'importants effets laxatifs. La meilleure solution reste de ne jamais y toucher.",
+    "type": {
+      "name": "Fleur",
+      "id": 37
+    },
+    "level": 80,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/35001-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/35001-128.png"
+    }
+  },
+  "3002": {
+    "ankama_id": 3002,
+    "name": "Botte trou\u00e9e de M\u00e9gabwork",
+    "description": "Cette botte est inutilisable dans cet \u00e9tat. Une fois correctement rapi\u00e9c\u00e9e par un cordonnier exp\u00e9riment\u00e9, vous pourrez peut-\u00eatre lui trouver une utilit\u00e9. En attendant, son odeur peut vous servir \u00e0 repousser les avances des gens un peu trop entreprenants.",
+    "type": {
+      "name": "V\u00eatement",
+      "id": 51
+    },
+    "level": 86,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15648-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15648-128.png"
+    }
+  },
+  "1610": {
+    "ankama_id": 1610,
+    "name": "Roue de Tivelo",
+    "description": "Cette roue provient du cadavre du monocycle d'un Tivelo.",
+    "type": {
+      "name": "\u00c9corce",
+      "id": 141
+    },
+    "level": 86,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15977-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15977-128.png"
+    }
+  },
+  "7030": {
+    "ankama_id": 7030,
+    "name": "Peau de Krambwork",
+    "description": "Cette peau a \u00e9t\u00e9 roussie par de nombreuses expositions \u00e0 des flammes vives.",
+    "type": {
+      "name": "Peau",
+      "id": 77
+    },
+    "level": 86,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/59047-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/59047-128.png"
+    }
+  },
+  "435": {
+    "ankama_id": 435,
+    "name": "Racine d'Abraknyde",
+    "description": "Ce morceau de racine a connu divers substrats \u00e0 force d'accompagner l'Abraknyde lors de promenades dans les sous-bois. Mais \u00e7a n'explique pas pourquoi ce morceau de racine est magique.",
+    "type": {
+      "name": "Racine",
+      "id": 195
+    },
+    "level": 44,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/98102-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/98102-128.png"
+    }
+  },
+  "3208": {
+    "ankama_id": 3208,
+    "name": "Slip de Bwork Archer",
+    "description": "Le Bwork Archer avait la f\u00e2cheuse habitude de se servir de son slip en cuir pour ranger ses fl\u00e8ches. C'est peut-\u00eatre finalement ce qui explique pourquoi les fl\u00e8ches du Bwork Archer sont r\u00e9put\u00e9es empoisonn\u00e9es.",
+    "type": {
+      "name": "V\u00eatement",
+      "id": 51
+    },
+    "level": 43,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/56649-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/56649-128.png"
+    }
+  },
+  "1891": {
+    "ankama_id": 1891,
+    "name": "Peau de serpentin",
+    "description": "N'avez-vous jamais r\u00eav\u00e9 d'un magnifique petit sac en peau de Serpentin ? Non ? Vous avez bien raison, car sa r\u00e9sistance laisse \u00e0 d\u00e9sirer.",
+    "type": {
+      "name": "Peau",
+      "id": 77
+    },
+    "level": 56,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/59361-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/59361-128.png"
+    }
+  },
+  "14280": {
+    "ankama_id": 14280,
+    "name": "Pic de dragodinde dor\u00e9e",
+    "description": "Am\u00e9lioration des performances durant les courses, d\u00e9fense contre les pr\u00e9dateurs, parades nuptiales : les avantages de poss\u00e9der un pic de belle taille sont nombreux. Et c'est sans compter les utilisations annexes ou r\u00e9cr\u00e9atives, comme le curage de narine ou la gravure sur \u00e9corce.",
+    "type": {
+      "name": "Os",
+      "id": 2
+    },
+    "level": 70,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/47598-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/47598-128.png"
+    }
+  },
+  "1456": {
+    "ankama_id": 1456,
+    "name": "Ailes de Scarafeuille Blanc",
+    "description": "Ces ailes de Scarafeuille ont des particularit\u00e9s magiques et permettent de fabriquer des potions \u00e9l\u00e9mentaires d'air.",
+    "type": {
+      "name": "Aile",
+      "id": 142
+    },
+    "level": 38,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/104213-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/104213-128.png"
+    }
+  },
+  "16002": {
+    "ankama_id": 16002,
+    "name": "Patte de Kankreblath",
+    "description": "Cette patte sert d'ingr\u00e9dient dans bon nombre de plats pr\u00e9par\u00e9s par les chefs d'Amakna, dommage qu'ils soient tous immangeables.",
+    "type": {
+      "name": "Patte",
+      "id": 61
+    },
+    "level": 40,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/103724-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/103724-128.png"
+    }
+  },
+  "414": {
+    "ankama_id": 414,
+    "name": "Plume du Kwak de Glace",
+    "description": "Cette plume a la particularit\u00e9 de r\u00e9sister au givre. C'est pour cela qu'on ne rencontre jamais de Kwak de Glace givr\u00e9.",
+    "type": {
+      "name": "Plume",
+      "id": 13
+    },
+    "level": 44,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/53112-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/53112-128.png"
+    }
+  },
+  "2497": {
+    "ankama_id": 2497,
+    "name": "Oreille de Guerrier Mental",
+    "description": "Portez-la \u00e0 votre oreille, et vous entendrez la mer, parait-il.",
+    "type": {
+      "name": "Oreille",
+      "id": 118
+    },
+    "level": 56,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/106522-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/106522-128.png"
+    }
+  },
+  "8483": {
+    "ankama_id": 8483,
+    "name": "Peau de Ramane d'\u00c9goutant",
+    "description": "Une fois lav\u00e9e, cette peau pourra faire office de tapis de sol, ou de paillasson.",
+    "type": {
+      "name": "Peau",
+      "id": 77
+    },
+    "level": 54,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/59622-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/59622-128.png"
+    }
+  },
+  "2566": {
+    "ankama_id": 2566,
+    "name": "Tranche Magique de Krambwork",
+    "description": "Cette tranche est impr\u00e9gn\u00e9e de substances nocives prolongeant sa combustion.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 86,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15576-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15576-128.png"
+    }
+  },
+  "3209": {
+    "ankama_id": 3209,
+    "name": "Scalp de Bizarbwork",
+    "description": "Tr\u00e8s t\u00f4t, les jeunes Enutrofs cherchent \u00e0 s'approprier un Scalp de Bizarbwork pour dissimuler leur calvitie naissante. Affubl\u00e9s d'une telle cochonnerie, ils paraissent encore plus ridicules qu'en temps normal, mais l'odeur de Bwork qui s'en d\u00e9gage permet de couvrir facilement leur haleine r\u00e9guli\u00e8rement impr\u00e9gn\u00e9e d'alcool.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 86,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15653-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15653-128.png"
+    }
+  },
+  "9382": {
+    "ankama_id": 9382,
+    "name": "Fleur de Blopignon",
+    "description": "Cette fleur vient d'\u00eatre arrach\u00e9e de la t\u00eate d'un Blopignon. Etant donn\u00e9 l'allure ridicule qu'elle lui donnait, il ne va pas s'en plaindre.",
+    "type": {
+      "name": "Fleur",
+      "id": 37
+    },
+    "level": 54,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/35008-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/35008-128.png"
+    }
+  },
+  "2251": {
+    "ankama_id": 2251,
+    "name": "M\u00e9ga Pierre du Craqueleur",
+    "description": "Je ne vous jette pas la m\u00e9ga pierre, Pierre !",
+    "type": {
+      "name": "Pierre brute",
+      "id": 91
+    },
+    "level": 65,
+    "pods": 5,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/51417-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/51417-128.png"
+    }
+  },
+  "2316": {
+    "ankama_id": 2316,
+    "name": "Couteau de Roukouto",
+    "description": "Ce couteau apporte une peur bleue \u00e0 tous ceux qui sous-estimeraient son pouvoir.",
+    "type": {
+      "name": "Ressource de combat",
+      "id": 101
+    },
+    "level": 86,
+    "pods": 10,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15980-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15980-128.png"
+    }
+  },
+  "1671": {
+    "ankama_id": 1671,
+    "name": "Avoine Magique",
+    "description": "Ce f\u00e9tu de paille d'Avoine Magique est issu d'un modeste paysan ensorcel\u00e9 par un apprenti Bwork Mage, qui tenait son livre \u00e0 l'envers.",
+    "type": {
+      "name": "C\u00e9r\u00e9ale",
+      "id": 128
+    },
+    "level": 86,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/34550-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/34550-128.png"
+    }
+  },
+  "2056": {
+    "ankama_id": 2056,
+    "name": "\u0152il de Crowneille",
+    "description": "Un \u0153il de crowneille est toujours utile, mais attention \u00e0 ce que le mauvais \u0153il ne tombe pas sur vous.",
+    "type": {
+      "name": "\u0152il",
+      "id": 89
+    },
+    "level": 66,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/109326-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/109326-128.png"
+    }
+  },
+  "8752": {
+    "ankama_id": 8752,
+    "name": "Bulbe Morito",
+    "description": "Le Palmifleur ne na\u00eet pas d'une graine mais d'un bulbe que l'on trempe dans l'alcool. Pourquoi ? Parce que !",
+    "type": {
+      "name": "Plante",
+      "id": 113
+    },
+    "level": 43,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/36005-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/36005-128.png"
+    }
+  },
+  "16166": {
+    "ankama_id": 16166,
+    "name": "Lamelle de Champa Marron",
+    "description": "Les mycologues s'accordent \u00e0 dire qu'\u00e0 l'origine, les Champas Marrons sont oranges et que cette variation de couleur aurait un rapport avec l'odeur f\u00e9cale qui les accompagne. Cette th\u00e8se est r\u00e9fut\u00e9e par les cuisiniers qui servent des omelettes aux Champas dans leurs restaurants.",
+    "type": {
+      "name": "Champignon",
+      "id": 69
+    },
+    "level": 39,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/119011-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/119011-128.png"
+    }
+  },
+  "2279": {
+    "ankama_id": 2279,
+    "name": "Canine Vampiresque",
+    "description": "Quand on est un vampire, c'est bien beau de vouloir terroriser ses victimes avec une allure f\u00e9roce et une haleine f\u00e9tide, encore faut-il prendre soin de son arme principale en se brossant les dents trois fois par jour pendant au moins trois minutes. Celui \u00e0 qui appartenait cette canine l'a appris bien malgr\u00e9 lui. Priv\u00e9 de son outil de travail, le voil\u00e0 condamn\u00e9 \u00e0 utiliser une paille.",
+    "type": {
+      "name": "Os",
+      "id": 2
+    },
+    "level": 35,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/47432-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/47432-128.png"
+    }
+  },
+  "901": {
+    "ankama_id": 901,
+    "name": "Cuir du Cochon de Lait",
+    "description": "Ce cuir tout lisse devient presque orange avec l'\u00e2ge, mais sent \u00e9galement de plus en plus mauvais au fil du temps, un peu comme la mimolette.",
+    "type": {
+      "name": "Cuir",
+      "id": 109
+    },
+    "level": 33,
+    "pods": 3,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/56141-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/56141-128.png"
+    }
+  },
+  "2250": {
+    "ankama_id": 2250,
+    "name": "Bois de Tronknyde",
+    "description": "Ce morceau de Bois sonne creux. La s\u00e8ve verte qui s'en \u00e9chappe vous signale que cette partie n'\u00e9tait rien d'autre que le nez du Tronknyde.",
+    "type": {
+      "name": "Bois",
+      "id": 12
+    },
+    "level": 39,
+    "pods": 5,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/38416-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/38416-128.png"
+    }
+  },
+  "12832": {
+    "ankama_id": 12832,
+    "name": "Patron de Redolphe",
+    "description": "Ce patron sert de base aux artisans pour confectionner un \u00e9l\u00e9ment de la panoplie de Redolphe.",
+    "type": {
+      "name": "Nowel",
+      "id": 136
+    },
+    "level": 85,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/153001-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/153001-128.png"
+    }
+  },
+  "12861": {
+    "ankama_id": 12861,
+    "name": "Nez-Rouge de Redolphe",
+    "description": "Ce nez enrub\u00e9 d\u00e9gouline d'une substance visqueuse impr\u00e9gn\u00e9e d'alcool. Seuls les Pandawas les plus t\u00e9m\u00e9raires osent le sucer.",
+    "type": {
+      "name": "Nowel",
+      "id": 136
+    },
+    "level": 85,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/153009-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/153009-128.png"
+    }
+  },
+  "844": {
+    "ankama_id": 844,
+    "name": "\u0152uf de Dragoeuf Ardoise",
+    "description": "Cet \u0153uf \u00e9trange donnera naissance \u00e0 un joli petit Dragoeuf une fois qu'il sera couv\u00e9 par une Femelle Dragoeuf Ardoise. En attendant, \u00e9vitez de le tenir au chaud contre vous, on ne sait pas ce qu'il pourrait arriver...",
+    "type": {
+      "name": "\u0152uf",
+      "id": 122
+    },
+    "level": 74,
+    "pods": 5,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/105204-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/105204-128.png"
+    }
+  },
+  "2624": {
+    "ankama_id": 2624,
+    "name": "Feuille de Tikoko",
+    "description": "De hardis chasseurs veulent co\u00fbte que co\u00fbte et quoi qu'il en co\u00fbte, r\u00e9cup\u00e9rer en guise de souvenir une feuille de Tikoko, pour ensuite ne jamais revenir sur cette \u00eele maudite. Pourquoi pas ?",
+    "type": {
+      "name": "Plante",
+      "id": 113
+    },
+    "level": 50,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/36609-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/36609-128.png"
+    }
+  },
+  "8496": {
+    "ankama_id": 8496,
+    "name": "Racine d'Abraknyde Ancestral",
+    "description": "M\u00eame arrach\u00e9e \u00e0 son propri\u00e9taire, cette racine peut vous fouetter les fesses ou vous tordre les chevilles. Sale b\u00eate !",
+    "type": {
+      "name": "Racine",
+      "id": 195
+    },
+    "level": 90,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/98668-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/98668-128.png"
+    }
+  },
+  "11250": {
+    "ankama_id": 11250,
+    "name": "Poil de Chachachovage",
+    "description": "Lorsqu'ils \u00e9taient encore vivants, les opposants politiques du Maire de Frigost expliquaient \u00e0 qui voulait bien l'entendre, qu'elle utilisait de la lingerie en poil de Chachachovage.",
+    "type": {
+      "name": "Poil",
+      "id": 36
+    },
+    "level": 82,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/54677-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/54677-128.png"
+    }
+  },
+  "600": {
+    "ankama_id": 600,
+    "name": "Kralamoure",
+    "description": "Le Kralamoure est un grand romantique, ses yeux de petit Tofu lui donnent un air un peu niais, mais ne vous y m\u00e9prenez pas, le Kralamoure est tr\u00e8s agressif envers les \u00e9trangers.",
+    "type": {
+      "name": "Poisson",
+      "id": 135
+    },
+    "level": 90,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/41309-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/41309-128.png"
+    }
+  },
+  "1978": {
+    "ankama_id": 1978,
+    "name": "Mesure de Poivre",
+    "description": "Cette poussi\u00e8re rajoute le piquant indispensable \u00e0 certains plats.",
+    "type": {
+      "name": "Poudre",
+      "id": 156
+    },
+    "level": 1,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/48734-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/48734-128.png"
+    }
+  },
+  "14284": {
+    "ankama_id": 14284,
+    "name": "Flamme Spectrale",
+    "description": "La flamme qui br\u00fble dans les yeux des spectres tomb\u00e9s durant l'Aurore Pourpre fut allum\u00e9e par Raval. Nul ne sait quand elle s'\u00e9teindra. Ne comptez pas sur elle pour vous r\u00e9chauffer durant les longues nuits d'hiver, car bien qu'elle consume les corps, les c\u0153urs et les \u00e2mes, elle est plus froide que le souffle d'un YeCh'Ti.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 65,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15247-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15247-128.png"
+    }
+  },
+  "538": {
+    "ankama_id": 538,
+    "name": "Pommes de Terre \u00e9pluch\u00e9es",
+    "description": "Ces Pommes de terre sont d\u00e9pourvues de leurs pelures, ce qui les rend encore plus savoureuses.",
+    "type": {
+      "name": "L\u00e9gume",
+      "id": 169
+    },
+    "level": 1,
+    "pods": 10,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/68136-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/68136-128.png"
+    },
+    "recipe": [
+      {
+        "item_ankama_id": 537,
+        "item_subtype": "resources",
+        "quantity": 1
+      }
+    ]
+  },
+  "1973": {
+    "ankama_id": 1973,
+    "name": "Huile \u00e0 frire",
+    "description": "Impossible de savoir ce qui compose cette huile. Tr\u00e8s bon march\u00e9, elle sert uniquement pour la cuisson et la friture des aliments.",
+    "type": {
+      "name": "Huile",
+      "id": 129
+    },
+    "level": 1,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/60073-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/60073-128.png"
+    }
+  },
+  "646": {
+    "ankama_id": 646,
+    "name": "Poils de Black Tiwabbit",
+    "description": "Ce poil tout noir a l'avantage de ne pas \u00eatre salissant, ce qui ne manquera pas d'int\u00e9resser les h\u00e9ros peu port\u00e9s sur l'hygi\u00e8ne et la coquetterie. Attention cependant, ce poil a tendance \u00e0 d\u00e9teindre au contact d'une sueur abondante et corrosive.",
+    "type": {
+      "name": "Poil",
+      "id": 36
+    },
+    "level": 46,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/54195-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/54195-128.png"
+    }
+  },
+  "8750": {
+    "ankama_id": 8750,
+    "name": "Bulbe Malibout",
+    "description": "Le Palmifleur ne na\u00eet pas d'une graine mais d'un bulbe que l'on trempe dans l'alcool. Pourquoi ? Parce que !",
+    "type": {
+      "name": "Plante",
+      "id": 113
+    },
+    "level": 43,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/36006-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/36006-128.png"
+    }
+  },
+  "313": {
+    "ankama_id": 313,
+    "name": "Or",
+    "description": "L'or est un m\u00e9tal rare et pr\u00e9cieux, ses qualit\u00e9s intrins\u00e8ques en font un m\u00e9tal de choix pour la conception d'armes ou d'objets particuli\u00e8rement puissants et d'esth\u00e9tique raffin\u00e9e.",
+    "type": {
+      "name": "Minerai",
+      "id": 167
+    },
+    "level": 160,
+    "pods": 5,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/39022-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/39022-128.png"
+    }
+  },
+  "16150": {
+    "ankama_id": 16150,
+    "name": "Racine d'Abraknyde V\u00e9n\u00e9rable",
+    "description": "Cette racine s'enfonce profond\u00e9ment dans le sol, permettant \u00e0 l'Abraknyde V\u00e9n\u00e9rable de r\u00e9sister aux pires temp\u00eates. H\u00e9las, \u00e7a ne l'a pas pr\u00e9serv\u00e9 des coups de hache.",
+    "type": {
+      "name": "Racine",
+      "id": 195
+    },
+    "level": 80,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/98672-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/98672-128.png"
+    }
+  },
+  "361": {
+    "ankama_id": 361,
+    "name": "Cawotte",
+    "description": "C'est l'unique nourriture du Tiwabbit Kiafin, ce qui explique peut-\u00eatre l'origine de sa d\u00e9bilit\u00e9 profonde.",
+    "type": {
+      "name": "L\u00e9gume",
+      "id": 169
+    },
+    "level": 44,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/68031-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/68031-128.png"
+    }
+  },
+  "1771": {
+    "ankama_id": 1771,
+    "name": "Souris verte",
+    "description": "Une souris verte qui courait dans les plaines... n'essayez pas de l'attraper par la queue.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 56,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15932-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15932-128.png"
+    }
+  },
+  "419": {
+    "ankama_id": 419,
+    "name": "Oreille du Grand Pa Wabbit",
+    "description": "Les oreilles du Grand Pa Wabbit sont pointues et rigides, mais sont recouvertes d'une \u00e9paisse fourrure z\u00e9br\u00e9e du plus bel effet. C'est sans conteste une des fourrures les plus recherch\u00e9es, ne serait-ce que parce qu'elle ne sent absolument rien.",
+    "type": {
+      "name": "Oreille",
+      "id": 118
+    },
+    "level": 56,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/106115-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/106115-128.png"
+    }
+  },
+  "13728": {
+    "ankama_id": 13728,
+    "name": "Paupi\u00e8re d'\u00c9toile",
+    "description": "Certains ont des \u00e9toiles plein les yeux, d'autres ont les yeux tourn\u00e9s vers les \u00e9toiles. Les \u00c9toiles de la mer d'Asse, elles, se contentent de faire de l'\u0153il aux aventuriers muscl\u00e9s qui se pavanent sur les plages en \u00e9t\u00e9.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 46,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15815-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15815-128.png"
+    }
+  },
+  "13496": {
+    "ankama_id": 13496,
+    "name": "Bandeau de Nakunbra",
+    "description": "Cet accessoire appr\u00e9ci\u00e9 de tous les pirates peut servir de cache-\u0153il, de cache-nez ou de cache-sexe selon la taille et l'occasion.",
+    "type": {
+      "name": "V\u00eatement",
+      "id": 51
+    },
+    "level": 90,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15088-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15088-128.png"
+    }
+  },
+  "843": {
+    "ankama_id": 843,
+    "name": "Coquille de Dragoeuf Charbon",
+    "description": "Cette coquille est presque incassable, cependant, en la polissant pendant des g\u00e9n\u00e9rations, les meilleurs Bijoutiers peuvent utiliser ses facult\u00e9s magiques pour confectionner des amulettes aux pouvoirs exceptionnels.",
+    "type": {
+      "name": "Coquille",
+      "id": 137
+    },
+    "level": 70,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/111203-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/111203-128.png"
+    }
+  },
+  "2305": {
+    "ankama_id": 2305,
+    "name": "Fragment de Pierre Pointue",
+    "description": "Ce Fragment provient de l'omoplate droite d'un Craqueleur des Plaines. \u00c0 moins que ce ne soit une partie du bas-ventre. Dans tous les cas, cette pierre n'est pas \u00e0 placer n'importe o\u00f9.",
+    "type": {
+      "name": "Pierre brute",
+      "id": 91
+    },
+    "level": 65,
+    "pods": 5,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/51455-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/51455-128.png"
+    }
+  },
+  "21263": {
+    "ankama_id": 21263,
+    "name": "Peau de Dragoeuf Alb\u00e2tre",
+    "description": "M\u00eame d\u00e9tach\u00e9e de son propri\u00e9taire, il ne faut pas l'exposer au soleil trop longtemps, vous risquerez de la voir prendre un coup de soleil.",
+    "type": {
+      "name": "Peau",
+      "id": 77
+    },
+    "level": 70,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/59675-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/59675-128.png"
+    }
+  },
+  "417": {
+    "ankama_id": 417,
+    "name": "Boue du Boo",
+    "description": "La Boo est tr\u00e8s agressive, elle est constitu\u00e9e de morceaux de boue mis bout \u00e0 bout, le seul moyen d'en venir \u00e0 bout c'est de la dess\u00e9cher, mais elle est tellement humide que vous n'\u00eates pas pr\u00e8s d'en voir le bout.",
+    "type": {
+      "name": "Liquide",
+      "id": 72
+    },
+    "level": 27,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15116-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15116-128.png"
+    }
+  },
+  "2437": {
+    "ankama_id": 2437,
+    "name": "Gel\u00e9e Citron Royale",
+    "description": "Selon certaines rumeurs, la Gel\u00e9e Citron Royale est bien meilleure que les autres gel\u00e9es. Peut-\u00eatre parce que le citron cache le go\u00fbt de la gel\u00e9e.",
+    "type": {
+      "name": "Gel\u00e9e",
+      "id": 185
+    },
+    "level": 60,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/110491-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/110491-128.png"
+    }
+  },
+  "9383": {
+    "ankama_id": 9383,
+    "name": "Racine de Tronkoblop",
+    "description": "Le Tronkoblop poss\u00e8de de longues racines, qui vont puiser dans le sol tout ce que les aventuriers peuvent y rejeter.",
+    "type": {
+      "name": "Racine",
+      "id": 195
+    },
+    "level": 52,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/98001-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/98001-128.png"
+    }
+  },
+  "8062": {
+    "ankama_id": 8062,
+    "name": "Poils de Koalak Indigo",
+    "description": "Ces poils sont recouverts de pollen de Blop, ce qui leur donne un go\u00fbt d\u00e9lectable, mais une odeur d\u00e9plorable.",
+    "type": {
+      "name": "Poil",
+      "id": 36
+    },
+    "level": 84,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/54659-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/54659-128.png"
+    }
+  },
+  "25817": {
+    "ankama_id": 25817,
+    "name": "Pelote de laine boufcoul",
+    "description": "Le Koulosse ne jure que par ce type de pelote pour confectionner ses v\u00eatements.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 100,
+    "pods": 10,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/126129-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/126129-128.png"
+    }
+  },
+  "445": {
+    "ankama_id": 445,
+    "name": "Mangan\u00e8se",
+    "description": "Contrairement \u00e0 ce que tout le monde pense, ce m\u00e9tal ne sert pas \u00e0 faire des goutti\u00e8res, mais plut\u00f4t \u00e0 faire des armes terrifiantes, comme le redoutable \"Tranchant Mangan\u00e9sien\" qui a estourbi plus d'un Tofu lors des f\u00eates du Boulgour.",
+    "type": {
+      "name": "Minerai",
+      "id": 167
+    },
+    "level": 80,
+    "pods": 5,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/39397-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/39397-128.png"
+    }
+  },
+  "16220": {
+    "ankama_id": 16220,
+    "name": "\u0152il de Saltik",
+    "description": "Impossible de confondre cet \u0153il d'un rose vif avec celui d'une autre cr\u00e9ature : si on le compare au globe oculaire d'un monstre quelconque, la diff\u00e9rence saute aux yeux.",
+    "type": {
+      "name": "\u0152il",
+      "id": 89
+    },
+    "level": 86,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/109611-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/109611-128.png"
+    }
+  },
+  "15167": {
+    "ankama_id": 15167,
+    "name": "Antenne de Tr\u00e9sant\u00e8ne",
+    "description": "On ne sait jamais ce que l'on peut d\u00e9nicher au bout d'une des antennes-crochets du Tr\u00e9sant\u00e8ne. Mais \u00e9tant donn\u00e9 qu'il aime s'attaquer aux endroits sensibles, on y retrouve le plus souvent des morceaux de sous-v\u00eatements.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 100,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15866-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15866-128.png"
+    }
+  },
+  "2294": {
+    "ankama_id": 2294,
+    "name": "Visc\u00e8res de Scarafeuille",
+    "description": "Au premier abord, ces visc\u00e8res ne semblent pas tr\u00e8s app\u00e9tissants. Et pourtant, h\u00e2ch\u00e9s avec de fines herbes s\u00e9ch\u00e9es au soleil, un peu de menthe sauvage, et cuits \u00e0 l'\u00e9touff\u00e9e dans un vieux chaudron rouill\u00e9, ces visc\u00e8res combleront de joie le plus gourmet des Chafers.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 38,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15445-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15445-128.png"
+    }
+  },
+  "8161": {
+    "ankama_id": 8161,
+    "name": "Ailes du Scarabosse Dor\u00e9",
+    "description": "Si vous avez toujours r\u00eav\u00e9 de voler comme un Piou adipeux, accrochez ces ailes \u00e0 votre ceinture, et jetez-vous depuis la tour des ordres de Br\u00e2kmar. Avec de la chance, vous ressemblerez \u00e0 un Corbac \u00e9cras\u00e9, vous offrirez aux Br\u00e2kmariens, un tr\u00e8s bon moment de rigolade, et aux Corbacs, un excellent repas.",
+    "type": {
+      "name": "Aile",
+      "id": 142
+    },
+    "level": 40,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/104733-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/104733-128.png"
+    }
+  },
+  "27364": {
+    "ankama_id": 27364,
+    "name": "Plume de Thomondor",
+    "description": "Lors de la saison des amours, les thomondors m\u00e2les s'arrachent la plus jolie plume de leur croupion dans le but de l'offrir \u00e0 l'\u00e9lue de leur c\u0153ur. C'est ainsi qu'ils tentent de s\u00e9duire leur bien-aim\u00e9e en effectuant une parade nuptiale, le derri\u00e8re en sang.",
+    "type": {
+      "name": "Plume",
+      "id": 13
+    },
+    "level": 50,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/53667-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/53667-128.png"
+    }
+  },
+  "27365": {
+    "ankama_id": 27365,
+    "name": "Corne de Buffalourd",
+    "description": "Cette imposante corne risque de peser lourd dans votre sac ! Il ne vous reste plus qu'\u00e0 esp\u00e9rer qu'elle se vende \u00e0 un bon prix, sans quoi vous vous serez ab\u00eem\u00e9 le dos pour rien.",
+    "type": {
+      "name": "Os",
+      "id": 2
+    },
+    "level": 50,
+    "pods": 5,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/47880-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/47880-128.png"
+    }
+  },
+  "8731": {
+    "ankama_id": 8731,
+    "name": "Corail Magistral",
+    "description": "La seule diff\u00e9rence entre le Corail us\u00e9 et le Corail Magistral r\u00e9side dans la taille et dans l'usage que l'on peut en faire. H\u00e9las, un amalgame de Coraux us\u00e9s ne remplacera jamais un seul Corail Magistral.",
+    "type": {
+      "name": "Pierre brute",
+      "id": 91
+    },
+    "level": 50,
+    "pods": 5,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/51009-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/51009-128.png"
+    }
+  },
+  "20817": {
+    "ankama_id": 20817,
+    "name": "Tendon de Waccro",
+    "description": "Un tendon si tendu qu'on s'attendrait \u00e0 l'entendre se d\u00e9tendre.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 55,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15995-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15995-128.png"
+    }
+  },
+  "2652": {
+    "ankama_id": 2652,
+    "name": "Ver d'Air",
+    "description": "Ce Ver est le plat pr\u00e9f\u00e9r\u00e9 des Kwaks sauvages. Ce qui est plus \u00e9trange, c'est qu'il est rest\u00e9 vivant alors qu'il a \u00e9t\u00e9 extrait de l'Estomac du Kwak.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 44,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15628-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15628-128.png"
+    }
+  },
+  "1691": {
+    "ankama_id": 1691,
+    "name": "Faux Visage de Choudini",
+    "description": "Ce masque ne fera pas de vous un prestidigitateur digne de ce nom.",
+    "type": {
+      "name": "V\u00eatement",
+      "id": 51
+    },
+    "level": 90,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15976-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15976-128.png"
+    }
+  },
+  "642": {
+    "ankama_id": 642,
+    "name": "Cocon de Ver \u00e0 Soie",
+    "description": "Cet \u00e9norme cocon blanch\u00e2tre, peut \u00eatre d\u00e9roul\u00e9 pour obtenir un magnifique fil de soie. L'aventurier Harry Hane l'aurait m\u00eame utilis\u00e9 pour pouvoir sortir du labyrinthe du Dark Vlad.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 36,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15489-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15489-128.png"
+    }
+  },
+  "8137": {
+    "ankama_id": 8137,
+    "name": "Visc\u00e8res du Scarabosse Dor\u00e9",
+    "description": "Ces visc\u00e8res sont en partie responsables des digestions difficiles du Scarabosse Dor\u00e9. Vous \u00eates donc autoris\u00e9 \u00e0 les faire frire sans remord.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 40,
+    "pods": 5,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15726-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15726-128.png"
+    }
+  },
+  "13489": {
+    "ankama_id": 13489,
+    "name": "Miroir de Dopeul",
+    "description": "Le reflet apparaissant dans ce miroir est d\u00e9form\u00e9 par vos pens\u00e9es les plus sombres. Voil\u00e0 une bonne raison de dire que la beaut\u00e9 n'est pas int\u00e9rieure.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 41,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15092-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15092-128.png"
+    }
+  },
+  "2598": {
+    "ankama_id": 2598,
+    "name": "Queue de dragodinde sauvage",
+    "description": "L'int\u00e9r\u00eat de cette queue est simple : posez-la sur un rocher rond et faites-la tourner. Quand elle s'arr\u00eate, suivez la direction indiqu\u00e9e par la pointe. Telle \u00e9tait la fa\u00e7on de se d\u00e9placer des Sadidas pendant des mill\u00e9naires.",
+    "type": {
+      "name": "Queue",
+      "id": 143
+    },
+    "level": 66,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/65594-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/65594-128.png"
+    }
+  },
+  "2528": {
+    "ankama_id": 2528,
+    "name": "Ongle de Kanigrou",
+    "description": "Il faut \u00eatre puissant et rapide pour arracher un ongle \u00e0 un Kanigrou. Puissant pour l'extraire, et rapide pour ne pas se prendre une baffe en retour.",
+    "type": {
+      "name": "Os",
+      "id": 2
+    },
+    "level": 70,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/47559-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/47559-128.png"
+    }
+  },
+  "18366": {
+    "ankama_id": 18366,
+    "name": "Sable Fin",
+    "description": "Bien que certains marchent dessus toute la journ\u00e9e, ce sable peut servir \u00e0 de nombreuses choses. Construire des ch\u00e2teaux par exemple.",
+    "type": {
+      "name": "Poudre",
+      "id": 156
+    },
+    "level": 80,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/48691-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/48691-128.png"
+    }
+  },
+  "2610": {
+    "ankama_id": 2610,
+    "name": "Carapace Rouge",
+    "description": "Mais o\u00f9 se cache le propri\u00e9taire ? Il a d\u00fb d\u00e9m\u00e9nager depuis peu.",
+    "type": {
+      "name": "Carapace",
+      "id": 0
+    },
+    "level": 50,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/24020-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/24020-128.png"
+    }
+  },
+  "25759": {
+    "ankama_id": 25759,
+    "name": "Lance de Chika Rat",
+    "description": "Cette lance a \u00e9t\u00e9 vol\u00e9e \u00e0 un milicien bontarien qui chipait de la nourriture dans le Garde-manger. Elle sera d\u00e9duite de sa solde, \u00e7a lui apprendra.",
+    "type": {
+      "name": "Ressource de combat",
+      "id": 101
+    },
+    "level": 110,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/165029-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/165029-128.png"
+    }
+  },
+  "14514": {
+    "ankama_id": 14514,
+    "name": "Dent de Molette",
+    "description": "Cette dent cari\u00e9e reste plus solide qu'un roc. En massacrant des millions de Molettes, vous en r\u00e9cup\u00e9rerez suffisamment pour vous construire un ch\u00e2teau.",
+    "type": {
+      "name": "Os",
+      "id": 2
+    },
+    "level": 95,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/47830-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/47830-128.png"
+    }
+  },
+  "439": {
+    "ankama_id": 439,
+    "name": "Canine de Mergranlou",
+    "description": "Cette canine tranchante est surtout recherch\u00e9e en tant que porte-bonheur, pourtant elle n'apporte \u00e0 son porteur que des mauvaises odeurs.",
+    "type": {
+      "name": "Os",
+      "id": 2
+    },
+    "level": 96,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/47106-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/47106-128.png"
+    }
+  },
+  "18411": {
+    "ankama_id": 18411,
+    "name": "\u0152il de L\u00e9olhy\u00e8ne",
+    "description": "M\u00eame une fois soustrait \u00e0 son propri\u00e9taire, cet \u0153il semble vous suivre du regard comme s'il pouvait vous mordre. Ne le laissez pas tra\u00eener dans vos poches, on ne sait jamais.",
+    "type": {
+      "name": "\u0152il",
+      "id": 89
+    },
+    "level": 80,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/109615-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/109615-128.png"
+    }
+  },
+  "8158": {
+    "ankama_id": 8158,
+    "name": "Plume Graisseuse du Tofu Ventripotent",
+    "description": "Le Tofu Ventripotent se badigeonne r\u00e9guli\u00e8rement de graisse pour que ses plumes ne se d\u00e9tachent jamais de son plumage. Une technique vieille comme le monde, qui permet \u00e0 certains Enutrofs de garder leurs cheveux, m\u00eame apr\u00e8s la pubert\u00e9.",
+    "type": {
+      "name": "Plume",
+      "id": 13
+    },
+    "level": 44,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/53001-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/53001-128.png"
+    }
+  },
+  "8681": {
+    "ankama_id": 8681,
+    "name": "Peau de Raul Mops",
+    "description": "La vraie faiblesse du Raul Mops, c'est qu'il aime se badigeonner d'eau, de vin, ou m\u00eame de vinaigre. Mais il aime avant tout se rouler dans des pots en verre autour d'un oignon. Encore une cr\u00e9ature aux moeurs myst\u00e9rieuses.",
+    "type": {
+      "name": "Peau",
+      "id": 77
+    },
+    "level": 46,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/59627-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/59627-128.png"
+    }
+  },
+  "2619": {
+    "ankama_id": 2619,
+    "name": "Lait de Tortue",
+    "description": "En voil\u00e0 une bonne id\u00e9e: avoir du lait de Tortue en bouteille, \u00e7a permet d'en boire quand on veut et o\u00f9 que l'on soit.",
+    "type": {
+      "name": "Liquide",
+      "id": 72
+    },
+    "level": 50,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15423-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15423-128.png"
+    }
+  },
+  "13593": {
+    "ankama_id": 13593,
+    "name": "Peau de Larve Saphir",
+    "description": "Cette peau est dot\u00e9e d'une magie particuli\u00e8re : elle brille dans le noir \u00e0 condition d'\u00eatre \u00e9clair\u00e9e.",
+    "type": {
+      "name": "Peau",
+      "id": 77
+    },
+    "level": 45,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/59634-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/59634-128.png"
+    }
+  },
+  "2488": {
+    "ankama_id": 2488,
+    "name": "Visc\u00e8res de Scorbute",
+    "description": "Au premier abord, il est certain que ces visc\u00e8res ne sont pas tr\u00e8s app\u00e9tissants. Et vous avez bien raison, les visc\u00e8res de Scorbute sont inf\u00e2mes, m\u00eame cuisin\u00e9s avec amour.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 65,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15445-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15445-128.png"
+    }
+  },
+  "6740": {
+    "ankama_id": 6740,
+    "name": "Peau de Tivelo",
+    "description": "Cette peau constitu\u00e9e d'une multitude d'\u00e9cailles est en tout point sup\u00e9rieure \u00e0 une classique peau de Roukouto. En effet, la face ext\u00e9rieure de la peau du Tivelo est plus r\u00e9sistante et recouverte d'\u00e9cailles ac\u00e9r\u00e9es tr\u00e8s coupantes, alors que la face int\u00e9rieure est particuli\u00e8rement douce. On raconte que certains vieux tailleurs confondent les deux faces lors de la confection de sous-v\u00eatements. L'histoire ne raconte pas si cela leur apporte plus ou moins de client\u00e8le...",
+    "type": {
+      "name": "Peau",
+      "id": 77
+    },
+    "level": 86,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15978-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15978-128.png"
+    }
+  },
+  "6475": {
+    "ankama_id": 6475,
+    "name": "Casque Cass\u00e9 du Chafer",
+    "description": "Ce casque est inutilisable dans cet \u00e9tat, il vous ferait bien trop mal \u00e0 la t\u00eate. Un bon Tailleur devrait pouvoir le r\u00e9parer, mettre un bon rembourrage \u00e0 l'int\u00e9rieur et au passage se faire beaucoup de kamas sur votre dos.",
+    "type": {
+      "name": "V\u00eatement",
+      "id": 51
+    },
+    "level": 40,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15709-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15709-128.png"
+    }
+  },
+  "2554": {
+    "ankama_id": 2554,
+    "name": "C\u00f4tes de Porkass",
+    "description": "Les C\u00f4tes de Porkass ont une saveur particuli\u00e8re. Certaines personnes en raffolent avec un jus \u00e9pic\u00e9, d'autres les pr\u00e9f\u00e8rent crues. Le Porkass, quant \u00e0 lui, pr\u00e9f\u00e8rera les v\u00f4tres. \u00c0 chacun sa recette.",
+    "type": {
+      "name": "Os",
+      "id": 2
+    },
+    "level": 46,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/47159-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/47159-128.png"
+    }
+  },
+  "16149": {
+    "ankama_id": 16149,
+    "name": "\u0152il d'Abrakne",
+    "description": "Cet \u0153il, aussi dur que de la pierre, pourra servir de calot dans votre collection de billes.",
+    "type": {
+      "name": "\u0152il",
+      "id": 89
+    },
+    "level": 46,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/109609-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/109609-128.png"
+    }
+  },
+  "2271": {
+    "ankama_id": 2271,
+    "name": "Cuir Violet de M\u00e9gabwork",
+    "description": "Beaucoup de myst\u00e8res planent encore autour de cet artisanat Bwork. Certains aventuriers pensent que la teinte violac\u00e9e proviendrait des Gobelins, mais le cuir a une origine inconnue. Bizarre.",
+    "type": {
+      "name": "Cuir",
+      "id": 109
+    },
+    "level": 86,
+    "pods": 3,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/56426-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/56426-128.png"
+    }
+  },
+  "12375": {
+    "ankama_id": 12375,
+    "name": "Fragment du Gorgouille",
+    "description": "Les Porkass sucent ce fragment lorsqu'ils sont \u00e0 proximit\u00e9 d'une femelle pr\u00eate pour assurer la p\u00e9rennit\u00e9 de l'esp\u00e8ce. Que fait-il dans votre bouche ?",
+    "type": {
+      "name": "Pierre brute",
+      "id": 91
+    },
+    "level": 100,
+    "pods": 5,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/51493-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/51493-128.png"
+    }
+  },
+  "21271": {
+    "ankama_id": 21271,
+    "name": "Cheveux de Draegnerys",
+    "description": "Ces cheveux sont tr\u00e8s utilis\u00e9s dans la confection d'objets contre la chaleur, en effet ils ont une incroyable r\u00e9sistance au feu.",
+    "type": {
+      "name": "Poil",
+      "id": 36
+    },
+    "level": 70,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/54714-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/54714-128.png"
+    }
+  },
+  "480": {
+    "ankama_id": 480,
+    "name": "Minerai \u00c9trange",
+    "description": "Ce minerai a \u00e9t\u00e9 extrait d'une myst\u00e9rieuse carri\u00e8re inconnue. Contrairement \u00e0 tous les objets \u00e9tranges d'Amakna, celui-ci n'est pas magique du tout.",
+    "type": {
+      "name": "Minerai",
+      "id": 167
+    },
+    "level": 56,
+    "pods": 5,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/39090-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/39090-128.png"
+    }
+  },
+  "2555": {
+    "ankama_id": 2555,
+    "name": "Courroie en cuir",
+    "description": "L'usage de ces courroies destin\u00e9es aux automates est souvent d\u00e9tourn\u00e9 par les Brigandins lors de leurs rassemblements nocturnes.",
+    "type": {
+      "name": "Cuir",
+      "id": 109
+    },
+    "level": 56,
+    "pods": 3,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15946-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15946-128.png"
+    }
+  },
+  "8744": {
+    "ankama_id": 8744,
+    "name": "Pince de Crustorail",
+    "description": "\u00c9vitez de serrer la pince du Crustorail ! Vous risquez de perdre la main pour un simple geste de politesse.",
+    "type": {
+      "name": "Os",
+      "id": 2
+    },
+    "level": 42,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/47017-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/47017-128.png"
+    }
+  },
+  "308": {
+    "ankama_id": 308,
+    "name": "Coquille de Dragoeuf Calcaire",
+    "description": "Cette coquille est presque incassable, cependant, en la polissant pendant des g\u00e9n\u00e9rations, les meilleurs Bijoutiers peuvent utiliser ses facult\u00e9s magiques pour confectionner des amulettes aux pouvoirs exceptionnels.",
+    "type": {
+      "name": "Coquille",
+      "id": 137
+    },
+    "level": 70,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/111021-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/111021-128.png"
+    }
+  },
+  "1129": {
+    "ankama_id": 1129,
+    "name": "Coquille de Dragoeuf Ardoise",
+    "description": "Cette coquille est presque incassable, cependant, en la polissant pendant des g\u00e9n\u00e9rations, les meilleurs Bijoutiers peuvent utiliser ses facult\u00e9s magiques pour confectionner des amulettes aux pouvoirs exceptionnels.",
+    "type": {
+      "name": "Coquille",
+      "id": 137
+    },
+    "level": 70,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/111211-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/111211-128.png"
+    }
+  },
+  "8085": {
+    "ankama_id": 8085,
+    "name": "Poils de Koalak Forestier",
+    "description": "Ces poils sont recouverts de s\u00e8ve de Kaliptus, ce qui leur conf\u00e8re un aspect luisant et brillant. Malheureusement, ils sont inutilisables en haute couture \u00e0 cause de leur odeur de Dragodinde morte.",
+    "type": {
+      "name": "Poil",
+      "id": 36
+    },
+    "level": 84,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/54004-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/54004-128.png"
+    }
+  },
+  "15168": {
+    "ankama_id": 15168,
+    "name": "Corne de Berserkoffre",
+    "description": "Les deux cornes du Berserkoffre sont r\u00e9ellement reli\u00e9es entre elles. Il a fallu faire preuve d'une force incommensurable pour d\u00e9tacher celle-ci de sa jumelle.",
+    "type": {
+      "name": "Os",
+      "id": 2
+    },
+    "level": 100,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15867-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15867-128.png"
+    }
+  },
+  "2578": {
+    "ankama_id": 2578,
+    "name": "\u0152il de Cocholou",
+    "description": "M\u00eame arrach\u00e9, le regard du Cocholou reste port\u00e9 sur vous. Et si vous regardez attentivement, vous aurez tendance \u00e0 penser qu'il vous suit des yeux, ou plut\u00f4t de l'\u0153il.",
+    "type": {
+      "name": "\u0152il",
+      "id": 89
+    },
+    "level": 96,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/109584-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/109584-128.png"
+    }
+  },
+  "21264": {
+    "ankama_id": 21264,
+    "name": "\u00c9toffe de Draegnerys",
+    "description": "Vous voil\u00e0 bien t\u00e9m\u00e9raire d'avoir arrach\u00e9 \u00e0 la gardienne des Dragoeufs Immatures un morceau de sa tunique. Certains ont \u00e9t\u00e9 br\u00fbl\u00e9s vifs pour bien moins que \u00e7a.",
+    "type": {
+      "name": "\u00c9toffe",
+      "id": 9
+    },
+    "level": 70,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/55739-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/55739-128.png"
+    }
+  },
+  "15165": {
+    "ankama_id": 15165,
+    "name": "Corde de Boursoin",
+    "description": "Cette corde n'est pas \u00e0 laisser entre toutes les mains : uniquement celles que vous d\u00e9sirez ligoter.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 100,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15864-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15864-128.png"
+    }
+  },
+  "27367": {
+    "ankama_id": 27367,
+    "name": "Croc de Trankilou",
+    "description": "Prenez garde aux morsures de trankilou ! Une fois ses crocs referm\u00e9s sur l'un de vos membres, vous aurez bien du mal \u00e0 lui faire l\u00e2cher prise.",
+    "type": {
+      "name": "Os",
+      "id": 2
+    },
+    "level": 50,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/47882-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/47882-128.png"
+    }
+  },
+  "6738": {
+    "ankama_id": 6738,
+    "name": "Cr\u00e2ne de Chef Crocodaille",
+    "description": "Cet \u00e9norme cr\u00e2ne t\u00e9moigne de l'hygi\u00e8ne dentaire d\u00e9plorable du Chef Crocodaille. Chose amusante, il semble encore anim\u00e9 d'une certaine magie, l'\u00e2me du Chef Crocodaille l'habitant encore. Il lui arrive m\u00eame parfois de verser de grosses larmes de Crocodaille si vous \u00eates m\u00e9chant avec lui.",
+    "type": {
+      "name": "Os",
+      "id": 2
+    },
+    "level": 69,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/47637-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/47637-128.png"
+    }
+  },
+  "16218": {
+    "ankama_id": 16218,
+    "name": "Dent de Gargant\u00fbl",
+    "description": "Ce croc a \u00e9t\u00e9 pr\u00e9lev\u00e9 de force dans la m\u00e2choire d'un Gargant\u00fbl. Nul besoin d'anesth\u00e9sie pour une telle op\u00e9ration : le monstre avait tellement de dents en r\u00e9serve qu'il ne s'est aper\u00e7u de rien.",
+    "type": {
+      "name": "Os",
+      "id": 2
+    },
+    "level": 86,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/47844-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/47844-128.png"
+    }
+  },
+  "847": {
+    "ankama_id": 847,
+    "name": "\u0152uf de Dragoeuf Calcaire",
+    "description": "Cet \u0153uf \u00e9trange donnera naissance \u00e0 un joli petit Dragoeuf une fois qu'il sera couv\u00e9 par une Femelle Dragoeuf Calcaire. En attendant, \u00e9vitez de le tenir au chaud contre vous, on ne sait pas ce qu'il pourrait arriver...",
+    "type": {
+      "name": "\u0152uf",
+      "id": 122
+    },
+    "level": 74,
+    "pods": 5,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/105648-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/105648-128.png"
+    }
+  },
+  "14462": {
+    "ankama_id": 14462,
+    "name": "Os de Wabbit Squelette",
+    "description": "Plus que 223 autres os diff\u00e9rents et vous pourrez reconstituer un Wabbit Squelette chez vous.",
+    "type": {
+      "name": "Os",
+      "id": 2
+    },
+    "level": 52,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/47827-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/47827-128.png"
+    }
+  },
+  "14457": {
+    "ankama_id": 14457,
+    "name": "Patte de Black Wabbit",
+    "description": "Mieux vaut un coup de patte bien plac\u00e9 qu'un coup de queue d\u00e9plac\u00e9. Vieux proverbe Ecaflip.",
+    "type": {
+      "name": "Patte",
+      "id": 61
+    },
+    "level": 50,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/103719-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/103719-128.png"
+    }
+  },
+  "1690": {
+    "ankama_id": 1690,
+    "name": "Poils du Milimulou",
+    "description": "Ces poils ressemblent \u00e0 ceux d'un mulou d'Amakna, en un peu plus courts, moins \u00e9pais, mais plus doux. C'est probablement pour mieux vous mettre en confiance avant de vous manger.",
+    "type": {
+      "name": "Poil",
+      "id": 36
+    },
+    "level": 26,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/54554-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/54554-128.png"
+    }
+  },
+  "8481": {
+    "ankama_id": 8481,
+    "name": "Poil de Rat d'\u00c9goutant",
+    "description": "Ce poil est sale et malodorant, il a train\u00e9 dans les \u00e9gouts les plus insalubres de la r\u00e9gion. Et pourtant il brille encore.",
+    "type": {
+      "name": "Poil",
+      "id": 36
+    },
+    "level": 60,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/54670-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/54670-128.png"
+    }
+  },
+  "291": {
+    "ankama_id": 291,
+    "name": "Poils de Mulounok\u00e9",
+    "description": "Ces poils ne sont pas comme tous les poils, ils disposent de propri\u00e9t\u00e9s particuli\u00e8res qui les rendent tr\u00e8s appr\u00e9ci\u00e9s des alchimistes.",
+    "type": {
+      "name": "Poil",
+      "id": 36
+    },
+    "level": 96,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/54008-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/54008-128.png"
+    }
+  },
+  "2577": {
+    "ankama_id": 2577,
+    "name": "Scalp du Meulou",
+    "description": "\u00c0 votre arriv\u00e9e, le Meulou avait certainement la m\u00eame intention que vous, c'est-\u00e0-dire de vous extraire avec plus ou moins de tact votre Scalp. Le voil\u00e0 pr\u00eat \u00e0 attraper un rube de cerveau.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 100,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15583-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15583-128.png"
+    }
+  },
+  "2581": {
+    "ankama_id": 2581,
+    "name": "Dents de Mulou",
+    "description": "Dans la famille des Mulous, si vous cherchez celui qui a les plus grandes dents, vous venez de faire bonne pioche. C'est pour mieux vous baver dessus mes enfants.",
+    "type": {
+      "name": "Os",
+      "id": 2
+    },
+    "level": 100,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/47587-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/47587-128.png"
+    }
+  },
+  "13505": {
+    "ankama_id": 13505,
+    "name": "Bourse Suspecte",
+    "description": "\u00c0 votre grande d\u00e9ception, il n'y a pas de kamas dans cette bourse. Elle contient quelques morceaux de plomb, une poign\u00e9e de d\u00e9s aux formes \u00e9tranges et un vieux crayon avec une gomme \u00e0 moiti\u00e9 m\u00e2ch\u00e9e. Sans doute les composants d'un rituel louche voire d\u00e9moniaque.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 45,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/141010-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/141010-128.png"
+    }
+  },
+  "392": {
+    "ankama_id": 392,
+    "name": "Noix de P\u00e9can",
+    "description": "Cette Noix de P\u00e9can permet de faire de l'huile, mais il est pr\u00e9f\u00e9rable de la consommer s\u00e9ch\u00e9e au regard des effets laxatifs de son huile.",
+    "type": {
+      "name": "Graine",
+      "id": 171
+    },
+    "level": 50,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/58064-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/58064-128.png"
+    }
+  },
+  "2179": {
+    "ankama_id": 2179,
+    "name": "Dent de dragodinde",
+    "description": "Cette Dent para\u00eet bien tranchante. Elle pourrait devenir une arme redoutable entre les mains de n'importe qui. Heureusement que la Dragodinde ne s'en sert que pour m\u00e2cher de la salade.",
+    "type": {
+      "name": "Os",
+      "id": 2
+    },
+    "level": 66,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/47419-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/47419-128.png"
+    }
+  },
+  "1686": {
+    "ankama_id": 1686,
+    "name": "Teinture Magique de Rougeur",
+    "description": "Cette petite potion magique donne une couleur rouge magnifique aux poils sur lesquels elle est appliqu\u00e9e. Accessoirement, il semblerait qu'elle puisse apporter quelques effets magiques.",
+    "type": {
+      "name": "Teinture",
+      "id": 201
+    },
+    "level": 55,
+    "pods": 2,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/70063-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/70063-128.png"
+    },
+    "recipe": [
+      {
+        "item_ankama_id": 368,
+        "item_subtype": "resources",
+        "quantity": 1
+      },
+      {
+        "item_ankama_id": 381,
+        "item_subtype": "resources",
+        "quantity": 10
+      }
+    ]
+  },
+  "1611": {
+    "ankama_id": 1611,
+    "name": "Bourgeon de Pirolienne",
+    "description": "Ce bourgeon provient de la baguette calcin\u00e9e d'une Pirolienne.",
+    "type": {
+      "name": "Bourgeon",
+      "id": 94
+    },
+    "level": 86,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/15979-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/15979-128.png"
+    }
+  },
+  "20818": {
+    "ankama_id": 20818,
+    "name": "Emballage Suspect",
+    "description": "Peu importe ce qui \u00e9tait emball\u00e9, c'\u00e9tait gras, fondant et d\u00e9licieux.",
+    "type": {
+      "name": "Ressource diverse",
+      "id": 229
+    },
+    "level": 52,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/154016-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/154016-128.png"
+    }
+  },
+  "1142": {
+    "ankama_id": 1142,
+    "name": "Bec du Kwak de Terre",
+    "description": "Ce bec extraordinairement solide permet au Kwak de Terre de faire des trous dans la terre, juste pour le plaisir de faire des trous dans la terre. Les kwaks de Terre sont d\u00e9cid\u00e9ment bien \u00e9tranges...",
+    "type": {
+      "name": "Os",
+      "id": 2
+    },
+    "level": 44,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/47222-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/47222-128.png"
+    }
+  },
+  "8402": {
+    "ankama_id": 8402,
+    "name": "Pierre du Koulosse",
+    "description": "Le Koulosse a beau \u00eatre g\u00e9n\u00e9reux, il ne vous a pas donn\u00e9 sa grosse pierre de gaiet\u00e9 de c\u0153ur, et on peut le comprendre lorsque l'on sait ce que vous allez en faire.",
+    "type": {
+      "name": "Pierre brute",
+      "id": 91
+    },
+    "level": 100,
+    "pods": 5,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/51465-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/51465-128.png"
+    }
+  },
+  "8084": {
+    "ankama_id": 8084,
+    "name": "Peau de Piralak",
+    "description": "Cette peau recouverte de balafres est devenue plus r\u00e9sistante que la roche, tout en gardant une souplesse remarquable. C'est la peau id\u00e9ale pour les martinets et les sandales de mauvais go\u00fbt.",
+    "type": {
+      "name": "Peau",
+      "id": 77
+    },
+    "level": 84,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/59008-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/59008-128.png"
+    }
+  },
+  "12015": {
+    "ankama_id": 12015,
+    "name": "Bec du Kwakwa",
+    "description": "Le Kwakwa a beau \u00eatre fier et majestueux, il pue du bec, c'est bien connu. Eh oui ! Vous auriez peut-\u00eatre d\u00fb y r\u00e9fl\u00e9chir \u00e0 deux fois avant de prendre cet objet dans vos mains...",
+    "type": {
+      "name": "Os",
+      "id": 2
+    },
+    "level": 50,
+    "pods": 1,
+    "image_urls": {
+      "icon": "https://api.dofusdu.de/dofus3/v1/img/item/47689-64.png",
+      "sd": "https://api.dofusdu.de/dofus3/v1/img/item/47689-128.png"
+    }
+  }
 }

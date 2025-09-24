@@ -7,7 +7,7 @@ class HTMLVisualizer:
     def generate_html_report(clusters, equipment_names, equipment_recipes, equipment_data, 
                             resource_names, similarity_scores, cluster_qualities=None):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"{Config.OUTPUT_PREFIX}_{timestamp}.html"
+        filename = f"reports/{Config.OUTPUT_PREFIX}_{timestamp}.html"
         
         with open(filename, 'w', encoding='utf-8') as f:
             f.write("""
@@ -160,7 +160,7 @@ class HTMLVisualizer:
                     """)
                     
                     for item_id, quantity in sorted_ingredients:
-                        resource_name = resource_names.get(item_id, f"Ressource {item_id}")
+                        resource_name = resource_names.get(item_id, f"{item_id}")
                         percentage = (quantity / total_resources) * 100
                         
                         f.write(f"""

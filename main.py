@@ -6,6 +6,7 @@ from utils import CacheManager, ExclusionManager
 from dofusapi import DofusAPI
 # ==================== DATA PROCESSING ====================
 from dataprocessor import DataProcessor
+from resourceoptimizer import ResourceOptimizer
 # ==================== VISUALIZATION ====================
 from htmlvisualizer import HTMLVisualizer
 
@@ -78,6 +79,21 @@ def main():
     
     print(f"Rapport HTML généré: {html_file}")
     print("Ouvrez ce fichier dans votre navigateur pour visualiser les résultats.")
+    # Trouver les ensembles d'équipements optimaux
+    print("Recherche des ensembles d'équipements optimaux...")
+    optimal_sets = ResourceOptimizer.find_optimal_equipment_sets(
+        equipment_names, equipment_recipes, resource_names, max_resources=20
+    )
+    from datetime import datetime
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    
+    # Générer le rapport d'optimisation
+    optimization_report = ResourceOptimizer.generate_optimization_report(
+        optimal_sets, resource_names, equipment_data, 
+        f"reports/{Config.OUTPUT_PREFIX}_optimization_{timestamp}.html"
+    )
+    
+    print(f"Rapport d'optimisation généré: {optimization_report}")
 
 if __name__ == "__main__":
     main()
