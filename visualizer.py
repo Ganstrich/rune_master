@@ -1,6 +1,7 @@
 # equipment_visualizer.py
 import json
 import os
+import html
 from pathlib import Path
 from typing import Any
 from models import Equipment, Resource
@@ -206,7 +207,21 @@ class EquipmentVisualizer:
             # Resource cell: image + small name
             img_html = ''
             if img:
-                img_html = f"<img class='ingredient-img' crossorigin=\"anonymous\" src=\"{img}\" alt=\"{name}\">"
+                # Escape values used in HTML attributes
+                esc_src = html.escape(img, quote=True)
+                esc_alt = html.escape(name, quote=True)
+                # Use json.dumps to create a JS string literal (handles quotes/newlines) and
+                # wrap the onclick attribute in double quotes but call JS with a single-quoted
+                # string to avoid breaking HTML attribute parsing.
+                safe_js_name = json.dumps(name)  # produces a double-quoted JS string literal
+                # convert to single-quoted JS literal for safe embedding in onclick
+                # e.g. "Blop mort" -> 'Blop mort' with proper escaping
+                if safe_js_name.startswith('"') and safe_js_name.endswith('"'):
+                    inner = safe_js_name[1:-1].replace("'", "\\'")
+                    js_arg = f"'{inner}'"
+                else:
+                    js_arg = safe_js_name
+                img_html = f"<img class='ingredient-img' crossorigin=\"anonymous\" src=\"{esc_src}\" alt=\"{esc_alt}\" title=\"Click to copy name\" onclick=\"copyResourceName({js_arg})\">"
             name_html = f"<div style=\"display:inline-block;vertical-align:middle;\"><div style=\"font-size:12px;font-weight:600;color:#102a43;\">{name}</div></div>"
             resource_cell = f"<div style=\"display:flex;align-items:center;gap:8px;\">{img_html}{name_html}</div>"
 
@@ -257,324 +272,444 @@ class EquipmentVisualizer:
         # Load CSS templates from separate module
         css = CSS_GRAPH
 
-        html = f"""
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Group {group_index} • Equipment Resource Network</title>
-    <script src="https://d3js.org/d3.v7.min.js"></script>
-    {css}
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <a href="index.html" class="back-link">← Back to All Groups</a>
-            <h1>Equipment Group {group_index}</h1>
-            <div class="stats">
-                <div class="stat-card">
-                    <div class="stat-value">{len(group['equipments'])}</div>
-                    <div>Equipment Items</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">{group['unique_ingredients_count']}</div>
-                    <div>Unique Resources</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">{group['total_items_needed']}</div>
-                    <div>Total Items Needed</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">{group['sharing_efficiency']:.1%}</div>
-                    <div>Sharing Efficiency</div>
-                </div>
-            </div>
-        </div>
+        # Build a compact horizontal equipment preview (small image + name) from graph_data.nodes
+        # Build equipment preview deterministically from graph_data.nodes first,
+        # then fallback to group['equipments'] if nothing was found.
+        equipment_preview_items = []
+        nodes = graph_data.get('nodes') if isinstance(graph_data, dict) else []
         
-        <div class="content-area">
-            <div class="legend">
-                <div class="legend-item">
-                    <div class="legend-color equipment-color"></div>
-                    <span>Equipment</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color resource-color"></div>
-                    <span>Resources</span>
-                </div>
-            </div>
-            
-            <div class="controls">
-                <button class="btn" onclick="resetLayout()">Reset Layout</button>
-                <button class="btn btn-secondary" onclick="toggleLabels()">Toggle Labels</button>
-                <button class="btn" onclick="exportData()">Export Data</button>
-            </div>
-            {ingredient_table}
-            
-            <div class="layout">
-                <div class="graph-section">
-                    <div class="graph-container" id="graph">
-                        <div style="display: flex; justify-content: center; align-items: center; height: 100%; color: #64748b;">
-                            Loading interactive network graph...
+        # Build preview; don't print debug info in normal runs
+        for n in nodes:
+            try:
+                ntype = n.get('type')
+            except Exception:
+                ntype = None
+            if ntype == 'equipment':
+                try:
+                    name = n.get('name', '') or ''
+                    img_url = n.get('image_url') or (n.get('resource_info') or {}).get('image_urls', {}).get('icon')
+                    esc_name = html.escape(name, quote=True)
+                    if img_url:
+                        esc_src = html.escape(img_url, quote=True)
+                        img_tag = f'<img class="equip-preview-img" src="{esc_src}" alt="{esc_name}">'
+                    else:
+                        img_tag = '<div class="equip-preview-fallback"></div>'
+                    equipment_preview_items.append(
+                        f'<div class="equip-preview-item" title="{esc_name}">{img_tag}<div class="equip-preview-name">{esc_name}</div></div>'
+                    )
+                except Exception:
+                    # skip this node but continue
+                    continue
+
+        # Fallback to group['equipments'] if no preview items were found
+        if not equipment_preview_items:
+            for e in group.get('equipments', []):
+                try:
+                    if isinstance(e, dict):
+                        name = e.get('name', '') or ''
+                        imgs = e.get('image_urls') or {}
+                        img_url = imgs.get('icon') or imgs.get('sd') or imgs.get('small') or imgs.get('thumbnail')
+                    else:
+                        name = getattr(e, 'name', '') or ''
+                        imgs = getattr(e, 'image_urls', None) or {}
+                        if isinstance(imgs, dict):
+                            img_url = imgs.get('icon') or imgs.get('sd') or imgs.get('small') or imgs.get('thumbnail')
+                        else:
+                            img_url = getattr(imgs, 'icon', None)
+                    esc_name = html.escape(str(name), quote=True)
+                    if img_url:
+                        esc_src = html.escape(img_url, quote=True)
+                        img_tag = f'<img class="equip-preview-img" src="{esc_src}" alt="{esc_name}">'
+                    else:
+                        img_tag = '<div class="equip-preview-fallback"></div>'
+                    equipment_preview_items.append(
+                        f'<div class="equip-preview-item" title="{esc_name}">{img_tag}<div class="equip-preview-name">{esc_name}</div></div>'
+                    )
+                except Exception:
+                    try:
+                        import traceback
+                        print(f"ERROR: create_index_page - exception while processing equipment for group {i+1}:")
+                        traceback.print_exc()
+                    except Exception:
+                        pass
+                    continue
+
+        equipment_preview_html = '<div class="equipment-preview">' + ''.join(equipment_preview_items) + '</div>'
+        # Save preview into the group for index use (non-intrusive key)
+        try:
+            group['_preview_html'] = equipment_preview_html
+        except Exception:
+            pass
+
+        page_html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Group {group_index} • Equipment Resource Network</title>
+            <script src="https://d3js.org/d3.v7.min.js"></script>
+            {css}
+            <style>
+            /* Small equipment preview styles (inline so generator controls output) */
+            .equipment-preview {{
+                display: flex;
+                gap: 12px;
+                padding: 10px 0;
+                overflow-x: auto;
+                align-items: center;
+                margin-bottom: 8px;
+            }}
+            .equip-preview-item {{
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                width: 84px;
+                flex: 0 0 auto;
+            }}
+            .equip-preview-img {{
+                width: 48px;
+                height: 48px;
+                border-radius: 6px;
+                object-fit: cover;
+                box-shadow: 0 2px 6px rgba(2,6,23,0.08);
+            }}
+            .equip-preview-name {{
+                font-size: 12px;
+                margin-top: 6px;
+                text-align: center;
+                color: #102a43;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                overflow: hidden;
+                max-width: 80px;
+            }}
+            .equip-preview-fallback {{
+                width: 48px;
+                height: 48px;
+                border-radius: 6px;
+                background: #e2e8f0;
+            }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <a href="index.html" class="back-link">← Back to All Groups</a>
+                    <h1>Equipment Group {group_index}</h1>
+                    <div class="stats">
+                        <div class="stat-card">
+                            <div class="stat-value">{len(group['equipments'])}</div>
+                            <div>Equipment Items</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">{group['unique_ingredients_count']}</div>
+                            <div>Unique Resources</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">{group['total_items_needed']}</div>
+                            <div>Total Items Needed</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">{group['sharing_efficiency']:.1%}</div>
+                            <div>Sharing Efficiency</div>
                         </div>
                     </div>
                 </div>
                 
+                <div class="content-area">    
+                    {equipment_preview_html}
+                    {ingredient_table}
+                    <div class="layout">
+                        <div class="graph-section">
+                            <div class="graph-container" id="graph">
+                                <div style="display: flex; justify-content: center; align-items: center; height: 100%; color: #64748b;">
+                                    Loading interactive network graph...
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
 
-    <script>
-        // Graph data
-        const graphData = {graph_data_json};
-        
-        let simulation;
-        let node, link, nodeLabel, linkLabel;
-        
-        function initializeGraph() {{
-            const container = document.getElementById('graph');
-            const width = container.clientWidth;
-            const height = 500;
-            
-            // Clear container
-            container.innerHTML = '';
-            
-            // Create SVG
-            const svg = d3.select('#graph')
-                .append('svg')
-                .attr('width', width)
-                .attr('height', height)
-                .attr('xmlns', 'http://www.w3.org/2000/svg')
-                .attr('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+            <script>
+                // Graph data
+                const graphData = {graph_data_json};
+                
+                let simulation;
+                let node, link, nodeLabel, linkLabel;
+                
+                function initializeGraph() {{
+                    const container = document.getElementById('graph');
+                    const width = container.clientWidth;
+                    const height = 500;
+                    
+                    // Clear container
+                    container.innerHTML = '';
+                    
+                    // Create SVG
+                    const svg = d3.select('#graph')
+                        .append('svg')
+                        .attr('width', width)
+                        .attr('height', height)
+                        .attr('xmlns', 'http://www.w3.org/2000/svg')
+                        .attr('xmlns:xlink', 'http://www.w3.org/1999/xlink');
 
-            // We'll append inline <image> elements inside each node group. This is simpler
-            // and allows the image to move with the node as the simulation runs.
-            
-            // Create tooltip
-            const tooltip = d3.select('body').append('div')
-                .attr('class', 'tooltip')
-                .style('opacity', 0);
-            
-            // Create force simulation
-            simulation = d3.forceSimulation(graphData.nodes)
-                .force('link', d3.forceLink(graphData.links).id(d => d.id).distance(100))
-                .force('charge', d3.forceManyBody().strength(-300))
-                .force('center', d3.forceCenter(width / 2, height / 2))
-                .force('collision', d3.forceCollide().radius(d => d.type === 'equipment' ? 25 : 20));
-            
-            // Create links
-            link = svg.append('g')
-                .selectAll('line')
-                .data(graphData.links)
-                .enter().append('line')
-                .attr('class', 'link')
-                .attr('stroke-width', 2);
-            
-            // Link labels
-            linkLabel = svg.append('g')
-                .selectAll('text')
-                .data(graphData.links)
-                .enter().append('text')
-                .attr('class', 'link-label')
-                .text(d => d.quantity)
-                .attr('text-anchor', 'middle');
-            
-            // Create node groups (so we can put images or circles inside)
-            node = svg.append('g')
-                .selectAll('g')
-                .data(graphData.nodes)
-                .enter().append('g')
-                .attr('class', d => `node-group ${{d.type}}`)
-                .call(d3.drag()
-                    .on('start', dragstarted)
-                    .on('drag', dragged)
-                    .on('end', dragended));
+                    // We'll append inline <image> elements inside each node group. This is simpler
+                    // and allows the image to move with the node as the simulation runs.
+                    
+                    // Create tooltip
+                    const tooltip = d3.select('body').append('div')
+                        .attr('class', 'tooltip')
+                        .style('opacity', 0);
+                    
+                    // Create force simulation
+                    simulation = d3.forceSimulation(graphData.nodes)
+                        .force('link', d3.forceLink(graphData.links).id(d => d.id).distance(100))
+                        .force('charge', d3.forceManyBody().strength(-300))
+                        .force('center', d3.forceCenter(width / 2, height / 2))
+                        .force('collision', d3.forceCollide().radius(d => d.type === 'equipment' ? 25 : 20));
+                    
+                    // Create links
+                    link = svg.append('g')
+                        .selectAll('line')
+                        .data(graphData.links)
+                        .enter().append('line')
+                        .attr('class', 'link')
+                        .attr('stroke-width', 2);
+                    
+                    // Link labels
+                    linkLabel = svg.append('g')
+                        .selectAll('text')
+                        .data(graphData.links)
+                        .enter().append('text')
+                        .attr('class', 'link-label')
+                        .text(d => d.quantity)
+                        .attr('text-anchor', 'middle');
+                    
+                    // Create node groups (so we can put images or circles inside)
+                    node = svg.append('g')
+                        .selectAll('g')
+                        .data(graphData.nodes)
+                        .enter().append('g')
+                        .attr('class', d => `node-group ${{d.type}}`)
+                        .call(d3.drag()
+                            .on('start', dragstarted)
+                            .on('drag', dragged)
+                            .on('end', dragended));
 
-            // For each node group, append either an image (if available) or a circle
-            node.each(function(d) {{
-                const g = d3.select(this);
-                // background circle for visibility
-                g.append('circle')
-                    .attr('class', 'node-bg')
-                    .attr('r', d.type === 'equipment' ? 22 : 17)
-                    .attr('fill', d.type === 'equipment' ? '#4f46e5' : '#10b981');
+                    // For each node group, append either an image (if available) or a circle
+                    node.each(function(d) {{
+                        const g = d3.select(this);
+                        // background circle for visibility
+                        g.append('circle')
+                            .attr('class', 'node-bg')
+                            .attr('r', d.type === 'equipment' ? 22 : 17)
+                            .attr('fill', d.type === 'equipment' ? '#4f46e5' : '#10b981');
 
-                if (d.image_url) {{
-                    // resource/equipment image (smaller)
-                    const w = d.type === 'equipment' ? 40 : 30;
-                    const h = w;
-                    const img = g.append('image')
-                        .attr('class', 'node-image')
-                        .attr('width', w)
-                        .attr('height', h)
-                        .attr('x', -w/2)
-                        .attr('y', -h/2)
-                        .attr('preserveAspectRatio', 'xMidYMid slice')
-                        .attr('href', d.image_url)
-                        .attr('xlink:href', d.image_url);
+                        if (d.image_url) {{
+                            // resource/equipment image (smaller)
+                            const w = d.type === 'equipment' ? 40 : 30;
+                            const h = w;
+                            const img = g.append('image')
+                                .attr('class', 'node-image')
+                                .attr('width', w)
+                                .attr('height', h)
+                                .attr('x', -w/2)
+                                .attr('y', -h/2)
+                                .attr('preserveAspectRatio', 'xMidYMid slice')
+                                .attr('href', d.image_url)
+                                .attr('xlink:href', d.image_url);
 
-                    // Fallback: if image fails to load, replace with a colored circle
-                    try {{
-                        const domImg = img.node();
-                        if (domImg) {{
-                            const probe = new Image();
-                            try {{ probe.crossOrigin = 'anonymous'; }} catch(e) {{}}
-                            probe.onload = () => {{ /* success */ }};
-                            probe.onerror = () => {{
-                                d3.select(domImg).remove();
-                                g.append('circle')
-                                    .attr('class', `node ${{d.type}}`)
-                                    .attr('r', d.type === 'equipment' ? 20 : 15);
-                            }};
-                            probe.src = d.image_url;
+                            // Fallback: if image fails to load, replace with a colored circle
+                            try {{
+                                const domImg = img.node();
+                                if (domImg) {{
+                                    const probe = new Image();
+                                    try {{ probe.crossOrigin = 'anonymous'; }} catch(e) {{}}
+                                    probe.onload = () => {{ /* success */ }};
+                                    probe.onerror = () => {{
+                                        d3.select(domImg).remove();
+                                        g.append('circle')
+                                            .attr('class', `node ${{d.type}}`)
+                                            .attr('r', d.type === 'equipment' ? 20 : 15);
+                                    }};
+                                    probe.src = d.image_url;
+                                }}
+                            }} catch (e) {{ /* ignore */ }}
+                        }} else {{
+                            // fallback: add a visible node circle (the node-bg already exists but ensure the inner node)
+                            g.append('circle')
+                                .attr('class', d => `node ${{d.type}}`)
+                                .attr('r', d.type === 'equipment' ? 20 : 15);
                         }}
-                    }} catch (e) {{ /* ignore */ }}
-                }} else {{
-                    // fallback: add a visible node circle (the node-bg already exists but ensure the inner node)
-                    g.append('circle')
-                        .attr('class', d => `node ${{d.type}}`)
-                        .attr('r', d.type === 'equipment' ? 20 : 15);
+                        // Add label inside group
+                        g.append('text')
+                            .attr('class', 'node-label')
+                            .text(d.name.length > 12 ? d.name.substring(0, 12) + '...' : d.name)
+                            .attr('text-anchor', 'middle')
+                            .attr('dy', d.type === 'equipment' ? -28 : 24);
+                    }});
+
+                    // Make nodeLabel and linkLabel selections for later toggles
+                    nodeLabel = svg.selectAll('.node-label');
+                    
+                    // Tooltip content
+                    function getTooltipContent(d) {{
+                        let content = `<strong>${{d.name}}</strong><br>`;
+                        if (d.type === 'equipment') {{
+                            content += `Type: Equipment<br>Level: ${{d.level}}`;
+                        }} else {{
+                            content += `Type: Resource<br>Total Needed: ${{d.total_quantity}}`;
+                            if (d.level) content += `<br>Level: ${{d.level}}`;
+                            if (d.rarity) content += `<br>Rarity: ${{d.rarity}}`;
+                        }}
+                        return content;
+                    }}
+                    
+                    // Interactivity
+                    node.on('mouseover', function(event, d) {{
+                        // Enlarge visual (image pattern or circle)
+                        const g = d3.select(this);
+                        g.select('circle').attr('r', d.type === 'equipment' ? 25 : 18);
+
+                        // Highlight connected links
+                        link.style('stroke', l => 
+                            l.source.id === d.id || l.target.id === d.id ? '#ef4444' : '#94a3b8'
+                        ).style('stroke-width', l => 
+                            l.source.id === d.id || l.target.id === d.id ? 3 : 2
+                        );
+
+                        // Show tooltip
+                        tooltip.style('opacity', 1)
+                            .html(getTooltipContent(d))
+                            .style('left', (event.pageX + 15) + 'px')
+                            .style('top', (event.pageY - 15) + 'px');
+                    }}).on('mouseout', function(event, d) {{
+                        const g = d3.select(this);
+                        g.select('circle').attr('r', d.type === 'equipment' ? 20 : 15);
+
+                        // Reset links
+                        link.style('stroke', '#94a3b8').style('stroke-width', 2);
+
+                        // Hide tooltip
+                        tooltip.style('opacity', 0);
+                    }});
+                    
+                    // Update positions
+                    simulation.on('tick', () => {{
+                        link.attr('x1', d => d.source.x)
+                            .attr('y1', d => d.source.y)
+                            .attr('x2', d => d.target.x)
+                            .attr('y2', d => d.target.y);
+
+                        linkLabel.attr('x', d => (d.source.x + d.target.x) / 2)
+                            .attr('y', d => (d.source.y + d.target.y) / 2);
+
+                        // Move node groups
+                        node.attr('transform', d => `translate(${{d.x}}, ${{d.y}})`);
+
+                        // node labels are positioned inside each node group (via dy) so we don't set absolute x/y here.
+                    }});
                 }}
-                // Add label inside group
-                g.append('text')
-                    .attr('class', 'node-label')
-                    .text(d.name.length > 12 ? d.name.substring(0, 12) + '...' : d.name)
-                    .attr('text-anchor', 'middle')
-                    .attr('dy', d.type === 'equipment' ? -28 : 24);
-            }});
-
-            // Make nodeLabel and linkLabel selections for later toggles
-            nodeLabel = svg.selectAll('.node-label');
-            
-            // Tooltip content
-            function getTooltipContent(d) {{
-                let content = `<strong>${{d.name}}</strong><br>`;
-                if (d.type === 'equipment') {{
-                    content += `Type: Equipment<br>Level: ${{d.level}}`;
-                }} else {{
-                    content += `Type: Resource<br>Total Needed: ${{d.total_quantity}}`;
-                    if (d.level) content += `<br>Level: ${{d.level}}`;
-                    if (d.rarity) content += `<br>Rarity: ${{d.rarity}}`;
+                
+                // Drag functions
+                function dragstarted(event, d) {{
+                    if (!event.active) simulation.alphaTarget(0.3).restart();
+                    d.fx = d.x;
+                    d.fy = d.y;
                 }}
-                return content;
-            }}
-            
-            // Interactivity
-            node.on('mouseover', function(event, d) {{
-                // Enlarge visual (image pattern or circle)
-                const g = d3.select(this);
-                g.select('circle').attr('r', d.type === 'equipment' ? 25 : 18);
-
-                // Highlight connected links
-                link.style('stroke', l => 
-                    l.source.id === d.id || l.target.id === d.id ? '#ef4444' : '#94a3b8'
-                ).style('stroke-width', l => 
-                    l.source.id === d.id || l.target.id === d.id ? 3 : 2
-                );
-
-                // Show tooltip
-                tooltip.style('opacity', 1)
-                    .html(getTooltipContent(d))
-                    .style('left', (event.pageX + 15) + 'px')
-                    .style('top', (event.pageY - 15) + 'px');
-            }}).on('mouseout', function(event, d) {{
-                const g = d3.select(this);
-                g.select('circle').attr('r', d.type === 'equipment' ? 20 : 15);
-
-                // Reset links
-                link.style('stroke', '#94a3b8').style('stroke-width', 2);
-
-                // Hide tooltip
-                tooltip.style('opacity', 0);
-            }});
-            
-            // Update positions
-            simulation.on('tick', () => {{
-                link.attr('x1', d => d.source.x)
-                    .attr('y1', d => d.source.y)
-                    .attr('x2', d => d.target.x)
-                    .attr('y2', d => d.target.y);
-
-                linkLabel.attr('x', d => (d.source.x + d.target.x) / 2)
-                    .attr('y', d => (d.source.y + d.target.y) / 2);
-
-                // Move node groups
-                node.attr('transform', d => `translate(${{d.x}}, ${{d.y}})`);
-
-                // node labels are positioned inside each node group (via dy) so we don't set absolute x/y here.
-            }});
-        }}
-        
-        // Drag functions
-        function dragstarted(event, d) {{
-            if (!event.active) simulation.alphaTarget(0.3).restart();
-            d.fx = d.x;
-            d.fy = d.y;
-        }}
-        
-        function dragged(event, d) {{
-            d.fx = event.x;
-            d.fy = event.y;
-        }}
-        
-        function dragended(event, d) {{
-            if (!event.active) simulation.alphaTarget(0);
-            d.fx = null;
-            d.fy = null;
-        }}
-        
-        // Control functions
-        window.resetLayout = function() {{
-            if (simulation) {{
-                simulation.alphaTarget(0.3).restart();
-                graphData.nodes.forEach(d => {{
+                
+                function dragged(event, d) {{
+                    d.fx = event.x;
+                    d.fy = event.y;
+                }}
+                
+                function dragended(event, d) {{
+                    if (!event.active) simulation.alphaTarget(0);
                     d.fx = null;
                     d.fy = null;
-                }});
-            }}
-        }};
-        
-        window.toggleLabels = function() {{
-            if (nodeLabel) {{
-                const current = nodeLabel.style('opacity');
-                nodeLabel.style('opacity', current === '1' ? '0' : '1');
-                linkLabel.style('opacity', current === '1' ? '0' : '1');
-            }}
-        }};
-        
-        window.exportData = function() {{
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(graphData, null, 2));
-            const downloadAnchorNode = document.createElement('a');
-            downloadAnchorNode.setAttribute("href", dataStr);
-            downloadAnchorNode.setAttribute("download", "group_{group_index}_data.json");
-            document.body.appendChild(downloadAnchorNode);
-            downloadAnchorNode.click();
-            downloadAnchorNode.remove();
-        }};
-        
-        // Initialize when D3 is ready
-        if (typeof d3 !== 'undefined') {{
-            initializeGraph();
-            }} else {{
-            // Wait for D3 to load
-            const checkD3 = setInterval(() => {{
-                if (typeof d3 !== 'undefined') {{
-                    clearInterval(checkD3);
-                    initializeGraph();
                 }}
-            }}, 100);
-        }}
-    </script>
-</body>
-</html>
-"""
+                
+                // Control functions
+                window.resetLayout = function() {{
+                    if (simulation) {{
+                        simulation.alphaTarget(0.3).restart();
+                        graphData.nodes.forEach(d => {{
+                            d.fx = null;
+                            d.fy = null;
+                        }});
+                    }}
+                }};
+                
+                window.toggleLabels = function() {{
+                    if (nodeLabel) {{
+                        const current = nodeLabel.style('opacity');
+                        nodeLabel.style('opacity', current === '1' ? '0' : '1');
+                        linkLabel.style('opacity', current === '1' ? '0' : '1');
+                    }}
+                }};
+                
+                window.exportData = function() {{
+                    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(graphData, null, 2));
+                    const downloadAnchorNode = document.createElement('a');
+                    downloadAnchorNode.setAttribute("href", dataStr);
+                    downloadAnchorNode.setAttribute("download", "group_{group_index}_data.json");
+                    document.body.appendChild(downloadAnchorNode);
+                    downloadAnchorNode.click();
+                    downloadAnchorNode.remove();
+                }};
+
+                // Copy resource name to clipboard and show a transient notification
+                window.copyResourceName = function(name) {{
+                    try {{
+                        navigator.clipboard.writeText(name).then(() => {{
+                            // small ephemeral notification
+                            const note = document.createElement('div');
+                            note.textContent = `Copied: ${{name}}`;
+                            note.style.position = 'fixed';
+                            note.style.right = '20px';
+                            note.style.bottom = '20px';
+                            note.style.background = 'rgba(16, 148, 115, 0.95)';
+                            note.style.color = 'white';
+                            note.style.padding = '8px 12px';
+                            note.style.borderRadius = '6px';
+                            note.style.boxShadow = '0 6px 18px rgba(2,6,23,0.2)';
+                            document.body.appendChild(note);
+                            setTimeout(() => note.remove(), 1600);
+                        }}, (err) => {{
+                            console.warn('Clipboard write failed', err);
+                        }});
+                    }} catch (e) {{
+                        console.warn('Clipboard not available', e);
+                    }}
+                }};
+                
+                // Initialize when D3 is ready
+                if (typeof d3 !== 'undefined') {{
+                    initializeGraph();
+                    }} else {{
+                    // Wait for D3 to load
+                    const checkD3 = setInterval(() => {{
+                        if (typeof d3 !== 'undefined') {{
+                            clearInterval(checkD3);
+                            initializeGraph();
+                        }}
+                    }}, 100);
+                }}
+            </script>
+        </body>
+        </html>
+        """
         
         filename = f"{self.output_dir}/group_{group_index}.html"
         with open(filename, 'w', encoding='utf-8') as f:
-            f.write(html)
+            f.write(page_html)
         return filename
 
     def create_index_page(self, groups):
         """Create a simple index page"""
+        # No debug logging here; index will pull per-group preview HTML if available
         html = f"""
 <!DOCTYPE html>
 <html>
@@ -588,15 +723,53 @@ class EquipmentVisualizer:
         <h1>Equipment Group Visualizations</h1>
         <ul class="group-list">
 """
-        
         for i, group in enumerate(groups):
+            # Prefer preview HTML saved during group page generation
+            preview_html = group.get('_preview_html')
+            if preview_html:
+                # Normalize class names produced by group pages to the index preview classes
+                try:
+                    preview_html = preview_html.replace('class="equipment-preview"', 'class="group-preview"')
+                    preview_html = preview_html.replace('equip-preview-item', 'group-preview-item')
+                    preview_html = preview_html.replace('equip-preview-img', 'group-preview-img')
+                    preview_html = preview_html.replace('equip-preview-name', 'group-preview-name')
+                except Exception:
+                    pass
+            if not preview_html:
+                # Fallback: build minimal preview from group['equipments'] right here
+                preview_items = []
+                for e in group.get('equipments', []):
+                    try:
+                        if isinstance(e, dict):
+                            name = e.get('name', '') or ''
+                            imgs = e.get('image_urls') or {}
+                            img_url = imgs.get('icon') or imgs.get('sd') or imgs.get('small') or imgs.get('thumbnail')
+                        else:
+                            name = getattr(e, 'name', '') or ''
+                            imgs = getattr(e, 'image_urls', None) or {}
+                            if isinstance(imgs, dict):
+                                img_url = imgs.get('icon') or imgs.get('sd') or imgs.get('small') or imgs.get('thumbnail')
+                            else:
+                                img_url = getattr(imgs, 'icon', None)
+                        esc_name = html.escape(str(name), quote=True)
+                        if img_url:
+                            esc_src = html.escape(img_url, quote=True)
+                            img_tag = f'<img class="group-preview-img" src="{esc_src}" alt="{esc_name}">'
+                        else:
+                            img_tag = '<div class="group-preview-fallback" style="width:40px;height:40px;border-radius:6px;background:#e2e8f0;"></div>'
+                        preview_items.append(f'<div class="group-preview-item" title="{esc_name}">{img_tag}<div class="group-preview-name">{esc_name}</div></div>')
+                    except Exception:
+                        continue
+                preview_html = '<div class="group-preview">' + ''.join(preview_items) + '</div>'
+
             html += f"""
             <li class="group-item">
-                <a href="group_{i+1}.html" class="group-link">
-                    Group {i+1} - {len(group['equipments'])} Equipment Items
-                </a>
-                <div class="group-stats">
-                    {group['unique_ingredients_count']} resources • {group['total_items_needed']} total items • {group['sharing_efficiency']:.1%} efficiency
+                <div class="group-row">
+                    <div style="flex:1">
+                        <a href="group_{i+1}.html" class="group-link">Group {i+1} - {len(group['equipments'])} Equipment Items</a>
+                        <div class="group-stats">{group['unique_ingredients_count']} resources • {group['total_items_needed']} total items • {group['sharing_efficiency']:.1%} efficiency</div>
+                    </div>
+                    <div style="flex:0 0 auto">{preview_html}</div>
                 </div>
             </li>
             """
@@ -619,7 +792,7 @@ class EquipmentVisualizer:
                 file_path = os.path.join(self.output_dir, file)
                 if os.path.isfile(file_path):
                     os.remove(file_path)
-        print(f"🎯 Generating professional visualizations for {len(groups)} groups...")
+        print(f"🎯 Generating reports for {len(groups)} groups...")
         
         if not groups:
             print("❌ No groups to visualize.")
@@ -630,7 +803,7 @@ class EquipmentVisualizer:
             try:
                 graph_data = self.prepare_graph_data(group, resource_info_getter)
                 filename = self.create_proper_visualization_html(graph_data, group, i+1)
-                print(f"✅ Created group_{i+1}.html")
+                # print(f"✅ Created group_{i+1}.html")
                 
             except Exception as e:
                 print(f"❌ Error creating visualization for group {i+1}: {e}")
@@ -640,17 +813,12 @@ class EquipmentVisualizer:
         # Create index page
         try:
             self.create_index_page(groups)
-            print("✅ Created index.html")
+            # print("✅ Created homepage index.html")
         except Exception as e:
             print(f"❌ Error creating index page: {e}")
         
-        print(f"\n🎉 Professional visualizations generated!")
+        print(f"\n🎉 Groups visualization generated !")
         print(f"👉 Open http://localhost:8000/index.html in your browser")
-        print(f"📊 Features included:")
-        print(f"   • Interactive force-directed graphs")
-        print(f"   • Complete ingredient tables with quantities")
-        print(f"   • Professional modern design")
-        print(f"   • Drag-and-drop interactivity")
 
 # Simple usage
 def visualize_equipment_groups(groups, resource_info_getter=None, output_dir="visualizations"):

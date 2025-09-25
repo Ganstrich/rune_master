@@ -125,6 +125,8 @@ body {
     box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
 
+.ingredient-img { cursor: pointer; }
+
 .ingredient-table th, .ingredient-table td { font-size: 12px; }
 .ingredient-table { font-size: 12px; }
 
@@ -351,9 +353,11 @@ CSS_INDEX = r"""
     .group-item { 
         background: #f8fafc; 
         margin: 15px 0; 
-        padding: 20px; 
+        padding: 16px; 
         border-radius: 8px; 
         border-left: 4px solid #4f46e5;
+        /* layout: put title on the left and preview on the right */
+        display: block;
     }
     .group-link { 
         text-decoration: none; 
@@ -363,9 +367,47 @@ CSS_INDEX = r"""
         display: block;
         margin-bottom: 8px;
     }
+    .group-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+    .group-link { flex: 1 1 auto; margin: 0; }
     .group-stats { 
         color: #64748b; 
         font-size: 14px;
     }
+    .group-preview {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-top: 10px;
+        overflow-x: auto;
+    }
+
+    /* On narrow screens stack title and preview vertically */
+    @media (max-width: 640px) {
+        .group-row { flex-direction: column; align-items: flex-start; }
+        .group-preview { margin-top: 8px; }
+        .group-link { margin-bottom: 6px; }
+    }
+    .group-preview-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 72px;
+        flex: 0 0 auto;
+        font-size: 12px;
+        color: #334155;
+    }
+    .group-preview-img {
+        width: 40px;
+        height: 40px;
+        object-fit: cover;
+        border-radius: 6px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+    .group-preview-name { margin-top: 6px; max-width: 64px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align:center; }
 </style>
 """

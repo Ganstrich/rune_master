@@ -16,7 +16,7 @@ class Config:
     SORT_ORDER = 'desc'
     MIN_LEVEL = 50
     MAX_LEVEL = 100
-    ITEM_TYPES = CORDONNIER
+    ITEM_TYPES = FORGERON+ SCULPTEUR
     FIELDS = ['recipe']
     MIN_COMMON_ITEMS = 3
     MIN_SIMILARITY = 0.3
