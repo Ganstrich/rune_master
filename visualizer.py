@@ -154,34 +154,81 @@ class EquipmentVisualizer:
         
         return {'nodes': nodes, 'links': links}
 
-    def generate_ingredient_table(self, group):
-        """Generate a proper HTML table with all ingredients"""
+    def generate_ingredient_table(self, group, graph_data=None):
+        """Generate a detailed HTML table with all ingredients.
+
+        Columns: Resource (icon + name), Total Needed, then one column per equipment in the group.
+        Non-applicable resource usages are shown as '-' instead of 0.
+        If `graph_data` is provided, it will be used to source image URLs for resources.
+        """
         if not group.get('total_ingredients'):
             return "<p>No ingredient data available</p>"
-        
+
+        # Build equipment column order and names
+        equipments = group.get('equipments', [])
+        def _equip_name_local(e):
+            try:
+                if isinstance(e, dict):
+                    return e.get('name')
+                return getattr(e, 'name')
+            except Exception:
+                return str(e)
+
+        equipment_names = [_equip_name_local(e) for e in equipments]
+
+        # Build a map from resource ankama_id -> image_url using graph_data nodes if available
+        res_image_map = {}
+        if graph_data and isinstance(graph_data, dict):
+            for n in graph_data.get('nodes', []):
+                try:
+                    if n.get('type') == 'resource':
+                        aid = n.get('ankama_id')
+                        if aid is not None:
+                            res_image_map[int(aid)] = n.get('image_url') or (n.get('resource_info') or {}).get('image_urls', {}).get('icon')
+                except Exception:
+                    continue
+
         # Sort by total quantity
         sorted_ingredients = sorted(
             group['total_ingredients'].items(),
             key=lambda x: x[1]['total_quantity'],
             reverse=True
         )
-        
+
+        # Build rows
         table_rows = []
         for resource_id, ingredient_info in sorted_ingredients:
-            # Create usage details
-            usage_details = []
-            for equip_name, quantity in ingredient_info['quantity_per_equipment'].items():
-                usage_details.append(f"{equip_name}: {quantity}")
-            
+            rid = int(resource_id)
+            total = ingredient_info.get('total_quantity', 0)
+            name = ingredient_info.get('name') or ''
+            img = res_image_map.get(rid)
+
+            # Resource cell: image + small name
+            img_html = ''
+            if img:
+                img_html = f"<img class='ingredient-img' crossorigin=\"anonymous\" src=\"{img}\" alt=\"{name}\">"
+            name_html = f"<div style=\"display:inline-block;vertical-align:middle;\"><div style=\"font-size:12px;font-weight:600;color:#102a43;\">{name}</div></div>"
+            resource_cell = f"<div style=\"display:flex;align-items:center;gap:8px;\">{img_html}{name_html}</div>"
+
+            # Per-equipment quantities
+            per_equip_cells = []
+            qmap = ingredient_info.get('quantity_per_equipment', {})
+            for ename in equipment_names:
+                q = qmap.get(ename)
+                per_equip_cells.append(str(q) if (q is not None and q != 0) else '-')
+
             row = f"""
             <tr>
-                <td><strong>{ingredient_info['name']}</strong></td>
-                <td style="text-align: center; background: #e8f5e8; font-weight: bold;">{ingredient_info['total_quantity']}</td>
-                <td>{'<br>'.join(usage_details)}</td>
+                <td>{resource_cell}</td>
+                <td style=\"text-align: center; background: #e8f5e8; font-weight: bold;\">{total}</td>
+                {''.join([f'<td style=\"text-align:center;\">{c}</td>' for c in per_equip_cells])}
             </tr>
             """
             table_rows.append(row)
-        
+
+        # Header with equipment columns
+        equip_headers = ''.join([f"<th>{ename}</th>" for ename in equipment_names])
+
         return f"""
         <div class="ingredient-table-container">
             <h3>📋 Complete Ingredient List</h3>
@@ -190,7 +237,7 @@ class EquipmentVisualizer:
                     <tr>
                         <th>Resource</th>
                         <th width="100">Total Needed</th>
-                        <th>Used In</th>
+                        {equip_headers}
                     </tr>
                 </thead>
                 <tbody>
@@ -204,26 +251,9 @@ class EquipmentVisualizer:
         """Create a proper interactive visualization with ingredient table"""
         
         graph_data_json = json.dumps(graph_data, indent=2)
-        ingredient_table = self.generate_ingredient_table(group)
-        # Build a simple image gallery (static <img>) so we can quickly verify images load
-        gallery_items = []
-        for n in graph_data.get('nodes', []):
-            img_url = n.get('image_url') or (n.get('resource_info', {}) or {}).get('image_urls', {}).get('icon')
-            if img_url:
-                name = n.get('name') or n.get('id')
-                # add crossorigin to help debugging CORS issues
-                gallery_items.append(f"<div class='gallery-item'><img crossorigin=\"anonymous\" src=\"{img_url}\" alt=\"{name}\" title=\"{name}\"><div class='caption'>{name}</div></div>")
-
-        image_gallery = ''
-        if gallery_items:
-            image_gallery = f"""
-            <div class="image-gallery">
-                <h3>Icons Preview</h3>
-                <div class="gallery-grid">
-                    {''.join(gallery_items)}
-                </div>
-            </div>
-            """
+        ingredient_table = self.generate_ingredient_table(group, graph_data)
+        # The ingredient table is rendered and will be placed above the graph (replacing the previous icons preview)
+        image_gallery = ''  # previously used for icons preview; kept for compatibility in templates
         # Load CSS templates from separate module
         css = CSS_GRAPH
 
@@ -278,7 +308,7 @@ class EquipmentVisualizer:
                 <button class="btn btn-secondary" onclick="toggleLabels()">Toggle Labels</button>
                 <button class="btn" onclick="exportData()">Export Data</button>
             </div>
-            {image_gallery}
+            {ingredient_table}
             
             <div class="layout">
                 <div class="graph-section">
@@ -289,9 +319,6 @@ class EquipmentVisualizer:
                     </div>
                 </div>
                 
-                <div class="ingredient-section">
-                    {ingredient_table}
-                </div>
             </div>
         </div>
     </div>

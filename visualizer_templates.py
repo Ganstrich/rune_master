@@ -66,9 +66,10 @@ body {
 
 .layout {
     display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 30px;
-    margin-top: 20px;
+    /* Single column layout: graph uses full width. Ingredient table is placed above the graph. */
+    grid-template-columns: 1fr;
+    gap: 18px;
+    margin-top: 12px;
 }
 
 .graph-section {
@@ -112,9 +113,20 @@ body {
 }
 
 .ingredient-table td {
-    padding: 12px;
+    padding: 8px 10px;
     border-bottom: 1px solid #e2e8f0;
 }
+
+.ingredient-img {
+    width: 28px;
+    height: 28px;
+    object-fit: cover;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.ingredient-table th, .ingredient-table td { font-size: 12px; }
+.ingredient-table { font-size: 12px; }
 
 .ingredient-table tr:hover {
     background: #f7fafc;
