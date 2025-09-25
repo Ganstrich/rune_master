@@ -14,8 +14,8 @@ class Config:
     GAME = 'dofus3'
     SORT_BY = 'level'
     SORT_ORDER = 'desc'
-    MIN_LEVEL = 100
-    MAX_LEVEL = 150
+    MIN_LEVEL = 50
+    MAX_LEVEL = 100
     ITEM_TYPES = CORDONNIER
     FIELDS = ['recipe']
     MIN_COMMON_ITEMS = 3

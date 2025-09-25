@@ -137,14 +137,14 @@ class DataProcessor:
         print(f"Optimal resolution: {best_resolution:.2f}, Score: {best_score:.3f}")
         return best_partition
         
-    def find_equipment_groups(self, min_shared_ratio=0.2):
+    def find_equipment_groups(self, min_shared_ratio=0.2, resolution_range=(1,10), target_community_size=3):
         """
         Main method to find equipment communities for bulk acquisition
         """
 
         equipment_graph, equipment_resources = self.get_equipement_graph_and_resources(min_shared_ratio)
 
-        partition = self.find_best_partition(equipment_graph, resolution_range=(1, 10), target_community_size=3, equipment_resources=equipment_resources)
+        partition = self.find_best_partition(equipment_graph, resolution_range=resolution_range, target_community_size=target_community_size, equipment_resources=equipment_resources)
         
         # Group equipment nodes by community id
         communities = self._partition_to_communities(partition)
