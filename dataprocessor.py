@@ -100,7 +100,7 @@ class DataProcessor:
             return {}
         return equipment_graph, equipment_resources
     
-    def find_best_partition(self, equipment_graph:nx.Graph, resolution_range=(1, 10), target_community_size=3, equipment_resources=None):
+    def find_best_louvain_partition(self, equipment_graph:nx.Graph, resolution_range=(1, 10, 1), target_community_size=2, equipment_resources=None):
         """
         Find the best partition using modularity optimization
         """
@@ -109,7 +109,7 @@ class DataProcessor:
         best_score = -1
         best_resolution = 1.0
                 
-        for resolution in np.arange(resolution_range[0], resolution_range[1], 1):
+        for resolution in np.arange(resolution_range[0], resolution_range[1], resolution_range[2]):
             partition = community.best_partition(equipment_graph, resolution=resolution, randomize=True)
             
             # Calculate community size distribution
@@ -123,6 +123,9 @@ class DataProcessor:
                 size_diff = abs(len(nodes) - target_community_size)
                 # Higher score for communities closer to target size
                 size_score += 1 / (1 + size_diff)
+                
+            if equipment_resources is None:
+                equipment_resources = self.get_equipment_resources(equipment_graph, equipment_graph.nodes())
             
             # Also consider resource sharing efficiency
             sharing_score = self.calculate_bulk_efficiency(partition, equipment_resources)
@@ -136,21 +139,64 @@ class DataProcessor:
         
         print(f"Optimal resolution: {best_resolution:.2f}, Score: {best_score:.3f}")
         return best_partition
+    
+    def find_best_bilouvain_partition(self, equipment_graph:nx.Graph, resolution=30.0):
+        """
+        Algorithme BiLouvain adapté pour graphes bipartis
+        """
+        equipment_nodes = [n for n in equipment_graph.nodes() if equipment_graph.nodes[n].get('bipartite') == 0]
+        resource_nodes = [n for n in equipment_graph.nodes() if equipment_graph.nodes[n].get('bipartite') == 1]
         
-    def find_equipment_groups(self, min_shared_ratio=0.2, resolution_range=(1,10), target_community_size=3):
+        # Phase 1: Projection pondérée sur les équipements
+        equipment_projection = nx.bipartite.weighted_projected_graph(equipment_graph, equipment_nodes)
+        
+        # Utiliser Louvain standard sur la projection comme point de départ
+            # Utiliser Louvain standard sur la projection comme point de départ
+        import community as community_louvain
+        partition = community_louvain.best_partition(equipment_projection, 
+                                                resolution=resolution, 
+                                                )
+        
+        # Étendre la partition aux ressources (affecter chaque ressource au groupe majoritaire de ses équipements connectés)
+        resource_partition = {}
+        for resource in resource_nodes:
+            connected_equipments = list(equipment_graph.neighbors(resource))
+            if connected_equipments:
+                # Trouver le groupe le plus fréquent parmi les équipements connectés
+                groups = [partition[eq] for eq in connected_equipments]
+                most_common_group = max(set(groups), key=groups.count)
+                resource_partition[resource] = most_common_group
+            else:
+                resource_partition[resource] = -1  # Ressource isolée
+        
+        # Fusionner les partitions
+        full_partition = {**partition, **resource_partition}
+        
+        return full_partition
+        
+    def find_equipment_groups(self, min_shared_ratio=0.2, resolution_range=(1,10, 1), target_community_size=2):
         """
         Main method to find equipment communities for bulk acquisition
         """
 
         equipment_graph, equipment_resources = self.get_equipement_graph_and_resources(min_shared_ratio)
 
-        partition = self.find_best_partition(equipment_graph, resolution_range=resolution_range, target_community_size=target_community_size, equipment_resources=equipment_resources)
+        partition = self.find_best_louvain_partition(equipment_graph, resolution_range=resolution_range, target_community_size=target_community_size, equipment_resources=equipment_resources)
+        
         
         # Group equipment nodes by community id
         communities = self._partition_to_communities(partition)
         
-        groups = self.map_communities(communities, min_group_size=2, max_group_size=8, min_shared_resources=2, efficiency_threshold=0.3)
+        groups = self.map_communities(communities, min_group_size=2, max_group_size=18, min_shared_resources=2, efficiency_threshold=0.15)
     
+        return groups
+    
+    def find_bi_louvain_groups(self,resolution=30):
+        
+        bipartite_graph = self.create_bipartite_graph(self.equipments)
+        partition = self.find_best_bilouvain_partition(bipartite_graph, resolution=resolution)
+        communities = self._partition_to_communities(partition)
+        groups = self.map_communities(communities, min_group_size=2, max_group_size=18, min_shared_resources=2, efficiency_threshold=0.15)
         return groups
     
     def map_communities(self, communities, min_group_size=2, max_group_size=8, min_shared_resources=2, efficiency_threshold=0.3):
@@ -200,8 +246,7 @@ class DataProcessor:
         groups.sort(key=lambda x: x["sharing_efficiency"], reverse=True)
 
         return groups
-        
-    
+         
     def analyze_communities(self, partition, B):
         """Analyze the resulting communities"""
         communities = {}
@@ -238,12 +283,6 @@ class DataProcessor:
                 print(f"  Shared resources: {sorted(shared_resources)}")
         
         return results
-    
-    
-    
-    
-    
-    
     
     def calculate_community_acquisition_efficiency(self, partition, B):
         """
@@ -287,125 +326,6 @@ class DataProcessor:
             }
         
         return community_efficiency
-
-    @classmethod
-    def find_optimized_equipment_groups(
-        cls,
-        equipments,
-        min_shared_resources=2,
-        excluded_resource_ids=None,
-        resolution=1.0,
-        min_group_size=2,
-        max_group_size=8,
-        efficiency_threshold=0.3,
-    ):
-        """
-        Find equipment groups optimized for resource sharing and bulk efficiency,
-        while excluding specific resources from the sharing calculation.
-
-        Args:
-            equipments: List of equipment dictionaries
-            min_shared_resources: Minimum number of non-excluded shared resources required
-            excluded_resource_ids: Set of resource IDs to exclude from sharing calculation
-            resolution: Community detection resolution parameter
-            min_group_size: Minimum equipment per group
-            max_group_size: Maximum equipment per group
-            efficiency_threshold: Minimum resource sharing efficiency required
-        """
-        # Thin wrapper to preserve the original static-like API while
-        # delegating to an instance for the implementation and helpers.
-        processor = cls()
-        return processor._find_optimized_equipment_groups(
-            equipments,
-            min_shared_resources=min_shared_resources,
-            excluded_resource_ids=excluded_resource_ids,
-            resolution=resolution,
-            min_group_size=min_group_size,
-            max_group_size=max_group_size,
-            efficiency_threshold=efficiency_threshold,
-        )
-
-    def _find_optimized_equipment_groups(
-        self,
-        equipments,
-        min_shared_resources=2,
-        excluded_resource_ids=None,
-        resolution=1.0,
-        min_group_size=2,
-        max_group_size=8,
-        efficiency_threshold=0.3,
-    ):
-        """Instance implementation that is split into smaller helpers."""
-        if excluded_resource_ids is None:
-            excluded_resource_ids = set()
-
-        # Normalize equipments to dataclasses
-        equipments_dc = [self._ensure_equipment_dataclass(e) for e in equipments]
-
-        # Create the bipartite graph from the equipment list
-        B = self.create_bipartite_graph(equipments_dc)
-
-        # Identify equipment nodes in the bipartite graph
-        equipment_nodes = {n for n, attr in B.nodes(data=True) if attr.get("bipartite") == 0}
-
-        # Find communities optimized for bulk acquisition
-        partition = self.find_communities_optimized_for_bulk(
-            B,
-            equipment_nodes,
-            target_community_size=3,
-            resolution_range=(0.3, 2.0),
-        )
-        
-
-        # Group equipment nodes by community id
-        communities = self._partition_to_communities(partition)
-
-        # Map equipment ids back to Equipment dataclass instances
-        equipment_dict = {int(e.ankama_id): e for e in equipments_dc}
-        groups = []
-        print(f"Found {len(communities)} communities.")
-
-        for community_id, equip_ids in tqdm(
-            communities.items(),
-            desc="Processing communities",
-            total=len(communities),
-            unit="community",
-            leave=True,
-        ):
-            group_equipments = self._resolve_equipment_objects(equip_ids, equipment_dict)
-
-            # Skip if group doesn't meet size requirements
-            if not (min_group_size <= len(group_equipments) <= max_group_size):
-                continue
-
-            # Calculate shared resources (excluding specified resources)
-            shared_count, total_shared, efficiency = self.calculate_shared_resources(
-                group_equipments, excluded_resource_ids
-            )
-
-            # Calculate total ingredients needed for the group
-            total_ingredients = self.calculate_total_ingredients(group_equipments)
-
-            # Apply multiple filters
-            if shared_count >= min_shared_resources and efficiency >= efficiency_threshold:
-                groups.append(
-                    {
-                        "equipments": group_equipments,
-                        "shared_resources_count": shared_count,
-                        "total_shared_resources": total_shared,
-                        "sharing_efficiency": efficiency,
-                        "total_ingredients": total_ingredients,
-                        "unique_ingredients_count": len(total_ingredients),
-                        "total_items_needed": sum(
-                            ingredient["total_quantity"] for ingredient in total_ingredients.values()
-                        ),
-                    }
-                )
-
-        # Sort groups by sharing efficiency (descending)
-        groups.sort(key=lambda x: x["sharing_efficiency"], reverse=True)
-
-        return groups
 
     def calculate_total_ingredients(self, group_equipments):
         """
@@ -465,44 +385,6 @@ class DataProcessor:
         efficiency = shared_count / total_unique if total_unique > 0 else 0
 
         return shared_count, len(total_shared_resources), efficiency
-
-    def print_optimized_groups(self, groups, excluded_resource_ids=None):
-        """
-        Print optimized groups with resource sharing information.
-        """
-        if excluded_resource_ids is None:
-            excluded_resource_ids = set()
-
-        print("OPTIMIZED EQUIPMENT GROUPS")
-        print("=" * 50)
-        print(f"Excluded resources from sharing calculation: {excluded_resource_ids}")
-        print(f"Total groups found: {len(groups)}")
-        print("\n")
-
-        for i, group in enumerate(groups):
-            print(f"Group {i+1}:")
-            print(f"  - Equipment count: {len(group['equipments'])}")
-            print(f"  - Shared resources (non-excluded): {group['shared_resources_count']}")
-            print(f"  - Total shared resources: {group['total_shared_resources']}")
-            print(f"  - Sharing efficiency: {group['sharing_efficiency']:.2%}")
-
-            # List equipment in this group
-            print("  - Equipment:")
-            for equip in group["equipments"]:
-                name = getattr(equip, "name", None) or str(getattr(equip, "ankama_id", "?"))
-                level = getattr(equip, "level", "?")
-                print(f"      {name} (Level: {level})")
-
-            # List shared resources (excluding specified ones)
-            shared_resources = self.get_shared_resources(group["equipments"], excluded_resource_ids)
-            if shared_resources:
-                print("  - Shared resources (non-excluded):")
-                for resource_id, count in shared_resources.items():
-                    res = self.cache.get_resource_info(resource_id)
-                    resource_name = res.name if res is not None else self.cache.get_resource_name(resource_id)
-                    print(f"      {resource_name} (used by {count} equipment)")
-
-            print()
 
     def get_shared_resources(self, group_equipments, excluded_resource_ids):
         """
@@ -598,7 +480,6 @@ class DataProcessor:
             except Exception:
                 continue
 
-
     def create_enhanced_equipment_graph(self, B, equipment_nodes, min_shared_ratio=0.3):
         """
         Create equipment graph optimized for bulk acquisition
@@ -630,54 +511,6 @@ class DataProcessor:
                     G.add_edge(eq1, eq2, weight=sharing_ratio, shared_count=shared)
         
         return G, equipment_resources
-
-    def find_communities_optimized_for_bulk(self, B, equipment_nodes, target_community_size=3, resolution_range=(0.5, 2.0)):
-        """
-        Find communities optimized for bulk resource acquisition
-        """
-        return
-        # Create enhanced graph
-        G, equipment_resources = self.create_enhanced_equipment_graph(B, equipment_nodes, min_shared_ratio=0.2)
-        
-        # Remove singletons and weak components
-        G_clean = self.remove_weak_candidates(G, min_component_size=2)
-        
-        if len(G_clean.nodes) == 0:
-            print("No meaningful groups found. Try lowering min_shared_ratio.")
-            return {}
-        
-        # Find optimal resolution for target community size
-        best_partition = None
-        best_score = -1
-        best_resolution = 1.0
-        
-        for resolution in np.arange(resolution_range[0], resolution_range[1], 0.1):
-            partition = community.best_partition(G_clean, resolution=resolution)
-            
-            # Calculate community size distribution
-            communities = {}
-            for node, comm_id in partition.items():
-                communities.setdefault(comm_id, []).append(node)
-            
-            # Score based on community sizes (penalize too small/large communities)
-            size_score = 0
-            for comm_id, nodes in communities.items():
-                size_diff = abs(len(nodes) - target_community_size)
-                # Higher score for communities closer to target size
-                size_score += 1 / (1 + size_diff)
-            
-            # Also consider resource sharing efficiency
-            sharing_score = self.calculate_bulk_efficiency(partition, equipment_resources)
-            
-            total_score = 0.6 * sharing_score + 0.4 * size_score
-            
-            if total_score > best_score:
-                best_score = total_score
-                best_partition = partition
-                best_resolution = resolution
-        
-        print(f"Optimal resolution: {best_resolution:.2f}, Score: {best_score:.3f}")
-        return best_partition
 
     def calculate_bulk_efficiency(self, partition, equipment_resources):
         """
