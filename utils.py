@@ -6,7 +6,7 @@ import os
 import json
 import time
 import requests
-from functools import lru_cache
+from models import Resource
 
 class CacheManager:
     _cache = {}
@@ -34,7 +34,7 @@ class CacheManager:
             json.dump(CacheManager._cache, f, indent=2)
 
     @classmethod
-    def get_resource_info(cls, resource_id):
+    def get_resource_info(cls, resource_id)-> Resource:
         """Get resource info from cache or API with caching"""
         resource_id_str = str(resource_id)
         
@@ -43,7 +43,7 @@ class CacheManager:
             cached_data = cls._cache[resource_id_str]
             # If we have the full resource info, return it
             if isinstance(cached_data, dict) and 'name' in cached_data:
-                return cached_data
+                return Resource.from_raw(cached_data)
             # If we only have the name, we need to fetch the full info
             # This shouldn't happen if we always store full info, but just in case
         
@@ -55,7 +55,7 @@ class CacheManager:
                 data = response.json()
                 # Update cache with full resource info
                 cls._cache[resource_id_str] = data
-                return data
+                return Resource.from_raw(data)
         except Exception as e:
             print(f"Error fetching resource {resource_id}: {e}")
         

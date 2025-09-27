@@ -1,6 +1,7 @@
 from config import Config
 import requests
 from utils import CacheManager
+from models import Equipment
 
 cache = CacheManager.load_cache()
 
@@ -27,7 +28,7 @@ class DofusAPI:
                 data = response.json()
                 # Filtrer uniquement les équipements avec une recette
                 unfiltered = data.get('items', [])
-                equipments = [stuff for stuff in unfiltered if 'recipe' in stuff.keys()]
+                equipments = [Equipment.from_raw(stuff) for stuff in unfiltered if 'recipe' in stuff.keys()]
                 print(f"✅ {len(equipments)} équipements récupérés avec succès")
                 return equipments
             else:

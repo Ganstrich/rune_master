@@ -14,9 +14,9 @@ class Config:
     GAME = 'dofus3'
     SORT_BY = 'level'
     SORT_ORDER = 'desc'
-    MIN_LEVEL = 100
-    MAX_LEVEL = 150
-    ITEM_TYPES = CORDONNIER
+    MIN_LEVEL = 50
+    MAX_LEVEL = 100
+    ITEM_TYPES = FORGERON+ SCULPTEUR
     FIELDS = ['recipe']
     MIN_COMMON_ITEMS = 3
     MIN_SIMILARITY = 0.3
