@@ -21,7 +21,199 @@ class DataProcessor:
         self.cache = cache_manager or CacheManager
         self.equipments = equipments
         self.excluded_resources_ids = {15263, 14635} # Pépite et Roses des sables
+    
+    def multi_level_communities(self):
+        """Use multiple grouping strategies at different similarity levels"""
+        from collections import defaultdict
+        import numpy as np
+        
+        equipment_resources = {}
+        for equipment in self.equipments:
+            equipment_resources[equipment.ankama_id] = set(r.resource_id for r in equipment.recipe)
+        
+        equipment_ids = list(equipment_resources.keys())
+        used_equipment = set()
+        communities = defaultdict(list)
+        group_id = 0
+        
+        # Level 1: Very high similarity (>80%)
+        print("Level 1: Finding >80% similarity groups...")
+        for i, eq1 in enumerate(equipment_ids):
+            if eq1 in used_equipment:
+                continue
                 
+            res1 = equipment_resources[eq1]
+            similar_equipment = [eq1]
+            
+            for eq2 in equipment_ids[i+1:]:
+                if eq2 in used_equipment:
+                    continue
+                    
+                res2 = equipment_resources[eq2]
+                intersection = len(res1 & res2)
+                min_size = min(len(res1), len(res2))
+                
+                if min_size > 0 and intersection / min_size > 0.8:
+                    similar_equipment.append(eq2)
+            
+            if len(similar_equipment) > 1:
+                communities[np.int32(group_id)] = similar_equipment
+                used_equipment.update(similar_equipment)
+                group_id += 1
+        
+        # Level 2: Medium similarity (60-80%)
+        print("Level 2: Finding 60-80% similarity groups...")
+        remaining_equipment = set(equipment_ids) - used_equipment
+        
+        for eq1 in list(remaining_equipment):
+            if eq1 in used_equipment:
+                continue
+                
+            res1 = equipment_resources[eq1]
+            similar_equipment = [eq1]
+            
+            for eq2 in list(remaining_equipment):
+                if eq2 == eq1 or eq2 in used_equipment:
+                    continue
+                    
+                res2 = equipment_resources[eq2]
+                intersection = len(res1 & res2)
+                min_size = min(len(res1), len(res2))
+                
+                if min_size > 0 and 0.6 <= intersection / min_size <= 0.8:
+                    similar_equipment.append(eq2)
+            
+            if len(similar_equipment) > 1:
+                communities[np.int32(group_id)] = similar_equipment
+                used_equipment.update(similar_equipment)
+                group_id += 1
+        
+        # Level 3: Remaining equipment as singletons or small groups
+        remaining_equipment = set(equipment_ids) - used_equipment
+        if remaining_equipment:
+            # Group remaining by shared resources (any overlap)
+            resource_to_remaining = defaultdict(list)
+            for eq in remaining_equipment:
+                for resource in equipment_resources[eq]:
+                    resource_to_remaining[resource].append(eq)
+            
+            # Create groups from shared resources
+            used_in_level3 = set()
+            for resource, eq_list in resource_to_remaining.items():
+                if len(eq_list) > 1:
+                    unused_eq = [eq for eq in eq_list if eq not in used_in_level3]
+                    if len(unused_eq) > 1:
+                        communities[np.int32(group_id)] = unused_eq
+                        used_in_level3.update(unused_eq)
+                        group_id += 1
+            
+            # Add any completely ungrouped as singletons
+            completely_ungrouped = remaining_equipment - used_in_level3
+            for eq in completely_ungrouped:
+                communities[np.int32(group_id)] = [eq]
+                group_id += 1
+        
+        print(f"Multi-level grouping: {len(communities)} total groups")
+        
+        # Print group size distribution
+        group_sizes = [len(equip_list) for equip_list in communities.values()]
+        if group_sizes:
+            print(f"Group size - Min: {min(group_sizes)}, Max: {max(group_sizes)}, Avg: {np.mean(group_sizes):.1f}")
+        
+        return communities
+    
+    def multi_level_grouping(self):
+        communities = self.multi_level_communities()
+        groups = self.map_communities_inclusive(communities)
+        
+        return groups
+    
+    def greedy_resource_exploration(self, min_shared_resources=2, exploration_depth=2):
+        """
+        Greedy grouping by exploring resource connections
+        
+        Parameters:
+        - min_shared_resources: Minimum shared resources to consider connection
+        - exploration_depth: How many hops to explore from initial connections
+        """
+        from collections import defaultdict, deque
+        import numpy as np
+        
+        # Build mappings
+        equipment_to_resources = {}
+        resource_to_equipments = defaultdict(list)
+        
+        for equipment in self.equipments:
+            resource_ids = [r.resource_id for r in equipment.recipe]
+            equipment_to_resources[equipment.ankama_id] = set(resource_ids)
+            for rid in resource_ids:
+                resource_to_equipments[rid].append(equipment.ankama_id)
+        
+        print(f"Starting greedy exploration with min_shared={min_shared_resources}, depth={exploration_depth}")
+        
+        communities = defaultdict(list)
+        visited_equipment = set()
+        group_id = 0
+        
+        for start_equipment in equipment_to_resources.keys():
+            if start_equipment in visited_equipment:
+                continue
+                
+            # Start a new group with this equipment
+            current_group = set([start_equipment])
+            queue = deque([start_equipment])
+            visited_equipment.add(start_equipment)
+            
+            # Explore connections
+            for depth in range(exploration_depth):
+                next_level = set()
+                
+                while queue:
+                    current_eq = queue.popleft()
+                    current_resources = equipment_to_resources[current_eq]
+                    
+                    # Find all equipment that share enough resources with current equipment
+                    for resource in current_resources:
+                        for neighbor_eq in resource_to_equipments[resource]:
+                            if neighbor_eq in visited_equipment:
+                                continue
+                                
+                            neighbor_resources = equipment_to_resources[neighbor_eq]
+                            shared_resources = current_resources & neighbor_resources
+                            
+                            if len(shared_resources) >= min_shared_resources:
+                                current_group.add(neighbor_eq)
+                                next_level.add(neighbor_eq)
+                                visited_equipment.add(neighbor_eq)
+                
+                # Add the next level to the queue for further exploration
+                queue.extend(next_level)
+            
+            # Only create group if we found meaningful connections
+            if len(current_group) > 1:
+                communities[np.int32(group_id)] = list(current_group)
+                group_id += 1
+        
+        # Handle any remaining ungrouped equipment
+        all_equipment = set(equipment_to_resources.keys())
+        ungrouped = all_equipment - visited_equipment
+        
+        for eq in ungrouped:
+            communities[np.int32(group_id)] = [eq]
+            group_id += 1
+        
+        print(f"Greedy exploration found {len(communities)} groups")
+        print(f"Group sizes: {[len(g) for g in communities.values()]}")
+        print(f"Total equipment: {len(self.equipments)}, Grouped: {len(visited_equipment)}, Ungrouped: {len(ungrouped)}")
+        
+        return communities
+    
+    def greedy_grouping(self, min_shared_resources=2, exploration_depth=2):
+        communities = self.greedy_resource_exploration(min_shared_resources, exploration_depth)
+        groups = self.map_communities_inclusive(communities)
+        print(f"Greedy grouping produced {len(groups)} final groups")
+        return groups
+    
     def create_bipartite_graph(self, equipments: List[Equipment]) -> nx.Graph:
         """Create a simple bipartite graph from equipment list.
 
@@ -196,7 +388,7 @@ class DataProcessor:
     def find_bi_louvain_groups(self,resolution_range=(1, 10, 1)):
         
         communities = self.get_bi_louvain_communities(resolution_range=resolution_range)
-        groups = self.map_communities(communities, min_group_size=2, max_group_size=len(self.equipments), min_shared_resources=2, efficiency_threshold=0.15)
+        groups = self.map_communities(communities, min_group_size=2, max_group_size=len(self.equipments), min_shared_resources=1, efficiency_threshold=0.15)
         # groups = self.map_communities_inclusive(communities, min_group_size=2, max_group_size=20, min_shared_resources=1, efficiency_threshold=0.2)
         # groups = self.map_communities_adaptive(communities, min_group_size=2, max_group_size=20, dynamic_thresholds=True)
         return groups
@@ -227,10 +419,8 @@ class DataProcessor:
 
             # Calculate total ingredients needed for the group
             total_ingredients = self.calculate_total_ingredients(group_equipments)
-
-            # Apply multiple filters
-            if shared_count >= min_shared_resources and efficiency >= efficiency_threshold:
-                groups.append(
+            
+            groups.append(
                     {
                         "equipments": group_equipments,
                         "shared_resources_count": shared_count,
@@ -243,6 +433,24 @@ class DataProcessor:
                         ),
                     }
                 )
+            
+            
+
+            # # Apply multiple filters
+            # if shared_count >= min_shared_resources and efficiency >= efficiency_threshold:
+            #     groups.append(
+            #         {
+            #             "equipments": group_equipments,
+            #             "shared_resources_count": shared_count,
+            #             "total_shared_resources": total_shared,
+            #             "sharing_efficiency": efficiency,
+            #             "total_ingredients": total_ingredients,
+            #             "unique_ingredients_count": len(total_ingredients),
+            #             "total_items_needed": sum(
+            #                 ingredient["total_quantity"] for ingredient in total_ingredients.values()
+            #             ),
+            #         }
+            #     )
 
         # Sort groups by sharing efficiency (descending)
         groups.sort(key=lambda x: x["sharing_efficiency"], reverse=True)
@@ -321,6 +529,66 @@ class DataProcessor:
         
         return groups
 
+    def walktrap_communities(self, steps=4):
+        """Walktrap: Communities based on short random walks"""
+        import networkx as nx
+        from sklearn.metrics.pairwise import euclidean_distances
+        from scipy.cluster.hierarchy import linkage, fcluster
+        
+        # Build bipartite graph
+        B = nx.Graph()
+        equipment_nodes = []
+        
+        for equipment in self.equipments:
+            equipment_nodes.append(equipment.ankama_id)
+            B.add_node(equipment.ankama_id, bipartite=0)
+            for resource in equipment.recipe:
+                B.add_node(resource.resource_id, bipartite=1)
+                B.add_edge(equipment.ankama_id, resource.resource_id)
+        
+        # Create transition probability matrix for equipment nodes only
+        equipment_ids = [eq.ankama_id for eq in self.equipments]
+        n_equipment = len(equipment_ids)
+        
+        # Build equipment-equipment similarity through random walks
+        similarity_matrix = np.zeros((n_equipment, n_equipment))
+        
+        for i, start_eq in enumerate(equipment_ids):
+            # Probability distribution after k steps starting from start_eq
+            prob_dist = np.zeros(n_equipment)
+            prob_dist[i] = 1.0  # Start at current equipment
+            
+            for step in range(steps):
+                new_dist = np.zeros(n_equipment)
+                for j, current_eq in enumerate(equipment_ids):
+                    if prob_dist[j] > 0:
+                        # Get neighbors (resources) of current equipment
+                        resources = list(B.neighbors(current_eq))
+                        if resources:
+                            # Move to random resource, then to connected equipment
+                            for resource in resources:
+                                equipment_neighbors = list(B.neighbors(resource))
+                                for eq_neighbor in equipment_neighbors:
+                                    if eq_neighbor in equipment_ids:
+                                        idx = equipment_ids.index(eq_neighbor)
+                                        transition_prob = prob_dist[j] / (len(resources) * len(equipment_neighbors))
+                                        new_dist[idx] += transition_prob
+                prob_dist = new_dist
+            
+            similarity_matrix[i] = prob_dist
+        
+        # Convert to distance matrix and cluster hierarchically
+        distance_matrix = 1 - (similarity_matrix / np.max(similarity_matrix))
+        Z = linkage(distance_matrix, method='average')
+        clusters = fcluster(Z, t=0.7, criterion='distance')
+        
+        communities = defaultdict(list)
+        for eq_id, cluster_id in zip(equipment_ids, clusters):
+            communities[cluster_id].append(eq_id)
+        
+        print(f"Walktrap communities: {len(communities)}")
+        return communities
+    
     def _print_retention_stats(self, stats, total_equipments):
         """Afficher les statistiques de rétention détaillées"""
         retention_rate = stats["processed"] / total_equipments if total_equipments > 0 else 0
@@ -333,6 +601,7 @@ class DataProcessor:
             print(f"\nDistribution de l'efficacité:")
             for eff_range, count in sorted(stats["efficiency_ranges"].items()):
                 print(f"  {eff_range}: {count} équipements ({count/total_equipments:.1%})")
+                
     def analyze_communities(self, partition, B):
         """Analyze the resulting communities"""
         communities = {}
