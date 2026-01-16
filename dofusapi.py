@@ -73,3 +73,12 @@ class DofusAPI:
             cache[str(resource_id)] = name
             return name
         return f"Ressource inconnue ({resource_id})"
+    
+    @staticmethod
+    def get_equipment_info(equipment_id):
+        url = f"https://api.dofusdu.de/{Config.GAME}/v1/{Config.LANGUAGE}/items/equipment/{equipment_id}"
+        response = requests.get(url)
+        if response.status_code == 200:
+            data = response.json()
+            return data
+        return None

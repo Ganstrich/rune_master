@@ -9,6 +9,8 @@ from itertools import combinations
 from tqdm.auto import tqdm
 from models import Equipment, Resource, ResourceRequirement
 from typing import List, Tuple, Dict, Any
+from config import Config
+from dofusapi import DofusAPI
 
 
 class DataProcessor:
@@ -18,9 +20,77 @@ class DataProcessor:
     def __init__(self, equipments: List[Equipment] = None, cache_manager=None):
         # Allows injecting a cache manager for testing; default to the
         # project's CacheManager class.
+        self.config = Config
         self.cache = cache_manager or CacheManager
         self.equipments = equipments
-        self.excluded_resources_ids = {15263, 14635} # Pépite et Roses des sables
+        self.excluded_resources_ids = self.config.EXCLUDED_RESOURCES # Pépite et Roses des sables
+        self.dofus_api = DofusAPI()
+        
+    def _compute_equipement_weight(self):
+        """ Compute stats weight for equipment based on their stats """
+        for equipment in self.equipments:
+            equipment_stats = self.dofus_api.get_equipment_info(equipment.ankama_id)
+            
+        
+    
+    def resource_chain_exploration(self, min_chain_length=1):
+        """
+        Find equipment connected by chains of shared resources
+        """
+        from collections import defaultdict, deque
+        import numpy as np
+        
+        # Build mappings
+        equipment_to_resources = {}
+        resource_to_equipments = defaultdict(list)
+        
+        for equipment in self.equipments:
+            resource_ids = [r.resource_id for r in equipment.recipe]
+            equipment_to_resources[equipment.ankama_id] = set(resource_ids)
+            for rid in resource_ids:
+                resource_to_equipments[rid].append(equipment.ankama_id)
+        
+        print(f"Resource chain exploration with min_chain={min_chain_length}")
+        
+        communities = defaultdict(list)
+        visited_equipment = set()
+        group_id = 0
+        
+        for start_equipment in equipment_to_resources.keys():
+            if start_equipment in visited_equipment:
+                continue
+                
+            # Find all equipment connected through resource chains
+            connected_component = set()
+            queue = deque([start_equipment])
+            visited_equipment.add(start_equipment)
+            
+            while queue:
+                current_eq = queue.popleft()
+                connected_component.add(current_eq)
+                
+                # Get all resources for current equipment
+                current_resources = equipment_to_resources[current_eq]
+                
+                # For each resource, get all equipment that use it
+                for resource in current_resources:
+                    for neighbor_eq in resource_to_equipments[resource]:
+                        if neighbor_eq not in visited_equipment:
+                            visited_equipment.add(neighbor_eq)
+                            queue.append(neighbor_eq)
+            
+            # Only keep components that meet the minimum chain length
+            if len(connected_component) >= min_chain_length:
+                communities[np.int32(group_id)] = list(connected_component)
+                group_id += 1
+            else:
+                # Add as individual equipment
+                for eq in connected_component:
+                    communities[np.int32(group_id)] = [eq]
+                    group_id += 1
+        
+        print(f"Resource chains found {len([g for g in communities.values() if len(g) > 1])} multi-equipment groups")
+        return self.map_communities_inclusive(communities)
     
     def multi_level_communities(self):
         """Use multiple grouping strategies at different similarity levels"""

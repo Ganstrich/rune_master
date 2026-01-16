@@ -7,6 +7,7 @@ BIJOUTIER = ['ring', 'amulet']
 TAILLEUR = ['hat', 'cloak']
 FORGERON = ['sword', 'hammer', 'dagger', 'axe', 'shovel', 'lance', 'scythe']
 SCULPTEUR = ['staff', 'wand', 'bow']
+FACONNEUR = ['shield']
 class Config:
     CACHE_FILE = 'resource_cache.json'
     OUTPUT_PREFIX = 'crafting_groups'
@@ -14,9 +15,9 @@ class Config:
     GAME = 'dofus3'
     SORT_BY = 'level'
     SORT_ORDER = 'desc'
-    MIN_LEVEL = 50
-    MAX_LEVEL = 100
-    ITEM_TYPES = CORDONNIER + FORGERON  
+    MIN_LEVEL = 20
+    MAX_LEVEL = 60
+    ITEM_TYPES = CORDONNIER
     FIELDS = ['recipe']
     MIN_COMMON_ITEMS = 3
     MIN_SIMILARITY = 0.3
