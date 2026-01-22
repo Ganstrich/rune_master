@@ -14,6 +14,7 @@ Pipeline:
 import os
 import sys
 import time
+import argparse
 import webbrowser
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
@@ -121,13 +122,23 @@ def _cache_equipment_resources(equipments: List[Equipment], cache: CacheManager,
     print(f"✅ Cached {fetched} new resources in {elapsed:.2f}s")
 
 
-def process_equipment(equipments: List[Equipment], cache_manager=None, api_client=None) -> List[dict]:
+def process_equipment(
+    equipments: List[Equipment],
+    cache_manager=None,
+    api_client=None,
+    grouping_method: str = None,
+    random_group_count: int = None,
+    density_level_ratio: float = None,
+) -> List[dict]:
     """Run RuneMaster processing pipeline.
 
     Args:
         equipments: List of Equipment objects
         cache_manager: Optional CacheManager for resource name lookup
         api_client: Optional API client to fetch resource names
+        grouping_method: Override default grouping method ("deterministic", "random", "hybrid")
+        random_group_count: Override number of random groups to generate
+        density_level_ratio: Override density level ratio filter
 
     Returns:
         List of equipment groups
@@ -135,6 +146,11 @@ def process_equipment(equipments: List[Equipment], cache_manager=None, api_clien
     print("\n" + "="*60)
     print("⚙️  PROCESSING EQUIPMENT")
     print("="*60)
+
+    # Use provided params or fall back to Config defaults
+    grouping_method = grouping_method or Config.GROUPING_METHOD
+    random_group_count = random_group_count or Config.RANDOM_GROUP_COUNT
+    density_level_ratio = density_level_ratio or Config.DENSITY_LEVEL_RATIO
 
     # Create processing configuration
     config = ProcessingConfig(
@@ -149,11 +165,28 @@ def process_equipment(equipments: List[Equipment], cache_manager=None, api_clien
         use_inclusive_mapping=False,
         use_resource_optimizer=False,
         excluded_resource_ids=set(Config.EXCLUDED_RESOURCES or []),
+        # NEW: Filtering and random grouping config
+        use_density_filtering=True,
+        equipment_density_level_ratio=density_level_ratio,
+        fallback_to_unfiltered=Config.FALLBACK_TO_UNFILTERED,
+        min_filtered_pool_size=Config.MIN_FILTERED_POOL_SIZE,
+        grouping_method=grouping_method,
+        random_group_count=random_group_count,
+        random_seed=None,  # Use system randomness for now
     )
 
-    # Run pipeline
+    # Run pipeline based on grouping method
     master = RuneMaster(equipments, config=config, cache_manager=cache_manager, api_client=api_client)
-    groups = master.run_all()
+
+    print(f"\n📋 Grouping Method: {grouping_method.upper()}")
+
+    if grouping_method == "random":
+        groups = master.run_random_grouping()
+    elif grouping_method == "hybrid":
+        groups = master.run_hybrid_grouping()
+    else:  # deterministic (default)
+        groups = master.run_all()
+
     master.print_summary()
 
     return groups
@@ -235,6 +268,30 @@ def start_server(port: int = 8000) -> tuple:
 
 def main():
     """Main entry point."""
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(
+        description="RuneMaster: Equipment Group Discovery & Visualization"
+    )
+    parser.add_argument(
+        "--grouping-method",
+        choices=["deterministic", "random", "hybrid"],
+        default=None,
+        help="Grouping method: deterministic (communities), random (seed-based), or hybrid (both)",
+    )
+    parser.add_argument(
+        "--random-groups",
+        type=int,
+        default=None,
+        help="Number of random groups to generate (default: 10)",
+    )
+    parser.add_argument(
+        "--density-ratio",
+        type=float,
+        default=None,
+        help="Density/level ratio filter (default: 0.15). Equipment must have stat_weight >= ratio * level",
+    )
+    args = parser.parse_args()
+
     print("\n")
     print(" ╔══════════════════════════════════════════════════════╗")
     print(" ║           🔥 RUNEMASTER - GROUP DISCOVERY 🔥        ║")
@@ -252,7 +309,14 @@ def main():
 
     # Step 2: Process equipment
     try:
-        groups = process_equipment(equipments, cache_manager=cache_manager, api_client=api_client)
+        groups = process_equipment(
+            equipments,
+            cache_manager=cache_manager,
+            api_client=api_client,
+            grouping_method=args.grouping_method,
+            random_group_count=args.random_groups,
+            density_level_ratio=args.density_ratio,
+        )
     except Exception as e:
         print(f"\n❌ Failed to process equipment. Exiting.")
         sys.exit(1)

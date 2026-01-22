@@ -25,3 +25,13 @@ class Config:
     MIN_SHARING_PERCENTAGE = 60
     EXCLUDED_RESOURCES = {15263, 14635}   # Example resource IDs
     MIN_EQUIPMENT_DENSITY = 0.0  # Minimum stat_weight per level (0 = no filter)
+    
+    # NEW: Density/Level filtering
+    DENSITY_LEVEL_RATIO = 0.15  # Equipment must have stat_weight >= 15% of level
+    FALLBACK_TO_UNFILTERED = True
+    MIN_FILTERED_POOL_SIZE = 10
+    
+    # NEW: Grouping method selection
+    GROUPING_METHOD = "deterministic"  # "deterministic", "random", "hybrid"
+    RANDOM_GROUP_COUNT = 10
+

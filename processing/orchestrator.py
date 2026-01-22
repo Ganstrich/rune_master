@@ -8,11 +8,13 @@ This is the central hub that coordinates:
 """
 
 from typing import Dict, List, Any, Optional
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from models import Equipment
 from processing.graph_builder import GraphBuilder
 from processing.community_detector import CommunityDetector
 from processing.group_mapper import GroupMapper
+from processing.equipment_filter import EquipmentFilteringStrategy
+from processing.random_group_builder import RandomGroupBuilder
 import networkx as nx
 
 
@@ -39,12 +41,18 @@ class ProcessingConfig:
     use_resource_optimizer: bool = True
 
     # Excluded resources (won't count toward sharing efficiency)
-    excluded_resource_ids: set = None
+    excluded_resource_ids: set = field(default_factory=set)
 
-    def __post_init__(self):
-        """Initialize default values."""
-        if self.excluded_resource_ids is None:
-            self.excluded_resource_ids = set()
+    # NEW: Density/Level filtering
+    use_density_filtering: bool = True
+    equipment_density_level_ratio: float = 0.15
+    fallback_to_unfiltered: bool = True
+    min_filtered_pool_size: int = 10
+
+    # NEW: Random/Hybrid grouping
+    grouping_method: str = "deterministic"  # "deterministic", "random", "hybrid"
+    random_group_count: int = 10
+    random_seed: Optional[int] = None
 
 
 class RuneMaster:
@@ -117,6 +125,143 @@ class RuneMaster:
         print("="*60 + "\n")
 
         return self.groups
+
+    def run_random_grouping(self) -> List[Dict[str, Any]]:
+        """Run random grouping pipeline with optional density filtering.
+
+        Pipeline:
+            1. Apply density/level ratio filtering (if enabled)
+            2. Generate random groups from filtered (or fallback) pool
+            3. Return results
+
+        Returns:
+            List of equipment groups discovered via random selection
+
+        Note: Does NOT use graph or community detection - pure random selection.
+        """
+        print("\n" + "="*60)
+        print("🚀 RuneMaster: Random Grouping Pipeline")
+        print("="*60)
+
+        # Step 1: Get active pool (possibly filtered)
+        print("\n[1/2] 📊 Applying Equipment Filtering...")
+        active_pool, was_filtered = EquipmentFilteringStrategy.get_active_pool(
+            self.equipments,
+            use_filtering=self.config.use_density_filtering,
+            density_ratio=self.config.equipment_density_level_ratio,
+            fallback_to_unfiltered=self.config.fallback_to_unfiltered,
+            min_pool_size=self.config.min_filtered_pool_size,
+        )
+
+        filter_status = "filtered" if was_filtered else "unfiltered"
+        print(f"      Active pool: {len(active_pool)} equipment ({filter_status})")
+
+        # Step 2: Build random groups
+        print(f"\n[2/2] 🎲 Generating {self.config.random_group_count} Random Groups...")
+        builder = RandomGroupBuilder(
+            self.equipments,
+            excluded_resource_ids=self.config.excluded_resource_ids,
+            seed=self.config.random_seed,
+            cache_manager=self.cache_manager,
+        )
+
+        self.groups = builder.build_multiple_random_groups(
+            active_pool,
+            count=self.config.random_group_count,
+            min_shared_resources=self.config.group_min_shared_resources,
+            max_group_size=self.config.group_max_size,
+            avoid_seed_duplicates=True,
+        )
+
+        print("\n" + "="*60)
+        print(f"✅ Pipeline Complete: {len(self.groups)} random groups generated")
+        print("="*60 + "\n")
+
+        return self.groups
+
+    def run_hybrid_grouping(self) -> List[Dict[str, Any]]:
+        """Run hybrid grouping: combine deterministic and random methods.
+
+        Pipeline:
+            1. Run deterministic grouping (communities)
+            2. If few groups, supplement with random groups
+            3. Deduplicate and merge results
+
+        Returns:
+            Combined list of deterministic + random groups
+
+        Note: Deterministic groups are prioritized (listed first).
+        """
+        print("\n" + "="*60)
+        print("🚀 RuneMaster: Hybrid Grouping Pipeline")
+        print("="*60)
+
+        # Step 1: Run deterministic
+        print("\n[1/3] 🔍 Deterministic Detection (Communities)...")
+        det_groups = self.run_all()
+        det_count = len(det_groups)
+
+        # Step 2: Run random to supplement if needed
+        min_threshold = max(5, int(self.config.random_group_count * 0.5))
+        print(f"\n[2/3] 📊 Checking if supplementation needed (threshold: {min_threshold})...")
+
+        if det_count < min_threshold:
+            print(
+                f"      Deterministic produced {det_count} groups (< {min_threshold}). "
+                f"Generating {self.config.random_group_count} random groups to supplement..."
+            )
+
+            # Get active pool for random
+            active_pool, was_filtered = EquipmentFilteringStrategy.get_active_pool(
+                self.equipments,
+                use_filtering=self.config.use_density_filtering,
+                density_ratio=self.config.equipment_density_level_ratio,
+                fallback_to_unfiltered=self.config.fallback_to_unfiltered,
+                min_pool_size=self.config.min_filtered_pool_size,
+            )
+
+            builder = RandomGroupBuilder(
+                self.equipments,
+                excluded_resource_ids=self.config.excluded_resource_ids,
+                seed=self.config.random_seed,
+                cache_manager=self.cache_manager,
+            )
+
+            rand_groups = builder.build_multiple_random_groups(
+                active_pool,
+                count=self.config.random_group_count,
+                min_shared_resources=self.config.group_min_shared_resources,
+                max_group_size=self.config.group_max_size,
+                avoid_seed_duplicates=True,
+            )
+
+            print(f"      Generated {len(rand_groups)} random groups")
+        else:
+            print(f"      Deterministic groups sufficient ({det_count}). Skipping random.")
+            rand_groups = []
+
+        # Step 3: Merge (deterministic first, then random)
+        print("\n[3/3] 🔗 Merging Results...")
+        self.groups = det_groups + rand_groups
+
+        print(
+            f"      Merged: {det_count} deterministic + {len(rand_groups)} random = "
+            f"{len(self.groups)} total groups"
+        )
+
+        print("\n" + "="*60)
+        print(f"✅ Pipeline Complete: {len(self.groups)} hybrid groups generated")
+        print("="*60 + "\n")
+
+        return self.groups
+
+    def get_grouping_method(self) -> str:
+        """Get the active grouping method.
+
+        Returns:
+            One of: "deterministic", "random", "hybrid"
+        """
+        return self.config.grouping_method
 
     def build_graph(self) -> tuple:
         """Step 1: Build equipment similarity graph.
