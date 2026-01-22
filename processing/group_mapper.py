@@ -66,6 +66,27 @@ class GroupMapper:
 
         return shared_count, len(total_shared_resources), efficiency
 
+    def calculate_average_density(
+        self,
+        group_equipments: List[Equipment]
+    ) -> float:
+        """Calculate average density of equipment in the group.
+
+        Density = sum of stat weights for all effects in an equipment
+        Average Density = mean stat_weight across all equipment in group
+
+        Args:
+            group_equipments: List of Equipment objects
+
+        Returns:
+            Average stat_weight across all equipment in the group
+        """
+        if not group_equipments:
+            return 0.0
+
+        total_weight = sum((eq.stat_weight or 0) for eq in group_equipments)
+        return total_weight / len(group_equipments)
+
     def calculate_total_ingredients(
         self,
         group_equipments: List[Equipment],
@@ -170,18 +191,20 @@ class GroupMapper:
             if efficiency < efficiency_threshold:
                 continue
 
-            # Calculate ingredients
+            # Calculate ingredients and density
             total_ingredients = self.calculate_total_ingredients(
                 group_equipments,
                 cache_manager=cache_manager,
                 api_client=api_client
             )
+            average_density = self.calculate_average_density(group_equipments)
 
             groups.append({
                 "equipments": group_equipments,
                 "shared_resources_count": shared_count,
                 "total_shared_resources": total_shared,
                 "sharing_efficiency": efficiency,
+                "average_density": average_density,
                 "total_ingredients": total_ingredients,
                 "unique_ingredients_count": len(total_ingredients),
                 "total_items_needed": sum(
@@ -300,18 +323,20 @@ class GroupMapper:
             stats["excluded_by_efficiency"] += len(group_equipments)
             return
 
-        # Calculate ingredients
+        # Calculate ingredients and density
         total_ingredients = self.calculate_total_ingredients(
             group_equipments,
             cache_manager=cache_manager,
             api_client=api_client
         )
+        average_density = self.calculate_average_density(group_equipments)
 
         groups.append({
             "equipments": group_equipments,
             "shared_resources_count": shared_count,
             "total_shared_resources": total_shared,
             "sharing_efficiency": efficiency,
+            "average_density": average_density,
             "total_ingredients": total_ingredients,
             "unique_ingredients_count": len(total_ingredients),
             "total_items_needed": sum(

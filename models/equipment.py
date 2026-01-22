@@ -29,8 +29,25 @@ class EquipmentStat:
     
     @property
     def stat_name(self) -> str:
-        """Get the stat name."""
-        return self.stat_type['name']
+        """Get the stat name, normalized to match STAT_WEIGHTS keys.
+        
+        Handles:
+        - Case normalization (e.g., "eau" vs "Eau")
+        - Singular/plural fixes (e.g., "Dommage" vs "Dommages")
+        """
+        raw_name = self.stat_type['name']
+        
+        # Normalization map for common API mismatches
+        normalizations = {
+            'Dommage Poussée': 'Dommages poussée',
+            '% Résistance Eau': '% Résistance eau',
+            '% Résistance Feu': '% Résistance feu',
+            '% Résistance Air': '% Résistance air',
+            '% Résistance Terre': '% Résistance terre',
+            '% Résistance Neutre': '% Résistance neutre',
+        }
+        
+        return normalizations.get(raw_name, raw_name)
     
     @property
     def stat_id(self) -> int:

@@ -14,6 +14,7 @@ from models import Equipment, EquipmentStat, Resource, ResourceRequirement
 from models import StatType, ItemType, ImageURLs
 from .api_client import DofusAPIClient
 from .cache_manager import CacheManager
+from processing.stat_calculator import calculate_equipment_weight
 
 
 class EquipmentLoader:
@@ -142,19 +143,28 @@ class EquipmentLoader:
     
     def from_raw_batch(self, raw_list: List[Dict[str, Any]]) -> List[Equipment]:
         """Convert multiple raw equipment dicts to Equipment list.
-        
+
         Skips invalid entries with warning.
-        
+        Filters equipment by minimum stat weight (density) if configured.
+
         Args:
             raw_list: List of raw equipment dicts
             
         Returns:
             List of valid Equipment objects
         """
+        from config import Config
+        
         equipments = []
         for raw in raw_list:
             try:
                 eq = self.from_raw_api(raw)
+                
+                # Filter by minimum density (stat_weight) if threshold is set
+                if Config.MIN_EQUIPMENT_DENSITY > 0:
+                    if (eq.stat_weight or 0) < Config.MIN_EQUIPMENT_DENSITY:
+                        continue
+                
                 equipments.append(eq)
             except (ValueError, KeyError) as e:
                 print(f"⚠️  Skipping invalid equipment: {e}")
@@ -165,7 +175,7 @@ class EquipmentLoader:
     def compute_stat_weight(equipment: Equipment) -> float:
         """Compute importance weight for equipment based on its effects.
         
-        Uses StatWeight enum to score each stat.
+        Uses the stat weight table from stat_calculator module.
         
         Args:
             equipment: Equipment instance with effects
@@ -173,27 +183,7 @@ class EquipmentLoader:
         Returns:
             Total weight score (higher = better)
         """
-        from models import StatWeight
-        
-        if not equipment.effects:
-            return 0.0
-        
-        total_weight = 0.0
-        for effect in equipment.effects:
-            stat_name = effect.stat_name
-            
-            # Get weight for this stat type
-            try:
-                weight = StatWeight[stat_name].value
-            except KeyError:
-                weight = StatWeight.get_weight(stat_name)
-            
-            # Weight increases with average value range
-            avg_value = (effect.int_minimum + effect.int_maximum) / 2.0
-            contribution = weight * max(1.0, avg_value)
-            total_weight += contribution
-        
-        return round(total_weight, 2)
+        return calculate_equipment_weight(equipment)
     
     def get_effects_cached(self, equipment_id: int) -> Optional[List[EquipmentStat]]:
         """Get equipment effects from cache or API.

@@ -13,7 +13,6 @@ from models import Equipment
 from processing.graph_builder import GraphBuilder
 from processing.community_detector import CommunityDetector
 from processing.group_mapper import GroupMapper
-from processing.stat_calculator import calculate_equipment_weight
 import networkx as nx
 
 
@@ -86,21 +85,19 @@ class RuneMaster:
         """Run complete processing pipeline.
 
         Pipeline:
-            1. Calculate equipment stat weights
-            2. Build equipment graph
-            3. Detect communities
-            4. Map to groups
-            5. (Optional) Optimize groups
+            1. Build equipment graph
+            2. Detect communities
+            3. Map to groups
+            4. (Optional) Optimize groups
 
         Returns:
             List of equipment groups with ingredients and efficiency metrics
+            
+        Note: Equipment stat weights are calculated during loading (EquipmentLoader)
         """
         print("\n" + "="*60)
         print("🚀 RuneMaster: Starting Processing Pipeline")
         print("="*60)
-
-        # Step 0: Calculate stat weights
-        self.calculate_stat_weights()
 
         # Step 1: Build graph
         self.build_graph()
@@ -120,19 +117,6 @@ class RuneMaster:
         print("="*60 + "\n")
 
         return self.groups
-
-    def calculate_stat_weights(self) -> None:
-        """Step 0: Calculate equipment stat weights.
-
-        Calculates and assigns stat_weight to each equipment based on
-        its effects and the static STAT_WEIGHTS table.
-        """
-        print("\n[0/5] ⚖️  Calculating Equipment Stat Weights...")
-
-        for equipment in self.equipments:
-            equipment.stat_weight = calculate_equipment_weight(equipment)
-
-        print(f"      ✓ Calculated weights for {len(self.equipments)} equipments")
 
     def build_graph(self) -> tuple:
         """Step 1: Build equipment similarity graph.

@@ -339,6 +339,7 @@ class HTMLGenerator:
         unique_ingredients = len(ingredients)
         total_items = sum(i.get('total_quantity', 0) for i in ingredients.values())
         efficiency = group.get('sharing_efficiency', 0)
+        average_density = group.get('average_density', 0)
         
         return f"""
         <div class="group-stats">
@@ -357,6 +358,10 @@ class HTMLGenerator:
             <div class="group-stat">
                 <div class="group-stat-label">Efficiency</div>
                 <div class="group-stat-value">{efficiency:.1%}</div>
+            </div>
+            <div class="group-stat">
+                <div class="group-stat-label">Avg Density</div>
+                <div class="group-stat-value">{average_density:.2f}</div>
             </div>
         </div>
         """
@@ -557,6 +562,7 @@ class HTMLGenerator:
         total_equipments = sum(len(g.get('equipments', [])) for g in groups)
         total_groups = len(groups)
         avg_efficiency = sum(g.get('sharing_efficiency', 0) for g in groups) / len(groups) if groups else 0
+        avg_density = sum(g.get('average_density', 0) for g in groups) / len(groups) if groups else 0
         
         return f"""
         <div class="index-summary">
@@ -571,6 +577,10 @@ class HTMLGenerator:
             <div class="summary-card">
                 <div class="summary-label">Average Efficiency</div>
                 <div class="summary-value">{avg_efficiency:.1%}</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Average Density</div>
+                <div class="summary-value">{avg_density:.2f}</div>
             </div>
         </div>
         """
