@@ -15,9 +15,9 @@ class Config:
     GAME = 'dofus3'
     SORT_BY = 'level'
     SORT_ORDER = 'desc'
-    MIN_LEVEL = 20
-    MAX_LEVEL = 60
-    ITEM_TYPES = CORDONNIER
+    MIN_LEVEL = 50
+    MAX_LEVEL = 100
+    ITEM_TYPES = TAILLEUR +  FACONNEUR
     FIELDS = ['recipe', 'effects']
     MIN_COMMON_ITEMS = 3
     MIN_SIMILARITY = 0.3
@@ -27,11 +27,11 @@ class Config:
     MIN_EQUIPMENT_DENSITY = 0.0  # Minimum stat_weight per level (0 = no filter)
     
     # NEW: Density/Level filtering
-    DENSITY_LEVEL_RATIO = 0.15  # Equipment must have stat_weight >= 15% of level
-    FALLBACK_TO_UNFILTERED = True
+    DENSITY_LEVEL_RATIO = 3
+    FALLBACK_TO_UNFILTERED = False
     MIN_FILTERED_POOL_SIZE = 10
     
     # NEW: Grouping method selection
-    GROUPING_METHOD = "deterministic"  # "deterministic", "random", "hybrid"
-    RANDOM_GROUP_COUNT = 10
+    GROUPING_METHOD = "hybrid"  # "deterministic", "random", "hybrid"
+    RANDOM_GROUP_COUNT = 50
 

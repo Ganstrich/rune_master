@@ -33,21 +33,55 @@ class EquipmentStat:
         
         Handles:
         - Case normalization (e.g., "eau" vs "Eau")
-        - Singular/plural fixes (e.g., "Dommage" vs "Dommages")
+        - Singular/plural variations (e.g., "Dommage" vs "Dommages")
+        - Common API inconsistencies
+        
+        Uses fuzzy matching to find the best STAT_WEIGHTS key.
         """
+        from processing.stat_calculator import STAT_WEIGHTS
+        
         raw_name = self.stat_type['name']
         
-        # Normalization map for common API mismatches
-        normalizations = {
-            'Dommage Poussée': 'Dommages poussée',
-            '% Résistance Eau': '% Résistance eau',
-            '% Résistance Feu': '% Résistance feu',
-            '% Résistance Air': '% Résistance air',
-            '% Résistance Terre': '% Résistance terre',
-            '% Résistance Neutre': '% Résistance neutre',
-        }
+        # First, try exact match (most common case)
+        if raw_name in STAT_WEIGHTS:
+            return raw_name
         
-        return normalizations.get(raw_name, raw_name)
+        # Try case-insensitive exact match
+        for key in STAT_WEIGHTS.keys():
+            if key.lower() == raw_name.lower():
+                return key
+        
+        # Try fuzzy matching: normalize singular/plural
+        # Convert to a canonical form for comparison
+        def normalize_for_matching(s: str) -> str:
+            """Normalize string for fuzzy matching."""
+            # Remove common plural endings
+            s_lower = s.lower()
+            
+            # Try removing 's' at the end (works for most French plurals)
+            variants = [s_lower]
+            if s_lower.endswith('s'):
+                variants.append(s_lower[:-1])  # Remove trailing 's'
+            if s_lower.endswith('es'):
+                variants.append(s_lower[:-2])  # Remove 'es'
+            
+            return variants
+        
+        raw_variants = normalize_for_matching(raw_name)
+        
+        # Find matching key by checking if any variant matches any key variant
+        for key in STAT_WEIGHTS.keys():
+            key_variants = normalize_for_matching(key)
+            
+            # Check if any variant of raw_name matches any variant of key
+            for raw_var in raw_variants:
+                for key_var in key_variants:
+                    if raw_var == key_var:
+                        return key  # Return the canonical STAT_WEIGHTS key
+        
+        # If no fuzzy match found, return original (will cause KeyError in calculator)
+        # This preserves the current behavior for debugging unknown stats
+        return raw_name
     
     @property
     def stat_id(self) -> int:

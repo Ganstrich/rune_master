@@ -55,6 +55,20 @@ class HTMLGenerator:
         return html.escape(str(text), quote=True)
     
     @staticmethod
+    def _escape_attr(text: Any) -> str:
+        """Escape HTML for use in attributes only.
+        
+        Args:
+            text: Text to escape
+            
+        Returns:
+            HTML-safe escaped string for attributes
+        """
+        if text is None:
+            return ""
+        return html.escape(str(text), quote=True)
+    
+    @staticmethod
     def _extract_equipment_id(equipment: Any) -> int:
         """Extract ankama_id from Equipment (dataclass or dict).
         
@@ -204,7 +218,7 @@ class HTMLGenerator:
         
         items_html = []
         for equipment in equipments:
-            name = self._escape_html(self._extract_equipment_name(equipment))
+            name = self._extract_equipment_name(equipment)
             level = self._extract_equipment_level(equipment)
             image_url = self._extract_image_url(equipment)
             
@@ -277,12 +291,14 @@ class HTMLGenerator:
         rows_html = []
         for resource_id, info in sorted_ingredients:
             resource_id = int(resource_id)
-            name = self._escape_html(info.get('name', f'Resource {resource_id}'))
+            name_raw = info.get('name', f'Resource {resource_id}')
             total = info.get('total_quantity', 0)
             qty_per_eq = info.get('quantity_per_equipment', {})
             
             # Resource cell with icon + name
-            resource_cell = f'<div class="ingredient-resource-name" data-copy-text="{self._escape_html(name)}">{name}</div>'
+            # For display: use raw name (browsers will render correctly)
+            # For attribute: escape for safety
+            resource_cell = f'<div class="ingredient-resource-name" data-copy-text="{self._escape_attr(name_raw)}">{name_raw}</div>'
             
             # Per-equipment quantities
             per_eq_cells = []
