@@ -10,7 +10,7 @@ serve:
 
 # Run the pipeline without starting the server
 compute:
-	python3 main.py --no-serve --committee --tune
+	python3 main.py --no-serve --grouping-method committee --tune
 
 # Run with parameter tuning
 tune:

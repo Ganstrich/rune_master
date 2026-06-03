@@ -11,13 +11,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openssh-client \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies (layer-cached — only re-runs when requirements.txt changes)
+# Install uv (fast Python package installer & project manager)
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+# Install Python dependencies with uv (layer-cached — only re-runs when requirements.txt changes)
 COPY requirements.txt /tmp/requirements.txt
-RUN pip install --no-cache-dir -r /tmp/requirements.txt
+RUN uv pip install --no-cache-dir -r /tmp/requirements.txt
 
 # Install aider-chat globally so it's available out of the box
 # (pinned version for reproducibility; update as needed)
-RUN pip install --no-cache-dir aider-chat==0.74.2
+RUN uv pip install --no-cache-dir aider-chat==0.74.2
 
 # Create non-root user (VS Code devcontainers expect 'vscode')
 RUN useradd -m -s /bin/bash vscode \
