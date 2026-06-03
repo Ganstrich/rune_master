@@ -18,7 +18,6 @@ from .style_templates import (
     get_index_css,
     get_javascript_utils
 )
-from .graph_generator import create_graph_html
 
 
 class HTMLGenerator:
@@ -417,9 +416,6 @@ class HTMLGenerator:
         stats = self._build_stats(group)
         equipment_gallery = self._build_equipment_gallery(group)
         
-        # Build Graph Data
-        graph_data = self._build_graph_data(group)
-        graph_html = create_graph_html(graph_data)
         
         # Build ingredient table
         ingredient_table = self._build_ingredient_table(group)
@@ -448,7 +444,6 @@ class HTMLGenerator:
     
     <main id="main" class="container">
         {equipment_gallery}
-        {graph_html}
         {ingredient_table}
     </main>
     

@@ -17,7 +17,7 @@ class Config:
     SORT_ORDER = 'desc'
     MIN_LEVEL = 5
     MAX_LEVEL = 100
-    ITEM_TYPES = TAILLEUR + FORGERON + SCULPTEUR 
+    ITEM_TYPES = BIJOUTIER
     FIELDS = ['recipe', 'effects']
     MIN_COMMON_ITEMS = 3
     MIN_SIMILARITY = 0.3
