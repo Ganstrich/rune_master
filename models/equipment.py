@@ -139,6 +139,16 @@ class Equipment:
         if self.level < 0:
             raise ValueError(f"level must be positive, got {self.level}")
     
+    def __hash__(self) -> int:
+        """Make Equipment hashable by its unique ID."""
+        return hash(self.ankama_id)
+
+    def __eq__(self, other: Any) -> bool:
+        """Equality based on unique ID."""
+        if not isinstance(other, Equipment):
+            return False
+        return self.ankama_id == other.ankama_id
+
     def total_pods_needed(self) -> int:
         """Calculate total pods needed for this equipment's recipe.
         

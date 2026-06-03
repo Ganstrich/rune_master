@@ -140,6 +140,52 @@ class GroupMapper:
 
         return dict(ingredients)
 
+    def create_group(
+        self,
+        group_equipments: List[Equipment],
+        cache_manager=None,
+        api_client=None
+    ) -> Dict[str, Any]:
+        """Create a formatted group dictionary from a list of Equipment objects.
+        
+        Args:
+            group_equipments: List of Equipment dataclasses
+            cache_manager: Optional CacheManager for resource names
+            api_client: Optional API client
+            
+        Returns:
+            Dictionary with all group metadata (efficiency, ingredients, etc.)
+        """
+        if not group_equipments:
+            return {}
+
+        # Calculate metrics
+        shared_count, total_shared, efficiency = self.calculate_shared_resources(
+            group_equipments
+        )
+
+        # Calculate ingredients and density
+        total_ingredients = self.calculate_total_ingredients(
+            group_equipments,
+            cache_manager=cache_manager,
+            api_client=api_client
+        )
+        average_density = self.calculate_average_density(group_equipments)
+
+        return {
+            "equipments": group_equipments,
+            "shared_resources_count": shared_count,
+            "total_shared_resources": total_shared,
+            "sharing_efficiency": efficiency,
+            "average_density": average_density,
+            "total_ingredients": total_ingredients,
+            "unique_ingredients_count": len(total_ingredients),
+            "total_items_needed": sum(
+                ing["total_quantity"] for ing in total_ingredients.values()
+            ),
+            "group_size": len(group_equipments),
+        }
+
     def map_communities(
         self,
         communities: Dict[int, List[int]],

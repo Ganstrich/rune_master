@@ -175,6 +175,11 @@ class RandomGroupBuilder:
         # Build group
         group_equipments = [seed_equipment] + companions
 
+        # ENFORCE MINIMUM SIZE: A group must have at least 2 items
+        if len(group_equipments) < 2:
+            logger.debug(f"Rejecting group for {seed_equipment.name}: no companions found")
+            return None
+
         # Calculate all metrics
         shared_resources = self._calculate_shared_resources(group_equipments)
         total_ingredients = self._aggregate_resources(group_equipments)
