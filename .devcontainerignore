@@ -1,0 +1,24 @@
+# Virtual environment (container has its own)
+venv/
+
+# Python caches
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Generated output (rebuilt inside container)
+visualizations/
+reports/
+demo_visualizations/
+test_visualizations/
+
+# Data cache (rebuilt from API)
+resource_cache.json
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
