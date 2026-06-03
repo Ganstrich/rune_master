@@ -1,24 +1,48 @@
-# Virtual environment (container has its own)
-venv/
+# =============================================================================
+# .devcontainerignore
+# Exclude files from devcontainer build context for faster builds
+# =============================================================================
 
-# Python caches
-__pycache__/
+# Version control
+.git
+.gitignore
+
+# Python artifacts
+__pycache__
 *.pyc
-.pytest_cache/
+*.pyo
+*.egg-info
+.eggs
+dist
+build
+.venv
+venv
 
-# Generated output (rebuilt inside container)
-visualizations/
-reports/
-demo_visualizations/
-test_visualizations/
+# IDE files
+.vscode
+.idea
+*.swp
+*.swo
 
-# Data cache (rebuilt from API)
-resource_cache.json
-
-# IDE
-.vscode/
-.idea/
-
-# OS
+# OS files
 .DS_Store
 Thumbs.db
+
+# Documentation
+*.md
+LICENSE
+
+# Test artifacts
+.pytest_cache
+htmlcov
+.coverage
+
+# Output files
+output
+*.json
+!requirements.txt
+
+# Temporary files
+tmp
+temp
+*.tmp
