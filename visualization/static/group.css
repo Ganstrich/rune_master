@@ -1,0 +1,376 @@
+/* ========================================================================
+   HEADER - Group details
+   ======================================================================== */
+.group-header {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+    color: white;
+    padding: var(--spacing-2xl) var(--spacing-xl);
+    margin-bottom: var(--spacing-2xl);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.group-header h1 {
+    color: white;
+    margin-bottom: var(--spacing-md);
+}
+
+.group-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: var(--spacing-lg);
+    margin-top: var(--spacing-lg);
+}
+
+.group-stat {
+    background: rgba(255, 255, 255, 0.1);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-xl);
+    backdrop-filter: blur(12px);
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.group-stat-label {
+    font-size: 0.875rem;
+    opacity: 0.9;
+    margin-bottom: var(--spacing-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+
+.group-stat-value {
+    font-size: 2rem;
+    font-weight: 800;
+    font-family: 'Outfit', sans-serif;
+}
+
+/* ========================================================================
+   EQUIPMENT PREVIEW GALLERY
+   ======================================================================== */
+.equipment-gallery {
+    padding: var(--spacing-xl);
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    margin-bottom: var(--spacing-lg);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-md);
+}
+
+.equipment-gallery h3 {
+    margin-bottom: var(--spacing-lg);
+    color: var(--text-main);
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: var(--spacing-sm);
+}
+
+.equipment-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.equipment-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--spacing-md);
+    background: var(--color-gray-50);
+    border-radius: var(--radius-lg);
+    transition: all var(--transition-base);
+    border: 1px solid var(--border-color);
+}
+
+.equipment-item:hover {
+    background: var(--bg-card);
+    box-shadow: var(--shadow-lg), var(--shadow-glow);
+    transform: translateY(-4px);
+    border-color: var(--color-primary-light);
+}
+
+.equipment-item-image {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    margin-bottom: var(--spacing-sm);
+    transition: transform var(--transition-base);
+}
+
+.equipment-item:hover .equipment-item-image {
+    transform: scale(1.1);
+}
+
+.equipment-item-fallback {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, var(--color-primary-light), var(--color-accent-light));
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2rem;
+    margin-bottom: var(--spacing-sm);
+}
+
+.equipment-item-name {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-align: center;
+    color: var(--text-main);
+    line-height: 1.3;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    word-break: break-word;
+}
+
+.equipment-item-name:hover {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+.equipment-item-name.copied {
+    background-color: var(--color-success);
+    color: white;
+}
+
+.equipment-item-weight {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    margin-top: var(--spacing-xs);
+    background-color: rgba(99, 102, 241, 0.1);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(99, 102, 241, 0.15);
+}
+
+/* ========================================================================
+   GRAPH CONTAINER
+   ======================================================================== */
+.graph-container {
+    padding: var(--spacing-xl);
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    margin-bottom: var(--spacing-lg);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-md);
+}
+
+.graph-container h3 {
+    margin-bottom: var(--spacing-sm);
+    color: var(--text-main);
+}
+
+#graph {
+    width: 100%;
+    height: 600px;
+}
+
+/* ========================================================================
+   INGREDIENT TABLE
+   ======================================================================== */
+.ingredient-section {
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-xl);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-md);
+}
+
+.ingredient-section h3 {
+    margin-bottom: var(--spacing-lg);
+    color: var(--text-main);
+    border-bottom: 2px solid var(--color-primary);
+    padding-bottom: var(--spacing-md);
+}
+
+.ingredient-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.ingredient-table thead {
+    background-color: var(--color-gray-50);
+    border-bottom: 2px solid var(--color-primary);
+}
+
+.ingredient-table th {
+    padding: var(--spacing-md);
+    text-align: left;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    word-break: break-word;
+}
+
+.ingredient-table td {
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
+    color: var(--text-main);
+}
+
+.ingredient-table tbody tr:hover {
+    background-color: rgba(99, 102, 241, 0.03);
+}
+
+/* Resource cell styling */
+.ingredient-resource-cell {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.ingredient-resource-icon {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-body);
+    transition: transform var(--transition-fast);
+}
+
+.ingredient-resource-icon:hover {
+    transform: scale(1.2);
+}
+
+.ingredient-resource-fallback {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    background-color: var(--color-gray-100);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+}
+
+.ingredient-resource-name {
+    font-weight: 600;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    display: inline-block;
+}
+
+.ingredient-resource-name:hover {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+.ingredient-resource-name.copied {
+    background-color: var(--color-success);
+    color: white;
+}
+
+.ingredient-total {
+    text-align: center;
+    background-color: rgba(16, 185, 129, 0.15);
+    font-weight: 700;
+    color: var(--color-success);
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.ingredient-per-equipment {
+    text-align: center;
+    color: var(--text-main);
+    font-weight: 500;
+}
+
+.ingredient-per-equipment.none {
+    color: var(--color-gray-400);
+    font-style: italic;
+    font-weight: 400;
+}
+
+/* ========================================================================
+   EFFICIENCY INDICATOR
+   ======================================================================== */
+.efficiency-meter {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.efficiency-bar {
+    flex: 1;
+    height: 8px;
+    background-color: var(--color-gray-200);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+}
+
+.efficiency-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-success), var(--color-primary));
+    transition: width var(--transition-base);
+}
+
+.efficiency-text {
+    font-weight: 700;
+    font-size: 0.875rem;
+    color: var(--text-main);
+    min-width: 50px;
+}
+
+/* ========================================================================
+   COPY TOOLTIP
+   ======================================================================== */
+.copy-tooltip {
+    position: relative;
+}
+
+.copy-tooltip-text {
+    visibility: hidden;
+    background-color: var(--color-gray-800);
+    color: white;
+    text-align: center;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-md);
+    position: absolute;
+    z-index: 10;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+    font-size: 0.75rem;
+    border: 1px solid var(--border-color);
+}
+
+.copy-tooltip:hover .copy-tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* ========================================================================
+   RESPONSIVE - Ingredient table
+   ======================================================================== */
+@media (max-width: 768px) {
+    .ingredient-table {
+        font-size: 0.8rem;
+    }
+    
+    .ingredient-table th,
+    .ingredient-table td {
+        padding: var(--spacing-sm);
+    }
+    
+    .equipment-list {
+        grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    }
+    
+    #graph {
+        min-height: 450px;
+    }
+}
