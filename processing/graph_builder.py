@@ -69,9 +69,10 @@ class GraphBuilder:
     def create_jaccard_similarity_graph(
         equipment_resources: Dict[int, Set[int]],
         equipment_nodes: Set[int],
-        min_shared_ratio: float = 0.2
+        min_shared_ratio: float = 0.2,
+        min_shared_count: int = 1
     ) -> nx.Graph:
-        """Create equipment similarity graph using Jaccard index.
+        """Create equipment similarity graph using Jaccard index or absolute count.
 
         Jaccard similarity = shared_resources / total_unique_resources
 
@@ -79,6 +80,7 @@ class GraphBuilder:
             equipment_resources: Dict from get_equipment_resources()
             equipment_nodes: Set of equipment IDs
             min_shared_ratio: Minimum Jaccard similarity to create edge (0.0-1.0)
+            min_shared_count: Minimum absolute number of shared resources to create edge
 
         Returns:
             NetworkX graph where edges connect similar equipment
@@ -96,11 +98,11 @@ class GraphBuilder:
                 total_unique = len(resources1 | resources2)
                 sharing_ratio = shared / total_unique if total_unique > 0 else 0
 
-                # Only connect if they share a significant portion of resources
-                if sharing_ratio >= min_shared_ratio:
+                # Connect if they meet the ratio OR the absolute shared count
+                if sharing_ratio >= min_shared_ratio or shared >= min_shared_count:
                     G.add_edge(
                         eq1, eq2,
-                        weight=sharing_ratio,
+                        weight=max(sharing_ratio, 0.01), # Ensure non-zero weight for algorithms
                         shared_count=shared
                     )
 
@@ -136,6 +138,7 @@ class GraphBuilder:
     def build_equipment_graph(
         equipments: List[Equipment],
         min_shared_ratio: float = 0.2,
+        min_shared_count: int = 1,
         min_component_size: int = 2
     ) -> Tuple[nx.Graph, Dict[int, Set[int]]]:
         """Build complete equipment similarity graph from equipments.
@@ -143,12 +146,13 @@ class GraphBuilder:
         Pipeline:
             1. Create bipartite graph (equipment + resources)
             2. Extract equipment-to-resources mapping
-            3. Build Jaccard similarity graph
+            3. Build similarity graph (Jaccard + Absolute)
             4. Remove weak components
 
         Args:
             equipments: List of Equipment objects
-            min_shared_ratio: Threshold for edge creation
+            min_shared_ratio: Threshold for similarity ratio
+            min_shared_count: Threshold for absolute shared resources
             min_component_size: Minimum nodes to keep in component
 
         Returns:
@@ -164,11 +168,12 @@ class GraphBuilder:
         }
         equipment_resources = GraphBuilder.get_equipment_resources(bipartite_graph)
 
-        # Step 3: Create Jaccard similarity graph
+        # Step 3: Create similarity graph
         equipment_graph = GraphBuilder.create_jaccard_similarity_graph(
             equipment_resources,
             equipment_nodes,
-            min_shared_ratio=min_shared_ratio
+            min_shared_ratio=min_shared_ratio,
+            min_shared_count=min_shared_count
         )
 
         # Step 4: Remove weak components
