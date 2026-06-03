@@ -214,80 +214,6 @@ class HTMLGenerator:
         
         return {'nodes': nodes, 'links': links}
     
-    def _build_synergy_matrix(self, group: Dict[str, Any]) -> str:
-        """Build a visual matrix mapping resources to equipment.
-        
-        Shared resources are highlighted to show synergies within the group.
-        
-        Args:
-            group: Equipment group dict
-            
-        Returns:
-            HTML string for the matrix
-        """
-        equipments = group.get('equipments', [])
-        ingredients = group.get('total_ingredients', {})
-        
-        if not ingredients:
-            return ""
-
-        # Sort resources by "Utility" (number of items using it, then quantity)
-        sorted_resources = sorted(
-            ingredients.items(),
-            key=lambda x: (len(x[1].get('quantity_per_equipment', {})), x[1].get('total_quantity', 0)),
-            reverse=True
-        )
-
-        # Header: Resource Name + Vertical Equipment Names/Icons
-        headers = []
-        for eq in equipments:
-            icon_url = self._extract_image_url(eq)
-            name = self._extract_equipment_name(eq)
-            icon_html = f'<img class="equipment-header-icon" src="{icon_url}" title="{name}" />' if icon_url else '<div class="equipment-header-icon fallback">⚔️</div>'
-            headers.append(f'<th class="matrix-equipment-header"><div class="equipment-header-content">{icon_html}<span class="equipment-header-name">{name}</span></div></th>')
-
-        # Rows: Resource Info + Quantity per equipment
-        rows_html = []
-        for res_id, info in sorted_resources:
-            name = info.get('name') or f"Resource {res_id}"
-            qty_per_eq = info.get('quantity_per_equipment', {})
-            is_shared = len(qty_per_eq) > 1
-            
-            row_class = "matrix-row-synergy" if is_shared else ""
-            cells = [f'<td class="sticky-col">{"● " if is_shared else ""}{name}</td>']
-            
-            for eq in equipments:
-                eq_name = self._extract_equipment_name(eq)
-                qty = qty_per_eq.get(eq_name)
-                if qty:
-                    cells.append(f'<td class="matrix-cell matrix-cell-active">{qty}</td>')
-                else:
-                    cells.append('<td class="matrix-cell matrix-cell-empty">-</td>')
-            
-            rows_html.append(f'<tr class="{row_class}">{"".join(cells)}</tr>')
-
-        return f"""
-        <div class="matrix-container">
-            <h3>📊 Synergy Matrix</h3>
-            <p class="text-small text-muted mb-md">
-                Rows with ● are <strong>shared resources</strong>. Higher density = better grouping.
-            </p>
-            <div class="matrix-wrapper">
-                <table class="matrix-table">
-                    <thead>
-                        <tr>
-                            <th class="sticky-col">Resource Name</th>
-                            {''.join(headers)}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {''.join(rows_html)}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        """
-
     def _build_equipment_gallery(self, group: Dict[str, Any]) -> str:
         """Build equipment preview gallery HTML.
         
@@ -495,8 +421,7 @@ class HTMLGenerator:
         graph_data = self._build_graph_data(group)
         graph_html = create_graph_html(graph_data)
         
-        # Keep Synergy Matrix as a detailed breakdown
-        synergy_matrix = self._build_synergy_matrix(group)
+        # Build ingredient table
         ingredient_table = self._build_ingredient_table(group)
         
         html_content = f"""<!DOCTYPE html>
@@ -524,7 +449,6 @@ class HTMLGenerator:
     <main id="main" class="container">
         {equipment_gallery}
         {graph_html}
-        {synergy_matrix}
         {ingredient_table}
     </main>
     
