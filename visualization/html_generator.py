@@ -158,7 +158,8 @@ class HTMLGenerator:
         node_id_map = {}
         
         # Add equipment nodes
-        for equipment in group.get('equipments', []):
+        equipments = group.get('equipments', [])
+        for equipment in equipments:
             eq_id = self._extract_equipment_id(equipment)
             node_id = f"equip_{eq_id}"
             node_id_map[eq_id] = node_id
@@ -173,34 +174,120 @@ class HTMLGenerator:
             })
         
         # Add resource nodes and links
-        for resource_id, ingredient_info in group.get('total_ingredients', {}).items():
-            resource_id = int(resource_id)
+        # total_ingredients can have string or int keys
+        ingredients = group.get('total_ingredients', {})
+        for res_id_key, ingredient_info in ingredients.items():
+            try:
+                resource_id = int(res_id_key)
+            except (ValueError, TypeError):
+                continue
+
             node_id = f"res_{resource_id}"
-            node_id_map[resource_id] = node_id
             
             nodes.append({
                 'id': node_id,
-                'name': ingredient_info.get('name', f'Resource {resource_id}'),
+                'name': ingredient_info.get('name') or f'Resource {resource_id}',
                 'type': 'resource',
                 'total_quantity': ingredient_info.get('total_quantity', 0),
-                'ankama_id': resource_id
+                'ankama_id': resource_id,
+                'image_url': ingredient_info.get('image_url')
             })
             
             # Create links from equipment to resources
-            for equip_name, quantity in ingredient_info.get('quantity_per_equipment', {}).items():
-                # Find matching equipment
-                for equipment in group.get('equipments', []):
-                    if self._extract_equipment_name(equipment) == equip_name:
-                        eq_id = self._extract_equipment_id(equipment)
-                        links.append({
-                            'source': node_id_map.get(eq_id),
-                            'target': node_id,
-                            'quantity': quantity
-                        })
+            # quantity_per_equipment maps equipment_name -> quantity
+            qty_per_eq = ingredient_info.get('quantity_per_equipment', {})
+            for equip_name, quantity in qty_per_eq.items():
+                # Find matching equipment by name
+                found_eq = None
+                for eq in equipments:
+                    if self._extract_equipment_name(eq) == equip_name:
+                        found_eq = eq
                         break
+                
+                if found_eq:
+                    eq_id = self._extract_equipment_id(found_eq)
+                    links.append({
+                        'source': node_id_map.get(eq_id),
+                        'target': node_id,
+                        'quantity': quantity
+                    })
         
         return {'nodes': nodes, 'links': links}
     
+    def _build_synergy_matrix(self, group: Dict[str, Any]) -> str:
+        """Build a visual matrix mapping resources to equipment.
+        
+        Shared resources are highlighted to show synergies within the group.
+        
+        Args:
+            group: Equipment group dict
+            
+        Returns:
+            HTML string for the matrix
+        """
+        equipments = group.get('equipments', [])
+        ingredients = group.get('total_ingredients', {})
+        
+        if not ingredients:
+            return ""
+
+        # Sort resources by "Utility" (number of items using it, then quantity)
+        sorted_resources = sorted(
+            ingredients.items(),
+            key=lambda x: (len(x[1].get('quantity_per_equipment', {})), x[1].get('total_quantity', 0)),
+            reverse=True
+        )
+
+        # Header: Resource Name + Vertical Equipment Names/Icons
+        headers = []
+        for eq in equipments:
+            icon_url = self._extract_image_url(eq)
+            name = self._extract_equipment_name(eq)
+            icon_html = f'<img class="equipment-header-icon" src="{icon_url}" title="{name}" />' if icon_url else '<div class="equipment-header-icon fallback">⚔️</div>'
+            headers.append(f'<th class="matrix-equipment-header"><div class="equipment-header-content">{icon_html}<span class="equipment-header-name">{name}</span></div></th>')
+
+        # Rows: Resource Info + Quantity per equipment
+        rows_html = []
+        for res_id, info in sorted_resources:
+            name = info.get('name') or f"Resource {res_id}"
+            qty_per_eq = info.get('quantity_per_equipment', {})
+            is_shared = len(qty_per_eq) > 1
+            
+            row_class = "matrix-row-synergy" if is_shared else ""
+            cells = [f'<td class="sticky-col">{"● " if is_shared else ""}{name}</td>']
+            
+            for eq in equipments:
+                eq_name = self._extract_equipment_name(eq)
+                qty = qty_per_eq.get(eq_name)
+                if qty:
+                    cells.append(f'<td class="matrix-cell matrix-cell-active">{qty}</td>')
+                else:
+                    cells.append('<td class="matrix-cell matrix-cell-empty">-</td>')
+            
+            rows_html.append(f'<tr class="{row_class}">{"".join(cells)}</tr>')
+
+        return f"""
+        <div class="matrix-container">
+            <h3>📊 Synergy Matrix</h3>
+            <p class="text-small text-muted mb-md">
+                Rows with ● are <strong>shared resources</strong>. Higher density = better grouping.
+            </p>
+            <div class="matrix-wrapper">
+                <table class="matrix-table">
+                    <thead>
+                        <tr>
+                            <th class="sticky-col">Resource Name</th>
+                            {''.join(headers)}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {''.join(rows_html)}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        """
+
     def _build_equipment_gallery(self, group: Dict[str, Any]) -> str:
         """Build equipment preview gallery HTML.
         
@@ -296,8 +383,12 @@ class HTMLGenerator:
             qty_per_eq = info.get('quantity_per_equipment', {})
             
             # Resource cell with icon + name
-            # For display: use raw name (browsers will render correctly)
-            # For attribute: escape for safety
+            image_url = info.get('image_url')
+            if image_url:
+                icon_html = f'<img class="ingredient-resource-icon" src="{self._escape_html(image_url)}" alt="{self._escape_attr(name_raw)}" />'
+            else:
+                icon_html = '<div class="ingredient-resource-fallback">📦</div>'
+
             resource_cell = f'<div class="ingredient-resource-name" data-copy-text="{self._escape_attr(name_raw)}">{name_raw}</div>'
             
             # Per-equipment quantities
@@ -313,6 +404,7 @@ class HTMLGenerator:
             <tr>
                 <td>
                     <div class="ingredient-resource-cell">
+                        {icon_html}
                         {resource_cell}
                     </div>
                 </td>
@@ -396,11 +488,16 @@ class HTMLGenerator:
         title = f"Equipment Group {group_num}"
         
         # Build all components
+        stats = self._build_stats(group)
+        equipment_gallery = self._build_equipment_gallery(group)
+        
+        # Build Graph Data
         graph_data = self._build_graph_data(group)
         graph_html = create_graph_html(graph_data)
-        equipment_gallery = self._build_equipment_gallery(group)
+        
+        # Keep Synergy Matrix as a detailed breakdown
+        synergy_matrix = self._build_synergy_matrix(group)
         ingredient_table = self._build_ingredient_table(group)
-        stats = self._build_stats(group)
         
         html_content = f"""<!DOCTYPE html>
 <html lang="en">
@@ -416,18 +513,22 @@ class HTMLGenerator:
     
     <header class="group-header">
         <div class="container-full">
-            <h1>{title}</h1>
+            <div class="flex-between mb-md">
+                <h1>{title}</h1>
+                <a href="index.html" class="btn btn-secondary">← Back to Dashboard</a>
+            </div>
             {stats}
         </div>
     </header>
     
     <main id="main" class="container">
         {equipment_gallery}
-        {ingredient_table}
         {graph_html}
+        {synergy_matrix}
+        {ingredient_table}
     </main>
     
-    <footer style="text-align: center; padding: 2rem; color: var(--color-gray-500); border-top: 1px solid var(--color-gray-200);">
+    <footer style="text-align: center; padding: 2rem; color: var(--color-gray-500); border-top: 1px solid var(--border-color); background: var(--bg-card);">
         <p>Generated by Rune Master | Equipment Crafting Optimizer</p>
     </footer>
     
@@ -499,7 +600,7 @@ class HTMLGenerator:
         </div>
     </main>
     
-    <footer style="text-align: center; padding: 2rem; color: var(--color-gray-500); border-top: 1px solid var(--color-gray-200);">
+    <footer style="text-align: center; padding: 2rem; color: var(--color-gray-500); border-top: 1px solid var(--border-color); background: var(--bg-card);">
         <p>Generated by Rune Master | Equipment Crafting Optimizer</p>
     </footer>
     
