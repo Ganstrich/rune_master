@@ -6,3 +6,4 @@ templates
 *.txt
 *.csv
 *.json
+.aider*
