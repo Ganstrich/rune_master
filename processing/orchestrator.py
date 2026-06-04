@@ -10,6 +10,7 @@ from processing.config_dataclass import ProcessingConfig
 from processing.experts.graph_expert import GraphGroupingExpert
 from processing.experts.random_expert import RandomGroupingExpert
 from processing.experts.genetic_expert import GeneticGroupingExpert
+from processing.graph_builder import GraphBuilder
 
 class RuneMaster:
     """Orchestrator for equipment group discovery and optimization.
@@ -107,12 +108,25 @@ class RuneMaster:
         print("🚀 RuneMaster: Mixture of Experts Committee")
         print("="*60)
         
+        # Pre-compute graph once for all experts
+        shared_graph, shared_resources = GraphBuilder.build_equipment_graph(
+            self.equipments,
+            min_shared_ratio=self.config.graph_min_shared_ratio,
+            min_shared_count=self.config.group_min_shared_resources,
+            min_component_size=self.config.graph_min_component_size,
+        )
+        
         all_potential_groups = []
         
         # 1. Dispatch to all experts
         for expert_name, expert in self.experts.items():
             print(f"\n[Expert: {expert_name}] Analyzing equipment pool...")
-            expert_groups = expert.discover_groups(self.equipments, self.config)
+            expert_groups = expert.discover_groups(
+                self.equipments, 
+                self.config,
+                precomputed_graph=shared_graph,
+                precomputed_resources=shared_resources,
+            )
             
             # Evaluate each group using the expert's fitness function
             for group in expert_groups:
