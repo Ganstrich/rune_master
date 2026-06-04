@@ -1,0 +1,48 @@
+# =============================================================================
+# .devcontainerignore
+# Exclude files from devcontainer build context for faster builds
+# =============================================================================
+
+# Version control
+.git
+.gitignore
+
+# Python artifacts
+__pycache__
+*.pyc
+*.pyo
+*.egg-info
+.eggs
+dist
+build
+.venv
+venv
+
+# IDE files
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Documentation
+*.md
+LICENSE
+
+# Test artifacts
+.pytest_cache
+htmlcov
+.coverage
+
+# Output files
+output
+*.json
+!requirements.txt
+
+# Temporary files
+tmp
+temp
+*.tmp

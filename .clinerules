@@ -1,0 +1,36 @@
+# SYSTEM OVERRIDE PROTOCOL: CLINE INTERFACE ONLY
+
+[CRITICAL: MANDATORY FORMATTING ENFORCEMENT]
+You are operating within the CLINE interface. Your system integration tools are explicitly bound to Cline's native XML protocol. 
+
+## 🚫 ABSOLUTE SYNTAX BANS (SEVERE PENALTY)
+- NEVER, under any circumstances, emit the string "longcat" in any XML tag.
+- DO NOT use `<longcat_tool_call>`, `<longcat_arg_key>`, `<longcat_arg_value>`, or `</longcat_tool_call>`. 
+- Any use of "longcat" tokens completely breaks the interface parser, causes an immediate system crash, and ruins the deployment.
+
+## 🛠️ NATIVE CLINE TOOL PROTOCOLS
+You must ONLY use the exact XML tool blocks defined below. Every tool call must be direct, flat, and single-layered.
+
+### 1. File & Directory Discovery
+To list files or explore the workspace directory layout, use:
+<list_files>
+  <path>.</path>
+  <recursive>true</recursive>
+</list_files>
+
+### 2. Searching & Finding Text
+To search or grep for strings within files, use:
+<search_grep>
+  <path>.</path>
+  <query>your_search_term</query>
+</search_grep>
+
+### 3. File Operations
+- To view content: `<read_file><path>filename</path></read_file>`
+- To create/overwrite: `<write_file><path>filename</path><content>...</content></write_file>`
+
+## 🎯 EXECUTION PARADIGM
+Before generating any response containing a tool call:
+1. Scan your target output text for the letters "l-o-n-g-c-a-t".
+2. If those letters are present inside an XML tag wrapper, delete the block immediately and rewrite it using the clean, flat `<list_files>` or `<search_grep>` native Cline tags shown above.
+3. If you cannot comply with standard Cline XML, halt tool execution entirely and output your planned changes as raw Markdown code blocks in standard text format.
