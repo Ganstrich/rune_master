@@ -8,6 +8,10 @@ all: compute
 serve:
 	python3 serve.py
 
+# Run quick for iterative development
+dev:
+	python3 main.py --no-serve
+
 # Run the pipeline without starting the server
 compute:
 	python3 main.py --no-serve --grouping-method committee --tune
@@ -32,6 +36,7 @@ help:
 	@echo ""
 	@echo "  make serve        Start the visualization server only"
 	@echo "  make compute      Run the pipeline (no server)"
+	@echo "  make dev          Run quick for iterative development"
 	@echo "  make all          Run the pipeline and start the server"
 	@echo "  make tune         Run with parameter tuning"
 	@echo "  make method M=..  Run with a specific grouping method"
