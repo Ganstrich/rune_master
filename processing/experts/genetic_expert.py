@@ -38,7 +38,11 @@ class GeneticGroupingExpert(GroupingExpert):
         self.elite_count = elite_count
 
     def discover_groups(
-        self, equipments: List[Equipment], config: ProcessingConfig
+        self,
+        equipments: List[Equipment],
+        config: ProcessingConfig,
+        precomputed_graph: Optional[Any] = None,
+        precomputed_resources: Optional[Dict[int, Set[int]]] = None,
     ) -> List[Dict[str, Any]]:
         """Run the genetic discovery pipeline."""
         if not equipments:
@@ -47,12 +51,16 @@ class GeneticGroupingExpert(GroupingExpert):
         try:
             # 1. Build similarity graph to identify candidate neighbors
             print(f"      [{self.name}] Building equipment similarity graph...")
-            graph, equipment_resources = GraphBuilder.build_equipment_graph(
-                equipments,
-                min_shared_ratio=config.graph_min_shared_ratio,
-                min_shared_count=config.group_min_shared_resources,
-                min_component_size=config.graph_min_component_size,
-            )
+            if precomputed_graph is not None and precomputed_resources is not None:
+                graph = precomputed_graph
+                equipment_resources = precomputed_resources
+            else:
+                graph, equipment_resources = GraphBuilder.build_equipment_graph(
+                    equipments,
+                    min_shared_ratio=config.graph_min_shared_ratio,
+                    min_shared_count=config.group_min_shared_resources,
+                    min_component_size=config.graph_min_component_size,
+                )
 
             if graph.number_of_nodes() == 0:
                 print(f"      [{self.name}] ⚠️ No connected equipment found.")
