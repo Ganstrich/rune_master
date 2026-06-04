@@ -31,7 +31,7 @@ from processing.tuner import ParameterTuner
 from visualization import HTMLGenerator
 
 
-def load_equipment() -> tuple:
+def load_equipment(processing_config: ProcessingConfig) -> tuple:
     """Load equipment from API with caching."""
     print("\n" + "="*60)
     print("📦 LOADING EQUIPMENT")
@@ -48,7 +48,7 @@ def load_equipment() -> tuple:
 
     try:
         raw_equipments = api.get_all_equipments()
-        equipments = loader.from_raw_batch(raw_equipments)
+        equipments = loader.from_raw_batch(raw_equipments, processing_config=processing_config)
     except Exception as e:
         print(f"\n❌ Error loading equipment: {e}")
         print("Make sure DofusAPI is accessible: https://api.dofusdu.de")
@@ -105,11 +105,9 @@ def _cache_equipment_resources(equipments: List[Equipment], cache: CacheManager,
 
 def process_equipment(
     equipments: List[Equipment],
+    processing_config: ProcessingConfig,
     cache_manager=None,
     api_client=None,
-    grouping_method: str = None,
-    random_group_count: int = None,
-    density_level_ratio: float = None,
     tune_params: bool = False,
 ) -> List[dict]:
     """Run RuneMaster processing pipeline."""
@@ -117,51 +115,29 @@ def process_equipment(
     print("⚙️  PROCESSING EQUIPMENT")
     print("="*60)
 
-    grouping_method = grouping_method or Config.GROUPING_METHOD
-    random_group_count = random_group_count or Config.RANDOM_GROUP_COUNT
-    density_level_ratio = density_level_ratio or Config.DENSITY_LEVEL_RATIO
-
     if tune_params:
         tuner = ParameterTuner(equipments, cache_manager, api_client)
-        config, _ = tuner.tune(method=grouping_method)
-        config.grouping_method = grouping_method
-        config.random_group_count = random_group_count
-        config.equipment_density_level_ratio = density_level_ratio
+        config, _ = tuner.tune(method=processing_config.grouping_method)
+        config.grouping_method = processing_config.grouping_method
+        config.random_group_count = processing_config.random_group_count
+        config.equipment_density_level_ratio = processing_config.equipment_density_level_ratio
+        config.min_equipment_density = processing_config.min_equipment_density
     else:
-        config = ProcessingConfig(
-            graph_min_shared_ratio=Config.MIN_SIMILARITY,
-            graph_min_component_size=Config.MIN_CLUSTER_SIZE,
-            algorithm="louvain",
-            resolution_range=(1, 10, 1),
-            group_min_size=Config.MIN_CLUSTER_SIZE,
-            group_max_size=18,
-            group_min_shared_resources=Config.MIN_COMMON_ITEMS,
-            group_efficiency_threshold=0.15,
-            use_inclusive_mapping=False,
-            use_resource_optimizer=False,
-            excluded_resource_ids=set(Config.EXCLUDED_RESOURCES or []),
-            use_density_filtering=True,
-            equipment_density_level_ratio=density_level_ratio,
-            fallback_to_unfiltered=Config.FALLBACK_TO_UNFILTERED,
-            min_filtered_pool_size=Config.MIN_FILTERED_POOL_SIZE,
-            grouping_method=grouping_method,
-            random_group_count=random_group_count,
-            random_seed=None,
-        )
+        config = processing_config
 
     master = RuneMaster(equipments, config=config, cache_manager=cache_manager, api_client=api_client)
 
-    print(f"\n📋 Grouping Method: {grouping_method.upper()}")
+    print(f"\n📋 Grouping Method: {config.grouping_method.upper()}")
     if tune_params:
         print(f"📊 Using Tuned Parameters: Ratio={config.graph_min_shared_ratio}, MinItems={config.group_min_shared_resources}")
 
-    if grouping_method == "random":
+    if config.grouping_method == "random":
         groups = master.run_random_grouping()
-    elif grouping_method == "hybrid":
+    elif config.grouping_method == "hybrid":
         groups = master.run_hybrid_grouping()
-    elif grouping_method == "committee":
+    elif config.grouping_method == "committee":
         groups = master.run_committee()
-    elif grouping_method == "genetic":
+    elif config.grouping_method == "genetic":
         expert = master.experts["genetic"]
         groups = expert.discover_groups(equipments, config)
     else:
@@ -229,11 +205,33 @@ def main():
 
     print("\n 🔥 RUNEMASTER - GROUP DISCOVERY 🔥 \n")
 
+    # Build ProcessingConfig from CLI args + defaults
+    processing_config = ProcessingConfig(
+        graph_min_shared_ratio=Config.MIN_SIMILARITY,
+        graph_min_component_size=Config.MIN_CLUSTER_SIZE,
+        algorithm="louvain",
+        resolution_range=(1, 10, 1),
+        group_min_size=Config.MIN_CLUSTER_SIZE,
+        group_max_size=18,
+        group_min_shared_resources=Config.MIN_COMMON_ITEMS,
+        group_efficiency_threshold=0.15,
+        use_inclusive_mapping=False,
+        use_resource_optimizer=False,
+        excluded_resource_ids=set(Config.EXCLUDED_RESOURCES or []),
+        use_density_filtering=True,
+        equipment_density_level_ratio=args.density_ratio or Config.DENSITY_LEVEL_RATIO,
+        fallback_to_unfiltered=Config.FALLBACK_TO_UNFILTERED,
+        min_filtered_pool_size=Config.MIN_FILTERED_POOL_SIZE,
+        grouping_method=args.grouping_method or Config.GROUPING_METHOD,
+        random_group_count=args.random_groups or Config.RANDOM_GROUP_COUNT,
+        random_seed=None,
+        min_equipment_density=Config.MIN_EQUIPMENT_DENSITY,
+    )
+
     try:
-        equipments, cache_manager, api_client = load_equipment()
+        equipments, cache_manager, api_client = load_equipment(processing_config)
         groups = process_equipment(
-            equipments, cache_manager, api_client,
-            args.grouping_method, args.random_groups, args.density_ratio, args.tune
+            equipments, processing_config, cache_manager, api_client, args.tune
         )
         
         if not groups:

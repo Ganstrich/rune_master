@@ -37,3 +37,6 @@ class ProcessingConfig:
     grouping_method: str = "deterministic"  # "deterministic", "random", "hybrid", "committee"
     random_group_count: int = 10
     random_seed: Optional[int] = None
+
+    # Equipment pre-filtering
+    min_equipment_density: float = 0.0  # Minimum stat_weight per level (0 = no filter)
