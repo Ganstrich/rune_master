@@ -322,9 +322,9 @@ class GeneticGroupingExpert(GroupingExpert):
     ) -> float:
         """Fitness = Sum(group_sharing_efficiency) - Overlap Penalty.
 
-        Uses the same sharing_efficiency metric as GroupMapper:
+        Uses the canonical "2+" sharing_efficiency definition:
             shared_count / total_unique
-        where shared_count = resources present in EVERY member's recipe,
+        where shared_count = resources used by >= 2 equipment in the group,
         and total_unique = union of all resources in the group.
 
         This is size-independent (0-1 range per group), so the fitness
@@ -346,24 +346,23 @@ class GeneticGroupingExpert(GroupingExpert):
             if len(eq_set) < min_size:
                 continue
 
-            # Collect per-member resource sets
-            per_member_resources: List[Set[int]] = []
+            # Count how many equipment use each resource
+            resource_usage: Dict[int, int] = {}
             all_unique: Set[int] = set()
             for eq in eq_set:
                 rset = resource_sets.get(eq.ankama_id, set())
-                per_member_resources.append(rset)
+                for r in rset:
+                    resource_usage[r] = resource_usage.get(r, 0) + 1
                 all_unique |= rset
 
             total_unique = len(all_unique)
             if total_unique == 0:
                 continue
 
-            # Shared = intersection of all members
-            shared = per_member_resources[0].copy()
-            for rs in per_member_resources[1:]:
-                shared &= rs
+            # Shared = resources used by >= 2 equipment
+            shared_count = sum(1 for count in resource_usage.values() if count >= 2)
 
-            sharing_efficiency = len(shared) / total_unique
+            sharing_efficiency = shared_count / total_unique
             total_score += sharing_efficiency
 
             # Overlap penalty
