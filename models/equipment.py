@@ -1,9 +1,10 @@
 """Equipment data model."""
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, TypedDict
+from typing import TypedDict, Dict, Any, Optional, List
 
 from .common import ImageURLs, ItemType, StatType
+from .recipe import ResourceRequirement
 
 
 class EquipmentStat:
@@ -103,17 +104,6 @@ class EquipmentStat:
             and self.int_minimum == other.int_minimum
             and self.int_maximum == other.int_maximum
         )
-
-
-@dataclass(frozen=True)
-class ResourceRequirement:
-    """Recipe requirement: a resource and its quantity.
-
-    Immutable to prevent accidental modification of recipes.
-    """
-
-    resource_id: int
-    quantity: int
 
 
 @dataclass(frozen=False)
