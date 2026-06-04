@@ -43,7 +43,8 @@ class GroupingExpert(ABC):
     def evaluate_group(self, group: Dict[str, Any]) -> float:
         """Calculate a fitness score for a group.
         
-        Default implementation uses sharing efficiency.
+        Default implementation uses sharing efficiency, which follows the
+        "2+ equipment" definition (resources used by 2+ equipment / total unique resources).
         Experts can override this to prioritize different metrics 
         (e.g., economic value, level consistency).
         """
