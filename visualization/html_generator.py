@@ -8,17 +8,11 @@ Responsible for:
 """
 import json
 import html
+import shutil
 from typing import Dict, List, Any, Optional
 from pathlib import Path
 
 from models import Equipment, Resource
-from .style_templates import (
-    get_base_css,
-    get_group_css,
-    get_index_css,
-    get_javascript_utils
-)
-from .graph_generator import create_graph_html
 
 
 class HTMLGenerator:
@@ -29,6 +23,7 @@ class HTMLGenerator:
     - Accessibility-first (WCAG 2.1 AA)
     - Mobile-responsive
     - Fast loading times
+    - Static CSS/JS files for caching and maintainability
     """
     
     def __init__(self, output_dir: str = "visualizations"):
@@ -39,6 +34,25 @@ class HTMLGenerator:
         """
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True)
+        self.static_dir = self.output_dir / "static"
+    
+    def _copy_static_files(self):
+        """Copy static CSS and JS files to output directory.
+        
+        This ensures the output directory is self-contained.
+        """
+        # Get the source static directory (relative to this file)
+        source_static = Path(__file__).parent / "static"
+        
+        if source_static.exists():
+            # Create output static directory
+            self.static_dir.mkdir(exist_ok=True)
+            
+            # Copy all files from source to output
+            for file_path in source_static.iterdir():
+                if file_path.is_file():
+                    dest_path = self.static_dir / file_path.name
+                    shutil.copy2(file_path, dest_path)
     
     @staticmethod
     def _escape_html(text: Any) -> str:
@@ -158,7 +172,8 @@ class HTMLGenerator:
         node_id_map = {}
         
         # Add equipment nodes
-        for equipment in group.get('equipments', []):
+        equipments = group.get('equipments', [])
+        for equipment in equipments:
             eq_id = self._extract_equipment_id(equipment)
             node_id = f"equip_{eq_id}"
             node_id_map[eq_id] = node_id
@@ -173,31 +188,43 @@ class HTMLGenerator:
             })
         
         # Add resource nodes and links
-        for resource_id, ingredient_info in group.get('total_ingredients', {}).items():
-            resource_id = int(resource_id)
+        # total_ingredients can have string or int keys
+        ingredients = group.get('total_ingredients', {})
+        for res_id_key, ingredient_info in ingredients.items():
+            try:
+                resource_id = int(res_id_key)
+            except (ValueError, TypeError):
+                continue
+
             node_id = f"res_{resource_id}"
-            node_id_map[resource_id] = node_id
             
             nodes.append({
                 'id': node_id,
-                'name': ingredient_info.get('name', f'Resource {resource_id}'),
+                'name': ingredient_info.get('name') or f'Resource {resource_id}',
                 'type': 'resource',
                 'total_quantity': ingredient_info.get('total_quantity', 0),
-                'ankama_id': resource_id
+                'ankama_id': resource_id,
+                'image_url': ingredient_info.get('image_url')
             })
             
             # Create links from equipment to resources
-            for equip_name, quantity in ingredient_info.get('quantity_per_equipment', {}).items():
-                # Find matching equipment
-                for equipment in group.get('equipments', []):
-                    if self._extract_equipment_name(equipment) == equip_name:
-                        eq_id = self._extract_equipment_id(equipment)
-                        links.append({
-                            'source': node_id_map.get(eq_id),
-                            'target': node_id,
-                            'quantity': quantity
-                        })
+            # quantity_per_equipment maps equipment_name -> quantity
+            qty_per_eq = ingredient_info.get('quantity_per_equipment', {})
+            for equip_name, quantity in qty_per_eq.items():
+                # Find matching equipment by name
+                found_eq = None
+                for eq in equipments:
+                    if self._extract_equipment_name(eq) == equip_name:
+                        found_eq = eq
                         break
+                
+                if found_eq:
+                    eq_id = self._extract_equipment_id(found_eq)
+                    links.append({
+                        'source': node_id_map.get(eq_id),
+                        'target': node_id,
+                        'quantity': quantity
+                    })
         
         return {'nodes': nodes, 'links': links}
     
@@ -296,8 +323,12 @@ class HTMLGenerator:
             qty_per_eq = info.get('quantity_per_equipment', {})
             
             # Resource cell with icon + name
-            # For display: use raw name (browsers will render correctly)
-            # For attribute: escape for safety
+            image_url = info.get('image_url')
+            if image_url:
+                icon_html = f'<img class="ingredient-resource-icon" src="{self._escape_html(image_url)}" alt="{self._escape_attr(name_raw)}" />'
+            else:
+                icon_html = '<div class="ingredient-resource-fallback">📦</div>'
+
             resource_cell = f'<div class="ingredient-resource-name" data-copy-text="{self._escape_attr(name_raw)}">{name_raw}</div>'
             
             # Per-equipment quantities
@@ -313,6 +344,7 @@ class HTMLGenerator:
             <tr>
                 <td>
                     <div class="ingredient-resource-cell">
+                        {icon_html}
                         {resource_cell}
                     </div>
                 </td>
@@ -396,11 +428,11 @@ class HTMLGenerator:
         title = f"Equipment Group {group_num}"
         
         # Build all components
-        graph_data = self._build_graph_data(group)
-        graph_html = create_graph_html(graph_data)
-        equipment_gallery = self._build_equipment_gallery(group)
-        ingredient_table = self._build_ingredient_table(group)
         stats = self._build_stats(group)
+        equipment_gallery = self._build_equipment_gallery(group)
+        
+        # Build ingredient table
+        ingredient_table = self._build_ingredient_table(group)
         
         html_content = f"""<!DOCTYPE html>
 <html lang="en">
@@ -408,15 +440,18 @@ class HTMLGenerator:
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{title} - Equipment Crafting Groups</title>
-    {get_base_css()}
-    {get_group_css()}
+    <link rel="stylesheet" href="static/base.css">
+    <link rel="stylesheet" href="static/group.css">
 </head>
 <body>
     <a href="#main" class="skip-link">Skip to main content</a>
     
     <header class="group-header">
         <div class="container-full">
-            <h1>{title}</h1>
+            <div class="flex-between mb-md">
+                <h1>{title}</h1>
+                <a href="index.html" class="btn btn-secondary">← Back to Dashboard</a>
+            </div>
             {stats}
         </div>
     </header>
@@ -424,14 +459,13 @@ class HTMLGenerator:
     <main id="main" class="container">
         {equipment_gallery}
         {ingredient_table}
-        {graph_html}
     </main>
     
-    <footer style="text-align: center; padding: 2rem; color: var(--color-gray-500); border-top: 1px solid var(--color-gray-200);">
+    <footer style="text-align: center; padding: 2rem; color: var(--color-gray-500); border-top: 1px solid var(--border-color); background: var(--bg-card);">
         <p>Generated by Rune Master | Equipment Crafting Optimizer</p>
     </footer>
     
-    {get_javascript_utils()}
+    <script src="static/utils.js"></script>
 </body>
 </html>
 """
@@ -479,8 +513,8 @@ class HTMLGenerator:
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Equipment Groups - Crafting Optimizer</title>
-    {get_base_css()}
-    {get_index_css()}
+    <link rel="stylesheet" href="static/base.css">
+    <link rel="stylesheet" href="static/index.css">
 </head>
 <body>
     <a href="#main" class="skip-link">Skip to main content</a>
@@ -499,11 +533,11 @@ class HTMLGenerator:
         </div>
     </main>
     
-    <footer style="text-align: center; padding: 2rem; color: var(--color-gray-500); border-top: 1px solid var(--color-gray-200);">
+    <footer style="text-align: center; padding: 2rem; color: var(--color-gray-500); border-top: 1px solid var(--border-color); background: var(--bg-card);">
         <p>Generated by Rune Master | Equipment Crafting Optimizer</p>
     </footer>
     
-    {get_javascript_utils()}
+    <script src="static/utils.js"></script>
 </body>
 </html>
 """
@@ -628,6 +662,9 @@ class HTMLGenerator:
             List of generated file paths
         """
         files = []
+        
+        # Copy static files first
+        self._copy_static_files()
         
         # Generate individual group pages
         for idx, group in enumerate(groups):

@@ -109,6 +109,7 @@ class GroupMapper:
                 "total_quantity": 0,
                 "used_in_equipments": [],
                 "quantity_per_equipment": {},
+                "image_url": None,
             }
         )
 
@@ -124,13 +125,17 @@ class GroupMapper:
                 ingredients[resource_id]["used_in_equipments"].append(eq_name)
                 ingredients[resource_id]["quantity_per_equipment"][eq_name] = int(quantity)
 
-                # Get resource name from cache
+                # Get resource name and image from cache
                 if ingredients[resource_id]["name"] is None:
                     if cache_manager:
                         try:
                             resource_data = cache_manager.get_resource(resource_id)
                             if resource_data:
                                 ingredients[resource_id]["name"] = resource_data.get('name', f'Resource {resource_id}')
+                                # Extract image URL
+                                img_urls = resource_data.get('image_urls', {})
+                                if img_urls:
+                                    ingredients[resource_id]["image_url"] = img_urls.get('icon') or img_urls.get('sd')
                         except Exception:
                             pass
 
