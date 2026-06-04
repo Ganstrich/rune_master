@@ -66,6 +66,30 @@ class GraphBuilder:
         return equipment_resources
 
     @staticmethod
+    def _build_inverted_index(
+        equipment_resources: Dict[int, Set[int]]
+    ) -> Dict[int, Set[int]]:
+        """Build inverted index: resource_id -> set of equipment_ids."""
+        index: Dict[int, Set[int]] = {}
+        for eq_id, resources in equipment_resources.items():
+            for rid in resources:
+                index.setdefault(rid, set()).add(eq_id)
+        return index
+
+    @staticmethod
+    def _candidate_pairs_from_index(
+        inverted_index: Dict[int, Set[int]]
+    ) -> Set[Tuple[int, int]]:
+        """Generate candidate equipment pairs that share at least one resource."""
+        candidates: Set[Tuple[int, int]] = set()
+        for equip_set in inverted_index.values():
+            if len(equip_set) < 2:
+                continue
+            for eq1, eq2 in combinations(sorted(equip_set), 2):
+                candidates.add((eq1, eq2))
+        return candidates
+
+    @staticmethod
     def create_jaccard_similarity_graph(
         equipment_resources: Dict[int, Set[int]],
         equipment_nodes: Set[int],
@@ -89,7 +113,11 @@ class GraphBuilder:
         G = nx.Graph()
         G.add_nodes_from(equipment_nodes)
 
-        for eq1, eq2 in combinations(equipment_nodes, 2):
+        # Build inverted index to find candidate pairs efficiently
+        inverted_index = GraphBuilder._build_inverted_index(equipment_resources)
+        candidate_pairs = GraphBuilder._candidate_pairs_from_index(inverted_index)
+
+        for eq1, eq2 in candidate_pairs:
             resources1 = equipment_resources[eq1]
             resources2 = equipment_resources[eq2]
 
