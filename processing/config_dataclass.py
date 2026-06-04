@@ -33,7 +33,6 @@ class ProcessingConfig:
     equipment_density_level_ratio: float = 0.15  # DENSITY_LEVEL_RATIO
     fallback_to_unfiltered: bool = True  # FALLBACK_TO_UNFILTERED
     min_filtered_pool_size: int = 10  # MIN_FILTERED_POOL_SIZE
-    min_sharing_percentage: int = 60  # MIN_SHARING_PERCENTAGE
 
     # Grouping method
     grouping_method: str = (
