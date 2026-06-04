@@ -48,6 +48,15 @@ class RuneMaster:
         # Results
         self.groups: List[Dict[str, Any]] = []
 
+    @staticmethod
+    def _equipment_set_overlap(group_a: List[Equipment], group_b: List[Equipment]) -> float:
+        """Compute Jaccard similarity between two groups' equipment sets."""
+        ids_a = {e.ankama_id for e in group_a}
+        ids_b = {e.ankama_id for e in group_b}
+        intersection = len(ids_a & ids_b)
+        union = len(ids_a | ids_b)
+        return intersection / union if union > 0 else 0.0
+
     def run_all(self) -> List[Dict[str, Any]]:
         """Run the default pipeline (backward compatibility)."""
         return self.run_deterministic()
@@ -139,19 +148,26 @@ class RuneMaster:
         # Sort by fitness score (descending)
         all_potential_groups.sort(key=lambda x: x.get("fitness_score", 0), reverse=True)
         
-        # Simple de-duplication based on equipment IDs set
+        # Overlap-based de-duplication
         unique_groups = []
-        seen_equipment_sets = []
         
         for group in all_potential_groups:
             # ENFORCE MINIMUM SIZE (Final Committee Sanity Check)
             if len(group.get("equipments", [])) < 2:
                 continue
 
-            equip_ids = sorted([e.ankama_id for e in group["equipments"]])
-            if equip_ids not in seen_equipment_sets:
+            # Overlap-based de-duplication
+            is_duplicate = False
+            for existing_group in unique_groups:
+                overlap = self._equipment_set_overlap(
+                    group["equipments"], existing_group["equipments"]
+                )
+                if overlap >= self.config.dedup_overlap_threshold:
+                    is_duplicate = True
+                    break
+
+            if not is_duplicate:
                 unique_groups.append(group)
-                seen_equipment_sets.append(equip_ids)
         
         self.groups = unique_groups
         
