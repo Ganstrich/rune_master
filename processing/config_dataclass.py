@@ -1,6 +1,8 @@
 """Configuration for the processing pipeline."""
+
 from dataclasses import dataclass, field
 from typing import Optional
+
 
 @dataclass
 class ProcessingConfig:
@@ -21,9 +23,6 @@ class ProcessingConfig:
     group_efficiency_threshold: float = 0.15
     use_inclusive_mapping: bool = False
 
-    # Optimization
-    use_resource_optimizer: bool = True
-
     # Excluded resources (won't count toward sharing efficiency)
     excluded_resource_ids: set = field(default_factory=set)
 
@@ -34,7 +33,9 @@ class ProcessingConfig:
     min_filtered_pool_size: int = 10
 
     # Grouping method
-    grouping_method: str = "deterministic"  # "deterministic", "random", "hybrid", "committee"
+    grouping_method: str = (
+        "deterministic"  # "deterministic", "random", "hybrid", "committee"
+    )
     random_group_count: int = 10
     random_seed: Optional[int] = None
 

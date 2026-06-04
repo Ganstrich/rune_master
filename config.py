@@ -38,8 +38,8 @@ class Config:
     SORT_BY = "level"
     SORT_ORDER = "desc"
     MIN_LEVEL = 5
-    MAX_LEVEL = 100
-    ITEM_TYPES = BIJOUTIER
+    MAX_LEVEL = 50
+    ITEM_TYPES = FORGERON
 
     FIELDS = ["recipe", "effects"]
     MIN_COMMON_ITEMS = 3
