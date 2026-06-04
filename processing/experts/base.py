@@ -1,10 +1,13 @@
 """Base class for grouping experts."""
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional, Set
+from typing import List, Dict, Any, Optional, Set, TYPE_CHECKING
 from models import Equipment
 # Avoid circular import by importing inside methods or using type hints with string if needed
 # but ProcessingConfig is usually safe to import.
 from processing.config_dataclass import ProcessingConfig
+
+if TYPE_CHECKING:
+    import networkx as nx
 
 class GroupingExpert(ABC):
     """Abstract base class for all grouping experts.
