@@ -1,6 +1,6 @@
 """Base class for grouping experts."""
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Set
 from models import Equipment
 # Avoid circular import by importing inside methods or using type hints with string if needed
 # but ProcessingConfig is usually safe to import.
@@ -27,13 +27,17 @@ class GroupingExpert(ABC):
     def discover_groups(
         self, 
         equipments: List[Equipment], 
-        config: ProcessingConfig
+        config: ProcessingConfig,
+        precomputed_graph: Optional[Any] = None,
+        precomputed_resources: Optional[Dict[int, Set[int]]] = None,
     ) -> List[Dict[str, Any]]:
         """Discover groups using the expert's specialized logic.
         
         Args:
             equipments: Pool of equipment to analyze
             config: Pipeline configuration
+            precomputed_graph: Optional pre-built equipment graph to avoid redundant computation.
+            precomputed_resources: Optional pre-built mapping of equipment IDs to resource sets.
             
         Returns:
             List of group dictionaries with consistent format.
