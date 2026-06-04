@@ -51,7 +51,7 @@ main.py (orchestration)
 - Parses effects, recipes, images
 - Caches results
 
-**CacheManager** → Persistent JSON cache (`~/.cache/rune_master_cache.json`)
+**CacheManager** → Persistent SQLite cache (`resource_cache.db`)
 - Stores equipment effects
 - **CRITICAL**: Stores resource data (names, images, etc.)
 - First run: fetches resources from API (~37 seconds for ~279 resources)
@@ -211,7 +211,7 @@ Output sequence:
 
 ### Clear Cache (Force Fresh Resource Fetch)
 ```bash
-rm ~/.cache/rune_master_cache.json
+rm resource_cache.db resource_cache.db-wal resource_cache.db-shm
 python3 main.py  # Will re-fetch all resources
 ```
 
@@ -249,7 +249,7 @@ grep "ingredient-resource-name" visualizations/group_001.html | head -5
 3. **Equipment names on index** - Must show actual equipment names in group cards
 4. **Paste feature needs resource names** - Without proper caching, paste won't work
 5. **First run is slow** - Expected behavior (resource fetching). Document this to users.
-6. **Cache location** - `~/.cache/rune_master_cache.json` (NOT in repo)
+6. **Cache location** - `resource_cache.db` (NOT in repo, gitignored)
 
 ---
 

@@ -30,35 +30,29 @@ DEFAULT_TIMEOUT = 30  # seconds
 
 ## `data/cache_manager.py` - Persistent Caching
 
-**Purpose**: JSON-based disk cache for expensive API calls
+**Purpose**: SQLite-backed disk cache for expensive API calls
 
 **Key Methods**:
 - `get_resource(id)` → Dict - Raw resource dict from cache
 - `set_resource(id, data)` → None - Store resource in cache
 - `has_resource(id)` → bool - Check if cached
-- `save()` → None - Write cache to disk
+- `save()` → None - No-op (SQLite auto-commits)
 - `get_stats()` → Dict - Cache size/counts
 
-**Cache Structure**:
-```python
-{
-    "resources": {
-        "123": {raw resource data},
-        "456": {...}
-    },
-    "equipment_effects": {...},
-    "stat_weights": {...},
-    "metadata": {"version": "1"}
-}
+**Cache Schema**:
+```sql
+CREATE TABLE resources (id INTEGER PRIMARY KEY, name TEXT, data BLOB, fetched_at TEXT);
+CREATE TABLE equipment_effects (equipment_id INTEGER PRIMARY KEY, effects BLOB, fetched_at TEXT);
+CREATE TABLE stat_weights (equipment_id INTEGER PRIMARY KEY, weight REAL, computed_at TEXT);
 ```
 
-**File Location**: `~/.cache/rune_master_cache.json` (per `config.py`)
+**File Location**: `resource_cache.db` (per `config.py`)
 
 **Important Notes**:
 - Persistent across runs (not cleared automatically)
-- Safe for concurrent reads only
+- WAL mode: safe for concurrent reads (used by tuner ProcessPoolExecutor)
 - All methods are synchronous (blocking)
-- To clear: `rm ~/.cache/rune_master_cache.json`
+- To clear: `rm resource_cache.db resource_cache.db-wal resource_cache.db-shm`
 
 ---
 
@@ -356,7 +350,7 @@ This is CRITICAL:
 
 **Key Settings**:
 ```python
-CACHE_FILE = "~/.cache/rune_master_cache.json"
+CACHE_FILE = "resource_cache.db"
 GAME = "dofus3"
 LANGUAGE = "fr"  # French
 ITEM_TYPES = [list of equipment types]
