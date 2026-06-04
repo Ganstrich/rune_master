@@ -236,26 +236,17 @@ def main():
 
     print("\n 🔥 RUNEMASTER - GROUP DISCOVERY 🔥 \n")
 
-    # Build ProcessingConfig from CLI args + defaults
+    # Build ProcessingConfig from CLI args, using dataclass defaults for everything else
     processing_config = ProcessingConfig(
-        graph_min_shared_ratio=Config.MIN_SIMILARITY,
-        graph_min_component_size=Config.MIN_CLUSTER_SIZE,
-        algorithm="louvain",
-        resolution_range=(1, 10, 1),
-        group_min_size=Config.MIN_CLUSTER_SIZE,
-        group_max_size=18,
-        group_min_shared_resources=Config.MIN_COMMON_ITEMS,
-        group_efficiency_threshold=0.15,
-        use_inclusive_mapping=False,
-        excluded_resource_ids=set(Config.EXCLUDED_RESOURCES or []),
-        use_density_filtering=True,
-        equipment_density_level_ratio=args.density_ratio or Config.DENSITY_LEVEL_RATIO,
-        fallback_to_unfiltered=Config.FALLBACK_TO_UNFILTERED,
-        min_filtered_pool_size=Config.MIN_FILTERED_POOL_SIZE,
-        grouping_method=args.grouping_method or Config.GROUPING_METHOD,
-        random_group_count=args.random_groups or Config.RANDOM_GROUP_COUNT,
-        random_seed=None,
-        min_equipment_density=Config.MIN_EQUIPMENT_DENSITY,
+        equipment_density_level_ratio=args.density_ratio
+        if args.density_ratio is not None
+        else ProcessingConfig.equipment_density_level_ratio,
+        grouping_method=args.grouping_method
+        if args.grouping_method is not None
+        else ProcessingConfig.grouping_method,
+        random_group_count=args.random_groups
+        if args.random_groups is not None
+        else ProcessingConfig.random_group_count,
     )
 
     try:

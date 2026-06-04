@@ -9,7 +9,7 @@ class ProcessingConfig:
     """Configuration for RuneMaster processing pipeline."""
 
     # Graph building
-    graph_min_shared_ratio: float = 0.2
+    graph_min_shared_ratio: float = 0.3
     graph_min_component_size: int = 2
 
     # Community detection
@@ -19,24 +19,25 @@ class ProcessingConfig:
     # Group mapping
     group_min_size: int = 2
     group_max_size: int = 18
-    group_min_shared_resources: int = 2
+    group_min_shared_resources: int = 3
     group_efficiency_threshold: float = 0.15
     use_inclusive_mapping: bool = False
 
     # Excluded resources (won't count toward sharing efficiency)
-    excluded_resource_ids: set = field(default_factory=set)
+    excluded_resource_ids: set = field(default_factory=lambda: {15263, 14635})
 
     # Density/Level filtering
     use_density_filtering: bool = True
     equipment_density_level_ratio: float = 0.15
     fallback_to_unfiltered: bool = True
     min_filtered_pool_size: int = 10
+    min_sharing_percentage: int = 60
 
     # Grouping method
     grouping_method: str = (
-        "deterministic"  # "deterministic", "random", "hybrid", "committee"
+        "deterministic"  # "deterministic", "random", "hybrid", "committee", "genetic"
     )
-    random_group_count: int = 10
+    random_group_count: int = 50
     random_seed: Optional[int] = None
 
     # Equipment pre-filtering
