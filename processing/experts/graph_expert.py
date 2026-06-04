@@ -1,5 +1,5 @@
 """Graph-based grouping expert using Louvain community detection."""
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Set
 import networkx as nx
 from models import Equipment
 from processing.experts.base import GroupingExpert
@@ -24,18 +24,24 @@ class GraphGroupingExpert(GroupingExpert):
     def discover_groups(
         self, 
         equipments: List[Equipment], 
-        config: ProcessingConfig
+        config: ProcessingConfig,
+        precomputed_graph: Optional[nx.Graph] = None,
+        precomputed_resources: Optional[Dict[int, Set[int]]] = None,
     ) -> List[Dict[str, Any]]:
         """Run the graph-based discovery pipeline."""
         print(f"      [{self.name}] Building graph and detecting communities...")
         
         # 1. Build graph
-        graph, resources = GraphBuilder.build_equipment_graph(
-            equipments,
-            min_shared_ratio=config.graph_min_shared_ratio,
-            min_shared_count=config.group_min_shared_resources, # NEW: Support absolute count
-            min_component_size=config.graph_min_component_size,
-        )
+        if precomputed_graph is not None and precomputed_resources is not None:
+            graph = precomputed_graph
+            resources = precomputed_resources
+        else:
+            graph, resources = GraphBuilder.build_equipment_graph(
+                equipments,
+                min_shared_ratio=config.graph_min_shared_ratio,
+                min_shared_count=config.group_min_shared_resources, # NEW: Support absolute count
+                min_component_size=config.graph_min_component_size,
+            )
         
         if graph.number_of_nodes() == 0:
             return []
