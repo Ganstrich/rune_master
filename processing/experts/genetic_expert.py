@@ -122,7 +122,7 @@ class GeneticGroupingExpert(GroupingExpert):
                     parent1 = self._tournament_select(population, fitness_scores)
                     parent2 = self._tournament_select(population, fitness_scores)
 
-                    child1, child2 = self._crossover(parent1, parent2)
+                    child1, child2 = self._crossover(parent1, parent2, resource_sets)
 
                     self._mutate(child1, graph, eq_by_id, resource_sets, config)
                     self._mutate(child2, graph, eq_by_id, resource_sets, config)
@@ -381,6 +381,21 @@ class GeneticGroupingExpert(GroupingExpert):
 
         return total_score - overlap_penalty
 
+    @staticmethod
+    def _equipment_group_affinity(
+        eq_id: int, group_ids: Set[int], resource_sets: Dict[int, Set[int]]
+    ) -> float:
+        """Measure how well an equipment fits in a group by resource overlap."""
+        eq_resources = resource_sets.get(eq_id, set())
+        if not eq_resources or not group_ids:
+            return 0.0
+        group_resources: Set[int] = set()
+        for gid in group_ids:
+            group_resources |= resource_sets.get(gid, set())
+        if not group_resources:
+            return 0.0
+        return len(eq_resources & group_resources) / len(eq_resources | group_resources)
+
     def _tournament_select(
         self, population: List[Any], scores: List[float], k: int = 3
     ) -> Any:
@@ -392,76 +407,105 @@ class GeneticGroupingExpert(GroupingExpert):
         return population[best]
 
     def _crossover(
-        self, p1: List[Set[Equipment]], p2: List[Set[Equipment]]
+        self,
+        p1: List[Set[Equipment]],
+        p2: List[Set[Equipment]],
+        resource_sets: Dict[int, Set[int]],
     ) -> Tuple[List[Set[Equipment]], List[Set[Equipment]]]:
-        """Exchange groups between parents, resolving conflicts."""
-        if not p1:
-            return [], [s.copy() for s in p2]
-        if not p2:
-            return [s.copy() for s in p1], []
+        """Group-based crossover: assign parent groups to children, resolve conflicts.
 
-        # Use equipment-level crossover: each equipment goes to the child
-        # group that has more of its neighbors
-        p1_ids = set()
+        Algorithm:
+        1. Collect all groups from both parents into a pool
+        2. For each group, randomly assign to child1, child2, or both
+        3. Resolve conflicts (equipment in multiple groups within same child)
+           by keeping it in the group where it has higher affinity
+        4. Remove groups that fall below config.group_min_size after resolution
+        """
+        # Build group pool with parent labels for tracking
+        all_groups: List[Tuple[Set[Equipment], int]] = []
         for g in p1:
-            p1_ids.update(eq.ankama_id for eq in g)
-        p2_ids = set()
+            all_groups.append((g.copy(), 0))
         for g in p2:
-            p2_ids.update(eq.ankama_id for eq in g)
+            all_groups.append((g.copy(), 1))
 
-        # Only crossover on shared equipment IDs
-        common_ids = p1_ids & p2_ids
-        if not common_ids:
-            return [s.copy() for s in p1], [s.copy() for s in p2]
+        # Assign groups to children
+        child1_groups: List[Set[Equipment]] = []
+        child2_groups: List[Set[Equipment]] = []
 
-        # Build ID -> group index maps
-        p1_map: Dict[int, int] = {}
-        for i, g in enumerate(p1):
-            for eq in g:
-                p1_map[eq.ankama_id] = i
-        p2_map: Dict[int, int] = {}
-        for i, g in enumerate(p2):
-            for eq in g:
-                p2_map[eq.ankama_id] = i
+        for group, _ in all_groups:
+            assignment = random.choice(["c1", "c2", "both"])
+            if assignment in ("c1", "both"):
+                child1_groups.append(group.copy())
+            if assignment in ("c2", "both"):
+                child2_groups.append(group.copy())
 
-        # For each common ID, randomly assign to child1 or child2
-        child1_groups: Dict[int, Set[Equipment]] = {}
-        child2_groups: Dict[int, Set[Equipment]] = {}
+        # Resolve conflicts in each child
+        child1_groups = self._resolve_conflicts(child1_groups, resource_sets)
+        child2_groups = self._resolve_conflicts(child2_groups, resource_sets)
 
-        for eq_id in common_ids:
-            eq_p1 = p1_map.get(eq_id)
-            eq_p2 = p2_map.get(eq_id)
-            if eq_p1 is None or eq_p2 is None:
-                continue
+        return child1_groups, child2_groups
 
+    def _resolve_conflicts(
+        self,
+        groups: List[Set[Equipment]],
+        resource_sets: Dict[int, Set[int]],
+    ) -> List[Set[Equipment]]:
+        """Resolve equipment appearing in multiple groups within a child.
+
+        For each conflicting equipment, keep it in the group where it has
+        the highest affinity (resource overlap), and remove it from others.
+        """
+        if not groups:
+            return groups
+
+        # Build equipment -> list of group indices map
+        eq_to_groups: Dict[int, List[int]] = {}
+        for i, group in enumerate(groups):
+            for eq in group:
+                eq_to_groups.setdefault(eq.ankama_id, []).append(i)
+
+        # Find conflicts (equipment in > 1 group)
+        conflicts = {
+            eq_id: g_indices
+            for eq_id, g_indices in eq_to_groups.items()
+            if len(g_indices) > 1
+        }
+
+        if not conflicts:
+            return groups
+
+        # Resolve each conflict
+        for eq_id, g_indices in conflicts.items():
+            # Find the equipment object
             eq_obj = None
-            for eq in p1[eq_p1]:
-                if eq.ankama_id == eq_id:
-                    eq_obj = eq
+            for i in g_indices:
+                for eq in groups[i]:
+                    if eq.ankama_id == eq_id:
+                        eq_obj = eq
+                        break
+                if eq_obj:
                     break
-            if eq_obj is None:
+
+            if not eq_obj:
                 continue
 
-            if random.random() < 0.5:
-                child1_groups.setdefault(eq_p1, set()).add(eq_obj)
-                child2_groups.setdefault(eq_p2, set()).add(eq_obj)
-            else:
-                child1_groups.setdefault(eq_p2, set()).add(eq_obj)
-                child2_groups.setdefault(eq_p1, set()).add(eq_obj)
+            # Calculate affinity for each group
+            best_group_idx = g_indices[0]
+            best_affinity = -1.0
 
-        # Add non-common IDs from respective parents
-        for i, g in enumerate(p1):
-            for eq in g:
-                if eq.ankama_id not in common_ids:
-                    child1_groups.setdefault(i, set()).add(eq)
-        for i, g in enumerate(p2):
-            for eq in g:
-                if eq.ankama_id not in common_ids:
-                    child2_groups.setdefault(i + len(p1), set()).add(eq)
+            for i in g_indices:
+                group_ids = {e.ankama_id for e in groups[i]}
+                affinity = self._equipment_group_affinity(eq_id, group_ids, resource_sets)
+                if affinity > best_affinity:
+                    best_affinity = affinity
+                    best_group_idx = i
 
-        c1 = [g for g in child1_groups.values() if g]
-        c2 = [g for g in child2_groups.values() if g]
-        return c1, c2
+            # Remove from all groups except the best one
+            for i in g_indices:
+                if i != best_group_idx:
+                    groups[i] = {eq for eq in groups[i] if eq.ankama_id != eq_id}
+
+        return groups
 
     def _mutate(
         self,
