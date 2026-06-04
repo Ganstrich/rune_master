@@ -259,19 +259,22 @@ class RandomGroupBuilder:
 
     @staticmethod
     def _calculate_shared_resources(equipments: List[Equipment]) -> set:
-        """Calculate resources shared by all equipments in group."""
+        """Calculate resources shared by 2+ equipments in group.
+        
+        Returns set of resource IDs that appear in 2+ equipment recipes.
+        This follows the canonical "2+" definition of sharing efficiency.
+        """
         if not equipments:
             return set()
 
-        # Start with first equipment's resources
-        shared = {req.resource_id for req in equipments[0].recipe}
+        # Count how many equipment use each resource
+        resource_usage = {}
+        for eq in equipments:
+            for req in eq.recipe:
+                resource_usage[req.resource_id] = resource_usage.get(req.resource_id, 0) + 1
 
-        # Intersect with all others
-        for eq in equipments[1:]:
-            eq_resources = {req.resource_id for req in eq.recipe}
-            shared = shared & eq_resources
-
-        return shared
+        # Return resources used by 2+ equipment
+        return {resource_id for resource_id, count in resource_usage.items() if count >= 2}
 
     def _aggregate_resources(self, equipments: List[Equipment]) -> Dict[int, dict]:
         """Aggregate all resources needed for group.
