@@ -5,7 +5,7 @@ optimization and bipartite-aware algorithms.
 """
 
 from itertools import combinations
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 import community
 import networkx as nx
