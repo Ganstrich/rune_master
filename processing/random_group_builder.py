@@ -46,6 +46,20 @@ class RandomGroupBuilder:
             random.seed(seed)
             logger.info(f"RandomGroupBuilder initialized with seed: {seed}")
 
+    def _build_resource_index(
+        self, equipment_pool: List[Equipment]
+    ) -> Dict[int, List[int]]:
+        """Build inverted index: resource_id -> list of equipment IDs in pool."""
+        index: Dict[int, List[int]] = {}
+        pool_ids = {e.ankama_id for e in equipment_pool}
+        for eq in equipment_pool:
+            for req in eq.recipe:
+                rid = req.resource_id
+                if rid not in index:
+                    index[rid] = []
+                index[rid].append(eq.ankama_id)
+        return index
+
     def select_random_seed(
         self,
         equipment_pool: List[Equipment],
@@ -81,6 +95,7 @@ class RandomGroupBuilder:
         equipment_pool: List[Equipment],
         min_shared_resources: int = 2,
         exclude_seed: bool = True,
+        resource_index: Optional[Dict[int, List[int]]] = None,
     ) -> List[Equipment]:
         """Find companion equipment sharing resources with seed.
         
@@ -94,6 +109,7 @@ class RandomGroupBuilder:
             equipment_pool: Pool to search for companions
             min_shared_resources: Minimum shared resources to qualify
             exclude_seed: Whether to exclude seed from companions
+            resource_index: Optional inverted index (resource_id -> [equipment_ids])
             
         Returns:
             List of companion Equipment, sorted by similarity (high to low)
@@ -108,8 +124,26 @@ class RandomGroupBuilder:
 
         # Find companions
         companions = []
+        pool_ids = {e.ankama_id for e in equipment_pool}
+        equipment_map = {e.ankama_id: e for e in equipment_pool}
 
-        for eq in equipment_pool:
+        if resource_index:
+            # Use inverted index to find candidates
+            candidate_ids = set()
+            for rid in seed_resources:
+                if rid in resource_index:
+                    candidate_ids.update(resource_index[rid])
+            # Filter to pool
+            candidate_ids &= pool_ids
+            if exclude_seed:
+                candidate_ids.discard(seed_equipment.ankama_id)
+            
+            candidates = [equipment_map[eid] for eid in candidate_ids]
+        else:
+            # Fallback to full scan
+            candidates = equipment_pool
+
+        for eq in candidates:
             # Skip seed itself if requested
             if exclude_seed and eq.ankama_id == seed_equipment.ankama_id:
                 continue
@@ -143,6 +177,7 @@ class RandomGroupBuilder:
         seed_equipment: Optional[Equipment] = None,
         min_shared_resources: int = 2,
         max_group_size: int = 18,
+        resource_index: Optional[Dict[int, List[int]]] = None,
     ) -> Optional[Dict[str, Any]]:
         """Build a single random group from seed and companions.
         
@@ -151,6 +186,7 @@ class RandomGroupBuilder:
             seed_equipment: If None, selects random seed from pool
             min_shared_resources: Minimum shared resources per companion
             max_group_size: Maximum group size (seed + companions)
+            resource_index: Optional inverted index (resource_id -> [equipment_ids])
             
         Returns:
             Dict with complete group data matching GroupMapper format, or None if unable to build group
@@ -167,6 +203,7 @@ class RandomGroupBuilder:
             equipment_pool,
             min_shared_resources=min_shared_resources,
             exclude_seed=True,
+            resource_index=resource_index,
         )
 
         # Limit group size
@@ -225,6 +262,9 @@ class RandomGroupBuilder:
         """
         groups = []
         used_seeds: Set[int] = set()
+        
+        # Build inverted index once
+        resource_index = self._build_resource_index(equipment_pool)
 
         for i in range(count):
             # Select seed (optionally avoiding duplicates)
@@ -246,6 +286,7 @@ class RandomGroupBuilder:
                 seed_equipment=seed,
                 min_shared_resources=min_shared_resources,
                 max_group_size=max_group_size,
+                resource_index=resource_index,
             )
 
             if group:
