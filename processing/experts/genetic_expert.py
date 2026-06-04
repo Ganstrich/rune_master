@@ -30,12 +30,14 @@ class GeneticGroupingExpert(GroupingExpert):
         generations: int = 50,
         mutation_rate: float = 0.3,
         elite_count: int = 3,
+        stagnation_limit: int = 15,
     ):
         super().__init__("GeneticExpert", cache_manager, api_client)
         self.population_size = population_size
         self.generations = generations
         self.mutation_rate = mutation_rate
         self.elite_count = elite_count
+        self.stagnation_limit = stagnation_limit
 
     def discover_groups(
         self,
@@ -110,6 +112,13 @@ class GeneticGroupingExpert(GroupingExpert):
                     stagnation_counter = 0
                 else:
                     stagnation_counter += 1
+
+                if stagnation_counter >= self.stagnation_limit:
+                    print(
+                        f"      [{self.name}] Early stopping at generation {gen + 1} "
+                        f"(stagnation: {stagnation_counter} generations)"
+                    )
+                    break
 
                 # Elitism: carry forward top individuals
                 ranked = sorted(
