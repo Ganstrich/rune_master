@@ -154,7 +154,7 @@ class ParameterTuner:
 
         if not best_config_params:
             print("⚠️ [Tuner] No valid configurations found. Using defaults.")
-            return ProcessingConfig(), {}
+            return ProcessingConfig(), {}  # type: ignore[return-value]
 
         ratio, count = best_config_params
         best_config = ProcessingConfig(
@@ -167,6 +167,6 @@ class ParameterTuner:
         print(f"      Score: {best_score:.2f}")
         print(f"      Ratio: {ratio:.2f}")
         print(f"      Min Shared Items: {count}")
-        print(f"      Max Group Size: {best_stats.get('max_group_size')}")
+        print(f"      Max Group Size: {(best_stats or {}).get('max_group_size')}")
 
-        return best_config, best_stats
+        return best_config, best_stats or {}
