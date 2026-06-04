@@ -259,19 +259,22 @@ class RandomGroupBuilder:
 
     @staticmethod
     def _calculate_shared_resources(equipments: List[Equipment]) -> set:
-        """Calculate resources shared by all equipments in group."""
+        """Calculate resources shared by 2+ equipments in group.
+        
+        Returns set of resource IDs that appear in 2+ equipment recipes.
+        This follows the canonical "2+" definition of sharing efficiency.
+        """
         if not equipments:
             return set()
 
-        # Start with first equipment's resources
-        shared = {req.resource_id for req in equipments[0].recipe}
+        # Count how many equipment use each resource
+        resource_usage = {}
+        for eq in equipments:
+            for req in eq.recipe:
+                resource_usage[req.resource_id] = resource_usage.get(req.resource_id, 0) + 1
 
-        # Intersect with all others
-        for eq in equipments[1:]:
-            eq_resources = {req.resource_id for req in eq.recipe}
-            shared = shared & eq_resources
-
-        return shared
+        # Return resources used by 2+ equipment
+        return {resource_id for resource_id, count in resource_usage.items() if count >= 2}
 
     def _aggregate_resources(self, equipments: List[Equipment]) -> Dict[int, dict]:
         """Aggregate all resources needed for group.
@@ -317,35 +320,28 @@ class RandomGroupBuilder:
     @staticmethod
     def _calculate_efficiency(equipments: List[Equipment]) -> float:
         """Calculate sharing efficiency of group.
-        
-        Efficiency = shared_resources_count / total_unique_resources_count
-        
-        Represents fraction of total unique resources that are shared across all equipment.
-        Same formula as GroupMapper for consistency and exploration purposes.
-        
+
+        Efficiency = resources used by 2+ equipment / total unique resources
+
+        Represents fraction of total unique resources that are shared across any subset of equipment.
+        This is the canonical definition used across all experts for consistency.
+
         Higher = better (more items share same resources)
         """
         if not equipments:
             return 0.0
 
-        # Calculate shared resources (must be in ALL equipment)
-        shared_resources = None
-        for eq in equipments:
-            eq_resources = {req.resource_id for req in eq.recipe}
-            if shared_resources is None:
-                shared_resources = eq_resources
-            else:
-                shared_resources = shared_resources & eq_resources
-
-        shared_count = len(shared_resources) if shared_resources else 0
-
-        # Calculate total unique resources
-        all_resources = set()
+        # Count how many equipment use each resource
+        resource_usage = {}
         for eq in equipments:
             for req in eq.recipe:
-                all_resources.add(req.resource_id)
+                resource_usage[req.resource_id] = resource_usage.get(req.resource_id, 0) + 1
 
-        total_unique = len(all_resources)
+        # Count resources used by 2+ equipment
+        shared_count = sum(1 for count in resource_usage.values() if count >= 2)
+
+        # Calculate total unique resources
+        total_unique = len(resource_usage)
 
         if total_unique == 0:
             return 0.0
