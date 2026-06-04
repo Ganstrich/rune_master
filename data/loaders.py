@@ -15,6 +15,7 @@ from models import StatType, ItemType, ImageURLs
 from .api_client import DofusAPIClient
 from .cache_manager import CacheManager
 from processing.stat_calculator import calculate_equipment_weight
+from processing.config_dataclass import ProcessingConfig
 
 
 class EquipmentLoader:
@@ -141,7 +142,7 @@ class EquipmentLoader:
         
         return equipment
     
-    def from_raw_batch(self, raw_list: List[Dict[str, Any]]) -> List[Equipment]:
+    def from_raw_batch(self, raw_list: List[Dict[str, Any]], processing_config: Optional[ProcessingConfig] = None) -> List[Equipment]:
         """Convert multiple raw equipment dicts to Equipment list.
 
         Skips invalid entries with warning.
@@ -149,20 +150,19 @@ class EquipmentLoader:
 
         Args:
             raw_list: List of raw equipment dicts
+            processing_config: Optional ProcessingConfig for filtering
             
         Returns:
             List of valid Equipment objects
         """
-        from config import Config
-        
         equipments = []
         for raw in raw_list:
             try:
                 eq = self.from_raw_api(raw)
                 
                 # Filter by minimum density (stat_weight) if threshold is set
-                if Config.MIN_EQUIPMENT_DENSITY > 0:
-                    if (eq.stat_weight or 0) < Config.MIN_EQUIPMENT_DENSITY:
+                if processing_config and processing_config.min_equipment_density > 0:
+                    if (eq.stat_weight or 0) < processing_config.min_equipment_density:
                         continue
                 
                 equipments.append(eq)
