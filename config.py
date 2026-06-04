@@ -39,6 +39,6 @@ class Config:
     SORT_ORDER = "desc"
     MIN_LEVEL = 5
     MAX_LEVEL = 50
-    ITEM_TYPES = FORGERON
+    ITEM_TYPES = TAILLEUR + BIJOUTIER
 
     FIELDS = ["recipe", "effects"]
