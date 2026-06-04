@@ -132,6 +132,7 @@ class ProcessingConfig:
     group_min_shared_resources: int = 2
     group_efficiency_threshold: float = 0.15
     use_inclusive_mapping: bool = False
+    use_resource_optimizer: bool = False
     excluded_resource_ids: set = None
 ```
 

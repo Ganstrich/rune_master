@@ -33,6 +33,7 @@ def _worker_run_config(
         graph_min_shared_ratio=ratio,
         group_min_shared_resources=count,
         grouping_method=method,
+        use_resource_optimizer=False,
         use_density_filtering=True,
         equipment_density_level_ratio=1.5,  # Relaxed for tuning
     )
@@ -153,7 +154,7 @@ class ParameterTuner:
 
         if not best_config_params:
             print("⚠️ [Tuner] No valid configurations found. Using defaults.")
-            return ProcessingConfig(), {}  # type: ignore[return-value]
+            return ProcessingConfig(), {}
 
         ratio, count = best_config_params
         best_config = ProcessingConfig(
@@ -166,6 +167,6 @@ class ParameterTuner:
         print(f"      Score: {best_score:.2f}")
         print(f"      Ratio: {ratio:.2f}")
         print(f"      Min Shared Items: {count}")
-        print(f"      Max Group Size: {(best_stats or {}).get('max_group_size')}")
+        print(f"      Max Group Size: {best_stats.get('max_group_size')}")
 
-        return best_config, best_stats or {}
+        return best_config, best_stats

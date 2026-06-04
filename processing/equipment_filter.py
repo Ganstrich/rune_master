@@ -6,7 +6,6 @@ Provides filtering strategies to reduce equipment pool based on stat density
 
 import logging
 from typing import List, Optional
-
 from models import Equipment
 
 logger = logging.getLogger(__name__)
@@ -14,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 class EquipmentFilteringStrategy:
     """Filters equipment pool based on density/level ratio.
-
+    
     Density ratio = stat_weight / level
     Higher density indicates more powerful equipment at a given level.
     """
@@ -22,14 +21,14 @@ class EquipmentFilteringStrategy:
     @staticmethod
     def calculate_minimum_density(level: int, ratio: float) -> float:
         """Calculate minimum stat_weight needed for given level and ratio.
-
+        
         Args:
             level: Equipment level
             ratio: Density ratio (e.g., 0.15 = 15% of level)
-
+            
         Returns:
             Minimum stat_weight for this equipment to pass filter
-
+            
         Example:
             >>> calculate_minimum_density(100, 0.15)
             15.0
@@ -37,16 +36,19 @@ class EquipmentFilteringStrategy:
         return level * ratio
 
     @staticmethod
-    def filter_by_density_ratio(equipments: List[Equipment], ratio: float) -> tuple:
+    def filter_by_density_ratio(
+        equipments: List[Equipment],
+        ratio: float
+    ) -> tuple:
         """Filter equipment by density/level ratio.
-
+        
         Keeps only equipment where stat_weight >= level * ratio.
         Equipment with None stat_weight are excluded.
-
+        
         Args:
             equipments: List of all Equipment objects
             ratio: Density ratio threshold (e.g., 0.15)
-
+            
         Returns:
             Tuple of (filtered_equipments, excluded_equipments)
         """
@@ -82,14 +84,14 @@ class EquipmentFilteringStrategy:
         min_pool_size: int = 10,
     ) -> tuple:
         """Get the active equipment pool based on filtering strategy.
-
+        
         Args:
             equipments: List of all Equipment objects
             use_filtering: Whether to apply density filtering
             density_ratio: Density threshold if filtering enabled
             fallback_to_unfiltered: Fall back to unfiltered if filtered pool too small
             min_pool_size: Minimum pool size before triggering fallback
-
+            
         Returns:
             Tuple of (active_pool, was_filtered)
             - active_pool: Equipment list to use for processing
@@ -120,10 +122,10 @@ class EquipmentFilteringStrategy:
     @staticmethod
     def get_pool_stats(equipments: List[Equipment]) -> dict:
         """Get statistics about equipment pool.
-
+        
         Args:
             equipments: List of Equipment objects
-
+            
         Returns:
             Dict with pool statistics
         """
@@ -140,11 +142,7 @@ class EquipmentFilteringStrategy:
                 "max_density": None,
             }
 
-        densities = [
-            e.stat_weight / e.level
-            for e in with_weight
-            if e.level > 0 and e.stat_weight is not None
-        ]
+        densities = [e.stat_weight / e.level for e in with_weight if e.level > 0]
 
         return {
             "total": len(equipments),
