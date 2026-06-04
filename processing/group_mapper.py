@@ -5,8 +5,10 @@ equipment groups with ingredient analysis and efficiency metrics.
 """
 
 from collections import defaultdict
-from typing import Dict, List, Tuple, Any, Optional
+from typing import Any, Dict, List, Optional, Tuple
+
 from tqdm.auto import tqdm
+
 from models import Equipment, ResourceRequirement
 
 
@@ -14,9 +16,7 @@ class GroupMapper:
     """Map communities to optimized equipment groups."""
 
     def __init__(
-        self,
-        equipments: List[Equipment],
-        excluded_resource_ids: set = None
+        self, equipments: List[Equipment], excluded_resource_ids: Optional[set] = None
     ):
         """Initialize group mapper.
 
@@ -29,8 +29,7 @@ class GroupMapper:
         self.excluded_resource_ids = excluded_resource_ids or set()
 
     def calculate_shared_resources(
-        self,
-        group_equipments: List[Equipment]
+        self, group_equipments: List[Equipment]
     ) -> Tuple[int, int, float]:
         """Calculate shared resources for a group.
 
@@ -50,13 +49,13 @@ class GroupMapper:
 
         # Count shared resources (used by 2+ equipment)
         shared_resources = {
-            rid: count for rid, count in resource_usage.items()
+            rid: count
+            for rid, count in resource_usage.items()
             if count > 1 and rid not in self.excluded_resource_ids
         }
 
         total_shared_resources = {
-            rid: count for rid, count in resource_usage.items()
-            if count > 1
+            rid: count for rid, count in resource_usage.items() if count > 1
         }
 
         # Calculate efficiency
@@ -66,10 +65,7 @@ class GroupMapper:
 
         return shared_count, len(total_shared_resources), efficiency
 
-    def calculate_average_density(
-        self,
-        group_equipments: List[Equipment]
-    ) -> float:
+    def calculate_average_density(self, group_equipments: List[Equipment]) -> float:
         """Calculate average density of equipment in the group.
 
         Density = sum of stat weights for all effects in an equipment
@@ -88,10 +84,7 @@ class GroupMapper:
         return total_weight / len(group_equipments)
 
     def calculate_total_ingredients(
-        self,
-        group_equipments: List[Equipment],
-        cache_manager=None,
-        api_client=None
+        self, group_equipments: List[Equipment], cache_manager=None, api_client=None
     ) -> Dict[int, Dict[str, Any]]:
         """Calculate total ingredients needed for all equipment in group.
 
@@ -123,7 +116,9 @@ class GroupMapper:
                     getattr(equipment, "ankama_id", "?")
                 )
                 ingredients[resource_id]["used_in_equipments"].append(eq_name)
-                ingredients[resource_id]["quantity_per_equipment"][eq_name] = int(quantity)
+                ingredients[resource_id]["quantity_per_equipment"][eq_name] = int(
+                    quantity
+                )
 
                 # Get resource name and image from cache
                 if ingredients[resource_id]["name"] is None:
@@ -131,11 +126,15 @@ class GroupMapper:
                         try:
                             resource_data = cache_manager.get_resource(resource_id)
                             if resource_data:
-                                ingredients[resource_id]["name"] = resource_data.get('name', f'Resource {resource_id}')
+                                ingredients[resource_id]["name"] = resource_data.get(
+                                    "name", f"Resource {resource_id}"
+                                )
                                 # Extract image URL
-                                img_urls = resource_data.get('image_urls', {})
+                                img_urls = resource_data.get("image_urls", {})
                                 if img_urls:
-                                    ingredients[resource_id]["image_url"] = img_urls.get('icon') or img_urls.get('sd')
+                                    ingredients[resource_id]["image_url"] = (
+                                        img_urls.get("icon") or img_urls.get("sd")
+                                    )
                         except Exception:
                             pass
 
@@ -146,18 +145,15 @@ class GroupMapper:
         return dict(ingredients)
 
     def create_group(
-        self,
-        group_equipments: List[Equipment],
-        cache_manager=None,
-        api_client=None
+        self, group_equipments: List[Equipment], cache_manager=None, api_client=None
     ) -> Dict[str, Any]:
         """Create a formatted group dictionary from a list of Equipment objects.
-        
+
         Args:
             group_equipments: List of Equipment dataclasses
             cache_manager: Optional CacheManager for resource names
             api_client: Optional API client
-            
+
         Returns:
             Dictionary with all group metadata (efficiency, ingredients, etc.)
         """
@@ -171,9 +167,7 @@ class GroupMapper:
 
         # Calculate ingredients and density
         total_ingredients = self.calculate_total_ingredients(
-            group_equipments,
-            cache_manager=cache_manager,
-            api_client=api_client
+            group_equipments, cache_manager=cache_manager, api_client=api_client
         )
         average_density = self.calculate_average_density(group_equipments)
 
@@ -186,7 +180,7 @@ class GroupMapper:
             "total_ingredients": total_ingredients,
             "unique_ingredients_count": len(total_ingredients),
             "total_items_needed": sum(
-                ing["total_quantity"] for ing in total_ingredients.values()
+                (ing.get("total_quantity") or 0) for ing in total_ingredients.values()
             ),
             "group_size": len(group_equipments),
         }
@@ -199,7 +193,7 @@ class GroupMapper:
         min_shared_resources: int = 2,
         efficiency_threshold: float = 0.15,
         cache_manager=None,
-        api_client=None
+        api_client=None,
     ) -> List[Dict[str, Any]]:
         """Convert communities to equipment groups with filtering.
 
@@ -244,24 +238,25 @@ class GroupMapper:
 
             # Calculate ingredients and density
             total_ingredients = self.calculate_total_ingredients(
-                group_equipments,
-                cache_manager=cache_manager,
-                api_client=api_client
+                group_equipments, cache_manager=cache_manager, api_client=api_client
             )
             average_density = self.calculate_average_density(group_equipments)
 
-            groups.append({
-                "equipments": group_equipments,
-                "shared_resources_count": shared_count,
-                "total_shared_resources": total_shared,
-                "sharing_efficiency": efficiency,
-                "average_density": average_density,
-                "total_ingredients": total_ingredients,
-                "unique_ingredients_count": len(total_ingredients),
-                "total_items_needed": sum(
-                    ing["total_quantity"] for ing in total_ingredients.values()
-                ),
-            })
+            groups.append(
+                {
+                    "equipments": group_equipments,
+                    "shared_resources_count": shared_count,
+                    "total_shared_resources": total_shared,
+                    "sharing_efficiency": efficiency,
+                    "average_density": average_density,
+                    "total_ingredients": total_ingredients,
+                    "unique_ingredients_count": len(total_ingredients),
+                    "total_items_needed": sum(
+                        (ing.get("total_quantity") or 0)
+                        for ing in total_ingredients.values()
+                    ),
+                }
+            )
 
         # Sort by efficiency descending
         groups.sort(key=lambda x: x["sharing_efficiency"], reverse=True)
@@ -278,7 +273,7 @@ class GroupMapper:
         min_shared_resources: int = 1,
         efficiency_threshold: float = 0.1,
         cache_manager=None,
-        api_client=None
+        api_client=None,
     ) -> List[Dict[str, Any]]:
         """Convert communities to groups with inclusive filtering.
 
@@ -323,22 +318,29 @@ class GroupMapper:
             # Split large groups
             if group_size > max_group_size:
                 subgroups = self._split_large_community(
-                    group_equipments,
-                    max_size=max_group_size
+                    group_equipments, max_size=max_group_size
                 )
                 for subgroup in subgroups:
                     self._process_subgroup(
-                        subgroup, groups, stats,
-                        min_shared_resources, efficiency_threshold,
-                        cache_manager, api_client
+                        subgroup,
+                        groups,
+                        stats,
+                        min_shared_resources,
+                        efficiency_threshold,
+                        cache_manager,
+                        api_client,
                     )
                 continue
 
             # Process normal-sized group
             self._process_subgroup(
-                group_equipments, groups, stats,
-                min_shared_resources, efficiency_threshold,
-                cache_manager, api_client
+                group_equipments,
+                groups,
+                stats,
+                min_shared_resources,
+                efficiency_threshold,
+                cache_manager,
+                api_client,
             )
 
         # Sort by efficiency descending
@@ -357,7 +359,7 @@ class GroupMapper:
         min_shared: int,
         efficiency_threshold: float,
         cache_manager,
-        api_client=None
+        api_client=None,
     ) -> None:
         """Process a subgroup and add to groups list if it meets criteria."""
         shared_count, total_shared, efficiency = self.calculate_shared_resources(
@@ -376,32 +378,31 @@ class GroupMapper:
 
         # Calculate ingredients and density
         total_ingredients = self.calculate_total_ingredients(
-            group_equipments,
-            cache_manager=cache_manager,
-            api_client=api_client
+            group_equipments, cache_manager=cache_manager, api_client=api_client
         )
         average_density = self.calculate_average_density(group_equipments)
 
-        groups.append({
-            "equipments": group_equipments,
-            "shared_resources_count": shared_count,
-            "total_shared_resources": total_shared,
-            "sharing_efficiency": efficiency,
-            "average_density": average_density,
-            "total_ingredients": total_ingredients,
-            "unique_ingredients_count": len(total_ingredients),
-            "total_items_needed": sum(
-                ing["total_quantity"] for ing in total_ingredients.values()
-            ),
-            "group_size": len(group_equipments),
-        })
+        groups.append(
+            {
+                "equipments": group_equipments,
+                "shared_resources_count": shared_count,
+                "total_shared_resources": total_shared,
+                "sharing_efficiency": efficiency,
+                "average_density": average_density,
+                "total_ingredients": total_ingredients,
+                "unique_ingredients_count": len(total_ingredients),
+                "total_items_needed": sum(
+                    (ing.get("total_quantity") or 0)
+                    for ing in total_ingredients.values()
+                ),
+                "group_size": len(group_equipments),
+            }
+        )
 
         stats["processed"] += len(group_equipments)
 
     def _split_large_community(
-        self,
-        large_group: List[Equipment],
-        max_size: int = 8
+        self, large_group: List[Equipment], max_size: int = 8
     ) -> List[List[Equipment]]:
         """Split a large community into smaller subgroups.
 
@@ -431,14 +432,17 @@ class GroupMapper:
 
         print(f"\n=== GROUP MAPPING STATISTICS ===")
         print(f"Equipment processed: {processed}/{total} ({retention_rate:.1%})")
-        print(f"Equipment excluded by size: {stats['excluded_by_size']} ({stats['excluded_by_size']/total:.1%})")
-        print(f"Equipment excluded by resources: {stats['excluded_by_resources']} ({stats['excluded_by_resources']/total:.1%})")
-        print(f"Equipment excluded by efficiency: {stats['excluded_by_efficiency']} ({stats['excluded_by_efficiency']/total:.1%})")
+        print(
+            f"Equipment excluded by size: {stats['excluded_by_size']} ({stats['excluded_by_size'] / total:.1%})"
+        )
+        print(
+            f"Equipment excluded by resources: {stats['excluded_by_resources']} ({stats['excluded_by_resources'] / total:.1%})"
+        )
+        print(
+            f"Equipment excluded by efficiency: {stats['excluded_by_efficiency']} ({stats['excluded_by_efficiency'] / total:.1%})"
+        )
 
-    def _resolve_equipment_objects(
-        self,
-        equip_ids: List[int]
-    ) -> List[Equipment]:
+    def _resolve_equipment_objects(self, equip_ids: List[int]) -> List[Equipment]:
         """Resolve equipment IDs to Equipment objects.
 
         Handles both int and str IDs.
@@ -476,12 +480,16 @@ class GroupMapper:
             Tuples of (resource_id, quantity)
         """
         if isinstance(equipment, Equipment):
-            for req in (equipment.recipe or []):
+            for req in equipment.recipe or []:
                 if isinstance(req, ResourceRequirement):
                     yield req.resource_id, req.quantity
                 elif isinstance(req, dict):
+                    ankama_id = req.get("item_ankama_id")
+                    quantity = req.get("quantity", 1)
+                    if ankama_id is None or quantity is None:
+                        continue
                     try:
-                        yield int(req.get("item_ankama_id")), int(req.get("quantity", 1))
+                        yield int(ankama_id), int(quantity)
                     except (ValueError, TypeError):
                         continue
                 else:
@@ -495,8 +503,12 @@ class GroupMapper:
             return
 
         # Handle dict format
-        for item in (equipment.get("recipe") or []):
+        for item in equipment.get("recipe") or []:
+            ankama_id = item.get("item_ankama_id")
+            quantity = item.get("quantity", 1)
+            if ankama_id is None or quantity is None:
+                continue
             try:
-                yield int(item.get("item_ankama_id")), int(item.get("quantity", 1))
+                yield int(ankama_id), int(quantity)
             except (ValueError, TypeError):
                 continue
