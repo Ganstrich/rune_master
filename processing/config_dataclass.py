@@ -44,3 +44,6 @@ class ProcessingConfig:
 
     # Equipment pre-filtering
     min_equipment_density: float = 0.0  # Minimum stat_weight per level (0 = no filter)
+
+    # MoE De-duplication
+    dedup_overlap_threshold: float = 0.7  # Jaccard similarity threshold for considering groups as duplicates
