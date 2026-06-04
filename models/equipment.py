@@ -1,7 +1,7 @@
 """Equipment data model."""
 
-from typing import TypedDict, Dict, Any, Optional, List
 from dataclasses import dataclass, field
+from typing import TypedDict, Dict, Any, Optional, List
 
 from .common import ImageURLs, ItemType, StatType
 from .recipe import ResourceRequirement
@@ -55,7 +55,7 @@ class EquipmentStat:
 
         # Try fuzzy matching: normalize singular/plural
         # Convert to a canonical form for comparison
-        def normalize_for_matching(s: str) -> str:
+        def normalize_for_matching(s: str) -> list:
             """Normalize string for fuzzy matching."""
             # Remove common plural endings
             s_lower = s.lower()
