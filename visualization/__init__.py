@@ -9,7 +9,7 @@ Architecture:
 Modules:
 - html_generator: Core HTML generation engine
 - style_templates: CSS and JavaScript templates
-- graph_generator: D3.js force-directed graph visualization
+
 """
 
 from .html_generator import HTMLGenerator
