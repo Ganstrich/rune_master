@@ -5,7 +5,7 @@ optimization and bipartite-aware algorithms.
 """
 
 from itertools import combinations
-from typing import Dict, List, Set
+from typing import Dict, List, Set, Tuple
 
 import community
 import networkx as nx
@@ -17,7 +17,9 @@ class CommunityDetector:
 
     @staticmethod
     def calculate_average_pairwise_similarity(
-        partition: Dict[int, int], equipment_resources: Dict[int, Set[int]]
+        partition: Dict[int, int],
+        equipment_resources: Dict[int, Set[int]],
+        _cache: Optional[Dict[Tuple[int, int], float]] = None,
     ) -> float:
         """Calculate average pairwise Jaccard similarity within communities.
 
@@ -27,6 +29,7 @@ class CommunityDetector:
         Args:
             partition: Dict mapping equipment_id -> community_id
             equipment_resources: Dict from GraphBuilder.get_equipment_resources()
+            _cache: Optional dictionary to cache Jaccard results for pairs.
 
         Returns:
             Average pairwise similarity (0.0 to 1.0)
@@ -54,16 +57,24 @@ class CommunityDetector:
                 for j in range(i + 1, len(valid_equipment)):
                     eq1 = valid_equipment[i]
                     eq2 = valid_equipment[j]
-                    set1 = equipment_resources[eq1]
-                    set2 = equipment_resources[eq2]
+                    
+                    key = (min(eq1, eq2), max(eq1, eq2))
+                    if _cache is not None and key in _cache:
+                        similarity = _cache[key]
+                    else:
+                        set1 = equipment_resources[eq1]
+                        set2 = equipment_resources[eq2]
 
-                    intersection = len(set1 & set2)
-                    union = len(set1 | set2)
+                        intersection = len(set1 & set2)
+                        union = len(set1 | set2)
 
-                    if union > 0:
-                        similarity = intersection / union
-                        community_similarity += similarity
-                        pair_count += 1
+                        similarity = intersection / union if union > 0 else 0.0
+                        
+                        if _cache is not None:
+                            _cache[key] = similarity
+
+                    community_similarity += similarity
+                    pair_count += 1
 
             if pair_count > 0:
                 total_similarity += community_similarity / pair_count
@@ -143,6 +154,8 @@ class CommunityDetector:
         start, stop, step = resolution_range
         if start is None or stop is None or step is None:
             return {}
+        
+        jaccard_cache: Dict[Tuple[int, int], float] = {}
         for resolution in np.arange(start, stop, step):
             partition = community.best_partition(
                 equipment_graph, resolution=resolution, randomize=True
@@ -151,7 +164,7 @@ class CommunityDetector:
             # Score based on average pairwise similarity
             pairwise_similarity = (
                 CommunityDetector.calculate_average_pairwise_similarity(
-                    partition, equipment_resources
+                    partition, equipment_resources, _cache=jaccard_cache
                 )
             )
 
