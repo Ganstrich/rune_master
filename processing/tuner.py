@@ -33,7 +33,6 @@ def _worker_run_config(
         graph_min_shared_ratio=ratio,
         group_min_shared_resources=count,
         grouping_method=method,
-        use_resource_optimizer=False,
         use_density_filtering=True,
         equipment_density_level_ratio=1.5,  # Relaxed for tuning
     )

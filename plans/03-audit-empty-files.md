@@ -20,7 +20,6 @@ Verify that `community_detector.py` and `resource_optimizer.py` are not empty or
 ## Files Affected
 - `processing/community_detector.py`
 - `processing/resource_optimizer.py`
-
 ## Validation
 - Both files should either have valid Python content or be removed from the project
 - `python -m py_compile processing/community_detector.py` — must succeed

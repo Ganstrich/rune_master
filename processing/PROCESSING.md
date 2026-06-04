@@ -19,7 +19,6 @@ processing/
 ├── equipment_filter.py       - Density/level ratio filtering
 ├── random_group_builder.py   - Random group generation
 ├── stat_calculator.py        - Equipment stat weight calculation
-├── resource_optimizer.py     - Resource optimization (placeholder)
 └── tuner.py                  - Parameter tuning engine
 ```
 

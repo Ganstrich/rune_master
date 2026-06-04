@@ -164,7 +164,6 @@ config = ProcessingConfig(
     group_min_shared_resources=Config.MIN_COMMON_ITEMS,
     group_efficiency_threshold=0.15,
     use_inclusive_mapping=False,
-    use_resource_optimizer=False,
     excluded_resource_ids=set(Config.EXCLUDED_RESOURCES or []),
     use_density_filtering=True,
     equipment_density_level_ratio=density_level_ratio,
