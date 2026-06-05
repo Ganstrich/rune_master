@@ -1,25 +1,27 @@
 """Genetic algorithm-based grouping expert.
 
-Uses evolutionary strategies (selection, crossover, mutation) to evolve 
+Uses evolutionary strategies (selection, crossover, mutation) to evolve
 optimal equipment groups by maximizing a global fitness function.
 """
 
 import random
-from typing import List, Dict, Any, Optional, Set
+from typing import Any, Dict, List, Optional, Set, Tuple
+
 from models import Equipment
-from processing.experts.base import GroupingExpert
 from processing.config_dataclass import ProcessingConfig
+from processing.experts.base import GroupingExpert
 from processing.group_mapper import GroupMapper
+
 
 class GeneticGroupingExpert(GroupingExpert):
     """Expert that uses Genetic Algorithms to discover optimal groups.
-    
-    Excellent for 'dense' graphs where traditional community detection 
+
+    Excellent for 'dense' graphs where traditional community detection
     struggles due to items sharing many common ingredients.
     """
-    
+
     def __init__(
-        self, 
+        self,
         cache_manager: Optional[Any] = None,
         api_client: Optional[Any] = None,
         population_size: int = 30,
@@ -137,56 +139,71 @@ class GeneticGroupingExpert(GroupingExpert):
 
                 if (gen + 1) % 10 == 0:
                     best_fit = max(fitness_scores)
-                    print(f"      [{self.name}] Generation {gen+1}/{self.generations} - Best Fitness: {best_fit:.2f}")
+                    print(
+                        f"      [{self.name}] Generation {gen + 1}/{self.generations} - Best Fitness: {best_fit:.2f}"
+                    )
 
             # 3. Extract best individual
-            final_fitness = [self._calculate_individual_fitness(ind) for ind in population]
+            final_fitness = [
+                self._calculate_individual_fitness(ind) for ind in population
+            ]
             best_individual = population[final_fitness.index(max(final_fitness))]
-            
+
             # 4. Convert best individual to standardized Group format
-            mapper = GroupMapper(equipments, excluded_resource_ids=config.excluded_resource_ids)
-            
+            mapper = GroupMapper(
+                equipments, excluded_resource_ids=config.excluded_resource_ids
+            )
+
             # Our individual is a list of sets of equipments
             final_groups = []
             for eq_set in best_individual:
                 if len(eq_set) < config.group_min_size:
                     continue
-                    
+
                 # Use GroupMapper to get full metadata (efficiency, ingredients, etc.)
                 group_data = mapper.create_group(
                     list(eq_set),
                     cache_manager=self.cache_manager,
-                    api_client=self.api_client
+                    api_client=self.api_client,
                 )
-                
-                if group_data.get("sharing_efficiency", 0) >= config.group_efficiency_threshold:
+
+                if (
+                    group_data.get("sharing_efficiency", 0)
+                    >= config.group_efficiency_threshold
+                ):
                     group_data["expert_name"] = self.name
                     group_data["selection_method"] = "genetic"
                     final_groups.append(group_data)
-                    
+
             return final_groups
         except Exception as e:
             print(f"      [{self.name}] ❌ Expert failed internally: {e}")
             import traceback
+
             traceback.print_exc()
             return []
 
-    def _initialize_population(self, equipments: List[Equipment], config: ProcessingConfig) -> List[List[Set[Equipment]]]:
+    def _initialize_population(
+        self, equipments: List[Equipment], config: ProcessingConfig
+    ) -> List[List[Set[Equipment]]]:
         """Create initial diverse individuals."""
         population = []
         for _ in range(self.population_size):
             population.append(self._create_random_individual(equipments, config))
         return population
 
-    def _create_random_individual(self, equipments: List[Equipment], config: ProcessingConfig) -> List[Set[Equipment]]:
+    def _create_random_individual(
+        self, equipments: List[Equipment], config: ProcessingConfig
+    ) -> List[Set[Equipment]]:
         """Create a single random individual."""
         individual = []
         num_groups = random.randint(3, 8)
         available = list(equipments)
         random.shuffle(available)
-        
+
         for _ in range(num_groups):
-            if not available: break
+            if not available:
+                break
             size = random.randint(config.group_min_size, config.group_max_size)
             group_set = set(available[:size])
             available = available[size:]
@@ -213,7 +230,7 @@ class GeneticGroupingExpert(GroupingExpert):
         total_score = 0.0
         seen_ids = set()
         overlap_penalty = 0.0
-        
+
         if not individual:
             return -100.0
 
@@ -246,9 +263,9 @@ class GeneticGroupingExpert(GroupingExpert):
             # Overlap penalty
             for eq in eq_set:
                 if eq.ankama_id in seen_ids:
-                    overlap_penalty += 1.0 # Stronger penalty for redundancy
+                    overlap_penalty += 1.0  # Stronger penalty for redundancy
                 seen_ids.add(eq.ankama_id)
-                
+
         return total_score - overlap_penalty
 
     @staticmethod
@@ -379,25 +396,27 @@ class GeneticGroupingExpert(GroupingExpert):
 
         return groups
 
-    def _mutate(self, individual: List[Set[Equipment]], all_equipments: List[Equipment]):
+    def _mutate(
+        self, individual: List[Set[Equipment]], all_equipments: List[Equipment]
+    ):
         """Mutate individual: move item, add item, or merge groups."""
         if random.random() > self.mutation_rate or not individual:
             return
 
         mutation_type = random.choice(["add", "remove", "merge"])
-        
+
         if mutation_type == "add":
             idx = random.randint(0, len(individual) - 1)
             new_eq = random.choice(all_equipments)
             individual[idx].add(new_eq)
-        
+
         elif mutation_type == "remove":
             idx = random.randint(0, len(individual) - 1)
             if len(individual[idx]) > 1:
                 individual[idx].pop()
             else:
-                individual.pop(idx) # Remove group if it becomes too small
-        
+                individual.pop(idx)  # Remove group if it becomes too small
+
         elif mutation_type == "merge" and len(individual) >= 2:
             i1, i2 = random.sample(range(len(individual)), 2)
             individual[i1].update(individual[i2])
