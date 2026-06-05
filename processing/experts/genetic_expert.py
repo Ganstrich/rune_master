@@ -1,29 +1,25 @@
 """Genetic algorithm-based grouping expert.
 
-Uses evolutionary strategies (selection, crossover, mutation) to evolve
-optimal equipment groups. Builds a similarity graph first, then evolves
-partitions of that graph using sharing_efficiency as the fitness metric.
+Uses evolutionary strategies (selection, crossover, mutation) to evolve 
+optimal equipment groups by maximizing a global fitness function.
 """
 
 import random
-from typing import Any, Dict, List, Optional, Set, Tuple
-
+from typing import List, Dict, Any, Optional, Set
 from models import Equipment
-from processing.config_dataclass import ProcessingConfig
 from processing.experts.base import GroupingExpert
-from processing.graph_builder import GraphBuilder
+from processing.config_dataclass import ProcessingConfig
 from processing.group_mapper import GroupMapper
-
 
 class GeneticGroupingExpert(GroupingExpert):
     """Expert that uses Genetic Algorithms to discover optimal groups.
-
-    Builds an equipment similarity graph, then evolves graph-aware partitions.
-    Uses the same sharing_efficiency metric as GroupMapper for consistency.
+    
+    Excellent for 'dense' graphs where traditional community detection 
+    struggles due to items sharing many common ingredients.
     """
-
+    
     def __init__(
-        self,
+        self, 
         cache_manager: Optional[Any] = None,
         api_client: Optional[Any] = None,
         population_size: int = 30,
@@ -89,11 +85,7 @@ class GeneticGroupingExpert(GroupingExpert):
                 print(f"      [{self.name}] ⚠️ Failed to initialize population.")
                 return []
 
-            # 3. Evolution Loop
-            best_ever_fitness = -1.0
-            best_ever_individual = None
-            stagnation_counter = 0
-
+            # 2. Evolution Loop
             for gen in range(self.generations):
                 # Evaluate fitness
                 fitness_scores = [
@@ -144,191 +136,62 @@ class GeneticGroupingExpert(GroupingExpert):
                 population = new_population[: self.population_size]
 
                 if (gen + 1) % 10 == 0:
-                    print(
-                        f"      [{self.name}] Generation {gen + 1}/{self.generations}"
-                        f" - Best: {gen_best_fitness:.3f}"
-                        f" (ever: {best_ever_fitness:.3f})"
-                    )
+                    best_fit = max(fitness_scores)
+                    print(f"      [{self.name}] Generation {gen+1}/{self.generations} - Best Fitness: {best_fit:.2f}")
 
-            # 4. Use best individual ever seen
-            if best_ever_individual is None:
-                final_fitness = [
-                    self._calculate_individual_fitness(ind, resource_sets, config)
-                    for ind in population
-                ]
-                best_idx = max(
-                    range(len(final_fitness)), key=lambda i: final_fitness[i]
-                )
-                best_individual = population[best_idx]
-            else:
-                best_individual = best_ever_individual
-
-            # 5. Convert to standardized Group format
-            mapper = GroupMapper(
-                equipments, excluded_resource_ids=config.excluded_resource_ids
-            )
-
+            # 3. Extract best individual
+            final_fitness = [self._calculate_individual_fitness(ind) for ind in population]
+            best_individual = population[final_fitness.index(max(final_fitness))]
+            
+            # 4. Convert best individual to standardized Group format
+            mapper = GroupMapper(equipments, excluded_resource_ids=config.excluded_resource_ids)
+            
+            # Our individual is a list of sets of equipments
             final_groups = []
-            seen_equipment_ids: Set[int] = set()
             for eq_set in best_individual:
                 if len(eq_set) < config.group_min_size:
                     continue
-
-                # Skip groups that overlap with already-selected groups
-                eq_ids = {eq.ankama_id for eq in eq_set}
-                if eq_ids & seen_equipment_ids:
-                    continue
-
+                    
+                # Use GroupMapper to get full metadata (efficiency, ingredients, etc.)
                 group_data = mapper.create_group(
                     list(eq_set),
                     cache_manager=self.cache_manager,
-                    api_client=self.api_client,
+                    api_client=self.api_client
                 )
-
-                if (
-                    group_data.get("sharing_efficiency", 0)
-                    >= config.group_efficiency_threshold
-                ):
+                
+                if group_data.get("sharing_efficiency", 0) >= config.group_efficiency_threshold:
                     group_data["expert_name"] = self.name
                     group_data["selection_method"] = "genetic"
                     final_groups.append(group_data)
-                    seen_equipment_ids |= eq_ids
-
-            print(
-                f"      [{self.name}] Produced {len(final_groups)} groups"
-                f" (avg efficiency: {sum(g['sharing_efficiency'] for g in final_groups) / len(final_groups):.3f})"
-                if final_groups
-                else f"      [{self.name}] No groups passed efficiency threshold."
-            )
+                    
             return final_groups
-
         except Exception as e:
             print(f"      [{self.name}] ❌ Expert failed internally: {e}")
             import traceback
-
             traceback.print_exc()
             return []
 
-    def _initialize_population(
-        self,
-        graph,
-        eq_by_id: Dict[int, Equipment],
-        resource_sets: Dict[int, Set[int]],
-        config: ProcessingConfig,
-    ) -> List[List[Set[Equipment]]]:
-        """Create initial diverse individuals using graph-aware seeding.
-
-        Half the population is seeded from graph neighbors (high-quality),
-        the other half is random for diversity.
-        """
-        population: List[List[Set[Equipment]]] = []
-        graph_nodes = list(graph.nodes())
-        num_groups_target = max(3, len(graph_nodes) // (config.group_max_size + 1))
-
-        for i in range(self.population_size):
-            if i < self.population_size // 2:
-                # Graph-aware seeding: pick random seeds, grow via neighbors
-                individual = self._create_graph_seeded_individual(
-                    graph,
-                    graph_nodes,
-                    eq_by_id,
-                    resource_sets,
-                    config,
-                    num_groups_target,
-                )
-            else:
-                # Random individual for diversity
-                individual = self._create_random_individual(
-                    graph_nodes, eq_by_id, config
-                )
-            if individual:
-                population.append(individual)
-
+    def _initialize_population(self, equipments: List[Equipment], config: ProcessingConfig) -> List[List[Set[Equipment]]]:
+        """Create initial diverse individuals."""
+        population = []
+        for _ in range(self.population_size):
+            population.append(self._create_random_individual(equipments, config))
         return population
 
-    def _create_graph_seeded_individual(
-        self,
-        graph,
-        graph_nodes: List[int],
-        eq_by_id: Dict[int, Equipment],
-        resource_sets: Dict[int, Set[int]],
-        config: ProcessingConfig,
-        num_groups: int,
-    ) -> List[Set[Equipment]]:
-        """Create an individual by growing groups from random seed nodes.
-
-        Each seed expands to include its most similar neighbors, creating
-        groups with inherently high sharing potential.
-        """
-        individual: List[Set[Equipment]] = []
-        used_ids: Set[int] = set()
-        seeds = random.sample(graph_nodes, min(num_groups, len(graph_nodes)))
-
-        for seed_id in seeds:
-            if seed_id in used_ids:
-                continue
-
-            group_ids: Set[int] = {seed_id}
-            candidates = list(graph.neighbors(seed_id))
-            random.shuffle(candidates)
-
-            # Grow group by adding neighbors that share the most resources
-            # with current group members
-            while len(group_ids) < config.group_max_size and candidates:
-                # Score each candidate by shared resources with current group
-                best_candidate = None
-                best_shared = -1
-                for c in candidates:
-                    if c in used_ids or c in group_ids:
-                        continue
-                    c_resources = resource_sets.get(c, set())
-                    group_resources: Set[int] = set()
-                    for gid in group_ids:
-                        group_resources |= resource_sets.get(gid, set())
-                    shared = len(c_resources & group_resources)
-                    if shared > best_shared:
-                        best_shared = shared
-                        best_candidate = c
-
-                if best_candidate is None or best_shared == 0:
-                    break
-
-                group_ids.add(best_candidate)
-                candidates = [
-                    n
-                    for n in graph.neighbors(best_candidate)
-                    if n not in used_ids and n not in group_ids
-                ]
-
-            if len(group_ids) >= config.group_min_size:
-                group = {eq_by_id[eid] for eid in group_ids if eid in eq_by_id}
-                if group:
-                    individual.append(group)
-                    used_ids |= group_ids
-
-        return individual
-
-    def _create_random_individual(
-        self,
-        graph_nodes: List[int],
-        eq_by_id: Dict[int, Equipment],
-        config: ProcessingConfig,
-    ) -> List[Set[Equipment]]:
-        """Create a random individual from graph nodes."""
-        individual: List[Set[Equipment]] = []
-        available = [n for n in graph_nodes if n in eq_by_id]
+    def _create_random_individual(self, equipments: List[Equipment], config: ProcessingConfig) -> List[Set[Equipment]]:
+        """Create a single random individual."""
+        individual = []
+        num_groups = random.randint(3, 8)
+        available = list(equipments)
         random.shuffle(available)
-
-        num_groups = random.randint(2, max(3, len(available) // config.group_max_size))
+        
         for _ in range(num_groups):
-            if not available:
-                break
+            if not available: break
             size = random.randint(config.group_min_size, config.group_max_size)
-            group_ids = set(available[:size])
+            group_set = set(available[:size])
             available = available[size:]
-            group = {eq_by_id[eid] for eid in group_ids}
-            if group:
-                individual.append(group)
+            if group_set:
+                individual.append(group_set)
         return individual
 
     def _calculate_individual_fitness(
@@ -348,13 +211,11 @@ class GeneticGroupingExpert(GroupingExpert):
         rewards sharing density rather than raw group size.
         """
         total_score = 0.0
-        seen_ids: Set[int] = set()
+        seen_ids = set()
         overlap_penalty = 0.0
-
+        
         if not individual:
             return -100.0
-
-        min_size = config.group_min_size if config else 2
 
         for eq_set in individual:
             if not eq_set:
@@ -385,9 +246,9 @@ class GeneticGroupingExpert(GroupingExpert):
             # Overlap penalty
             for eq in eq_set:
                 if eq.ankama_id in seen_ids:
-                    overlap_penalty += 1.0
+                    overlap_penalty += 1.0 # Stronger penalty for redundancy
                 seen_ids.add(eq.ankama_id)
-
+                
         return total_score - overlap_penalty
 
     @staticmethod
@@ -518,81 +379,26 @@ class GeneticGroupingExpert(GroupingExpert):
 
         return groups
 
-    def _mutate(
-        self,
-        individual: List[Set[Equipment]],
-        graph,
-        eq_by_id: Dict[int, Equipment],
-        resource_sets: Dict[int, Set[int]],
-        config: ProcessingConfig,
-    ):
-        """Mutate individual using graph-aware operations."""
+    def _mutate(self, individual: List[Set[Equipment]], all_equipments: List[Equipment]):
+        """Mutate individual: move item, add item, or merge groups."""
         if random.random() > self.mutation_rate or not individual:
             return
 
-        mutation_type = random.choice(["add_neighbor", "remove", "split", "swap"])
-
-        if mutation_type == "add_neighbor":
-            # Add a graph neighbor of an existing group member
+        mutation_type = random.choice(["add", "remove", "merge"])
+        
+        if mutation_type == "add":
             idx = random.randint(0, len(individual) - 1)
-            group_ids = {eq.ankama_id for eq in individual[idx]}
-            neighbors = set()
-            for eid in group_ids:
-                neighbors.update(graph.neighbors(eid))
-            neighbors -= group_ids
-            # Filter to valid equipment IDs
-            neighbors = {n for n in neighbors if n in eq_by_id}
-            if neighbors and len(individual[idx]) < config.group_max_size:
-                best = max(
-                    neighbors,
-                    key=lambda n: len(
-                        resource_sets.get(n, set())
-                        & set().union(
-                            *(resource_sets.get(eid, set()) for eid in group_ids)
-                        )
-                    ),
-                )
-                individual[idx].add(eq_by_id[best])
-
+            new_eq = random.choice(all_equipments)
+            individual[idx].add(new_eq)
+        
         elif mutation_type == "remove":
             idx = random.randint(0, len(individual) - 1)
-            if len(individual[idx]) > config.group_min_size:
-                # Remove the member with least shared resources
-                group_ids = {eq.ankama_id for eq in individual[idx]}
-                group_shared: Set[int] = set()
-                for eid in group_ids:
-                    group_shared |= resource_sets.get(eid, set())
-                # Find member whose removal least hurts sharing
-                worst_eq = min(
-                    individual[idx],
-                    key=lambda eq: len(
-                        resource_sets.get(eq.ankama_id, set()) & group_shared
-                    ),
-                )
-                individual[idx].remove(worst_eq)
-            elif len(individual[idx]) == config.group_min_size:
-                # Remove the entire small group
-                individual.pop(idx)
-
-        elif (
-            mutation_type == "split"
-            and len(individual[idx := random.randint(0, len(individual) - 1)])
-            > config.group_min_size * 2
-        ):
-            # Split a large group into two
-            members = list(individual[idx])
-            random.shuffle(members)
-            mid = len(members) // 2
-            individual[idx] = set(members[:mid])
-            individual.append(set(members[mid:]))
-
-        elif mutation_type == "swap" and len(individual) >= 2:
-            # Swap a member between two groups
+            if len(individual[idx]) > 1:
+                individual[idx].pop()
+            else:
+                individual.pop(idx) # Remove group if it becomes too small
+        
+        elif mutation_type == "merge" and len(individual) >= 2:
             i1, i2 = random.sample(range(len(individual)), 2)
-            if individual[i1] and individual[i2]:
-                eq1 = random.choice(list(individual[i1]))
-                eq2 = random.choice(list(individual[i2]))
-                individual[i1].discard(eq1)
-                individual[i1].add(eq2)
-                individual[i2].discard(eq2)
-                individual[i2].add(eq1)
+            individual[i1].update(individual[i2])
+            individual.pop(i2)

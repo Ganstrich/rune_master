@@ -10,6 +10,9 @@ from typing import Dict, List, Optional, Set, Tuple
 import community
 import networkx as nx
 import numpy as np
+import networkx as nx
+import community
+from itertools import combinations
 
 
 class CommunityDetector:
@@ -44,7 +47,10 @@ class CommunityDetector:
 
         for comm_id, equipment_list in communities_dict.items():
             # Filter to equipment with known resources
-            valid_equipment = [eq for eq in equipment_list if eq in equipment_resources]
+            valid_equipment = [
+                eq for eq in equipment_list
+                if eq in equipment_resources
+            ]
 
             if len(valid_equipment) < 2:
                 continue
@@ -77,7 +83,7 @@ class CommunityDetector:
                     pair_count += 1
 
             if pair_count > 0:
-                total_similarity += community_similarity / pair_count
+                total_similarity += (community_similarity / pair_count)
                 total_communities += 1
 
         if total_communities == 0:
@@ -87,7 +93,8 @@ class CommunityDetector:
 
     @staticmethod
     def calculate_bulk_efficiency(
-        partition: Dict[int, int], equipment_resources: Dict[int, Set[int]]
+        partition: Dict[int, int],
+        equipment_resources: Dict[int, Set[int]]
     ) -> float:
         """Calculate average bulk acquisition efficiency across communities.
 
@@ -114,7 +121,9 @@ class CommunityDetector:
 
             # Calculate resource overlap
             try:
-                all_resources = [equipment_resources[eq] for eq in equipment_list]
+                all_resources = [
+                    equipment_resources[eq] for eq in equipment_list
+                ]
             except KeyError:
                 # Some equipment may not have resources
                 continue
@@ -133,7 +142,7 @@ class CommunityDetector:
     def find_best_louvain_partition(
         equipment_graph: nx.Graph,
         equipment_resources: Dict[int, Set[int]],
-        resolution_range: tuple = (1, 10, 1),
+        resolution_range: tuple = (1, 10, 1)
     ) -> Dict[int, int]:
         """Find best Louvain partition using modularity optimization.
 
@@ -158,7 +167,9 @@ class CommunityDetector:
         jaccard_cache: Dict[Tuple[int, int], float] = {}
         for resolution in np.arange(start, stop, step):
             partition = community.best_partition(
-                equipment_graph, resolution=resolution, randomize=True
+                equipment_graph,
+                resolution=resolution,
+                randomize=True
             )
 
             # Score based on average pairwise similarity
@@ -173,16 +184,15 @@ class CommunityDetector:
                 best_partition = partition
                 best_resolution = resolution
 
-        print(
-            f"✓ Louvain optimal resolution: {best_resolution:.2f}, "
-            f"Score: {best_score:.3f}"
-        )
+        print(f"✓ Louvain optimal resolution: {best_resolution:.2f}, "
+              f"Score: {best_score:.3f}")
 
-        return best_partition if best_partition is not None else {}
+        return best_partition
 
     @staticmethod
     def find_best_bilouvain_partition(
-        equipment_graph: nx.Graph, resolution_range: tuple = (1, 10, 1)
+        equipment_graph: nx.Graph,
+        resolution_range: tuple = (1, 10, 1)
     ) -> Dict[int, int]:
         """Find best partition using BiLouvain for bipartite graphs.
 
@@ -197,14 +207,12 @@ class CommunityDetector:
         """
         # Identify bipartite nodes
         equipment_nodes = [
-            n
-            for n in equipment_graph.nodes()
-            if equipment_graph.nodes[n].get("bipartite") == 0
+            n for n in equipment_graph.nodes()
+            if equipment_graph.nodes[n].get('bipartite') == 0
         ]
         resource_nodes = [
-            n
-            for n in equipment_graph.nodes()
-            if equipment_graph.nodes[n].get("bipartite") == 1
+            n for n in equipment_graph.nodes()
+            if equipment_graph.nodes[n].get('bipartite') == 1
         ]
 
         # Get equipment resources for scoring
@@ -215,12 +223,15 @@ class CommunityDetector:
         # Project bipartite graph to equipment nodes
         if equipment_nodes:
             equipment_projection = nx.bipartite.weighted_projected_graph(
-                equipment_graph, equipment_nodes
+                equipment_graph,
+                equipment_nodes
             )
 
             # Apply Louvain on projection
             partition = CommunityDetector.find_best_louvain_partition(
-                equipment_projection, equipment_resources, resolution_range
+                equipment_projection,
+                equipment_resources,
+                resolution_range
             )
         else:
             partition = {}
@@ -244,10 +255,8 @@ class CommunityDetector:
         # Merge partitions
         full_partition = {**partition, **resource_partition}
 
-        print(
-            f"✓ BiLouvain partition complete: "
-            f"{len(partition)} equipment, {len(resource_partition)} resources"
-        )
+        print(f"✓ BiLouvain partition complete: "
+              f"{len(partition)} equipment, {len(resource_partition)} resources")
 
         return full_partition
 

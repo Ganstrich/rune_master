@@ -42,3 +42,18 @@ class Config:
     ITEM_TYPES = BIJOUTIER + TAILLEUR
 
     FIELDS = ["recipe", "effects"]
+    MIN_COMMON_ITEMS = 3
+    MIN_SIMILARITY = 0.3
+    MIN_CLUSTER_SIZE = 2
+    MIN_SHARING_PERCENTAGE = 60
+    EXCLUDED_RESOURCES = {15263, 14635}  # Example resource IDs
+
+    # NEW: Density/Level filtering
+    DENSITY_LEVEL_RATIO = 3
+    FALLBACK_TO_UNFILTERED = False
+    MIN_FILTERED_POOL_SIZE = 10
+    MIN_EQUIPMENT_DENSITY = 0.0  # Minimum stat_weight per level (0 = no filter)
+
+    # NEW: Grouping method selection
+    GROUPING_METHOD = "hybrid"  # "deterministic", "random", "hybrid"
+    RANDOM_GROUP_COUNT = 50

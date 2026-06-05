@@ -1,6 +1,0 @@
-ruleDirs:
-- /home/adamb/rune_master/rules
-testConfigs:
-- testDir: /home/adamb/rune_master/rule-tests
-utilDirs:
-- /home/adamb/rune_master/utils
