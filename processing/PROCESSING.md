@@ -29,6 +29,7 @@ Dataclass controlling all pipeline behavior.
 
 **Graph Building:**
 - `graph_min_shared_ratio: float` - Jaccard similarity threshold (default: `0.3`)
+- `graph_min_shared_count: int` - Minimum absolute shared resources for an edge (default: `1`)
 - `graph_min_component_size: int` - Minimum nodes per component (default: `2`)
 
 **Community Detection:**
@@ -112,7 +113,8 @@ Constructs equipment-resource relationship graphs. All methods are static.
 
 **Similarity Metrics:**
 - **Jaccard Index:** `shared_resources / total_unique_resources`
-- **Absolute Count:** Minimum shared resources threshold (`min_shared_count`)
+- **Absolute Count:** Minimum shared resources threshold (`graph_min_shared_count`)
+- Both Jaccard ratio AND absolute count must be met (AND logic)
 - Edge weight = `max(jaccard, 0.01)` to ensure non-zero for algorithms
 - Edge also stores `shared_count` attribute
 

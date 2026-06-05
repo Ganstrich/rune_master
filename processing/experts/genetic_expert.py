@@ -60,7 +60,7 @@ class GeneticGroupingExpert(GroupingExpert):
                 graph, equipment_resources = GraphBuilder.build_equipment_graph(
                     equipments,
                     min_shared_ratio=config.graph_min_shared_ratio,
-                    min_shared_count=config.group_min_shared_resources,
+                    min_shared_count=config.graph_min_shared_count,
                     min_component_size=config.graph_min_component_size,
                 )
 
@@ -504,7 +504,9 @@ class GeneticGroupingExpert(GroupingExpert):
 
             for i in g_indices:
                 group_ids = {e.ankama_id for e in groups[i]}
-                affinity = self._equipment_group_affinity(eq_id, group_ids, resource_sets)
+                affinity = self._equipment_group_affinity(
+                    eq_id, group_ids, resource_sets
+                )
                 if affinity > best_affinity:
                     best_affinity = affinity
                     best_group_idx = i

@@ -10,6 +10,9 @@ class ProcessingConfig:
 
     # Graph building
     graph_min_shared_ratio: float = 0.3
+    graph_min_shared_count: int = (
+        1  # Min absolute shared resources for edge (independent of ratio)
+    )
     graph_min_component_size: int = 2  # MIN_CLUSTER_SIZE
 
     # Community detection
@@ -45,4 +48,6 @@ class ProcessingConfig:
     min_equipment_density: float = 0.0  # Minimum stat_weight per level (0 = no filter)
 
     # MoE De-duplication
-    dedup_overlap_threshold: float = 0.7  # Jaccard similarity threshold for considering groups as duplicates
+    dedup_overlap_threshold: float = (
+        0.7  # Jaccard similarity threshold for considering groups as duplicates
+    )

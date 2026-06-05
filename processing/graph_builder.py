@@ -5,8 +5,10 @@ from equipment and resource data.
 """
 
 from itertools import combinations
-from typing import Dict, Set, List, Tuple
+from typing import Dict, List, Set, Tuple
+
 import networkx as nx
+
 from models import Equipment
 
 
@@ -27,19 +29,19 @@ class GraphBuilder:
             NetworkX bipartite graph with equipment and resource nodes
         """
         B = nx.Graph()
-        
+
         for equip in equipments:
             # Add equipment node
             B.add_node(equip.ankama_id, bipartite=0, type="equipment")
-            
+
             # Add resource nodes and edges
             if equip.recipe:
                 for resource_req in equip.recipe:
                     resource_id = resource_req.resource_id
-                    
+
                     if not B.has_node(resource_id):
                         B.add_node(resource_id, bipartite=1, type="resource")
-                    
+
                     B.add_edge(equip.ankama_id, resource_id)
 
         return B
@@ -56,7 +58,8 @@ class GraphBuilder:
         """
         equipment_resources = {}
         equipment_nodes = {
-            n for n, attr in bipartite_graph.nodes(data=True)
+            n
+            for n, attr in bipartite_graph.nodes(data=True)
             if attr.get("bipartite") == 0
         }
 
@@ -67,7 +70,7 @@ class GraphBuilder:
 
     @staticmethod
     def _build_inverted_index(
-        equipment_resources: Dict[int, Set[int]]
+        equipment_resources: Dict[int, Set[int]],
     ) -> Dict[int, Set[int]]:
         """Build inverted index: resource_id -> set of equipment_ids."""
         index: Dict[int, Set[int]] = {}
@@ -78,7 +81,7 @@ class GraphBuilder:
 
     @staticmethod
     def _candidate_pairs_from_index(
-        inverted_index: Dict[int, Set[int]]
+        inverted_index: Dict[int, Set[int]],
     ) -> Set[Tuple[int, int]]:
         """Generate candidate equipment pairs that share at least one resource."""
         candidates: Set[Tuple[int, int]] = set()
@@ -94,7 +97,7 @@ class GraphBuilder:
         equipment_resources: Dict[int, Set[int]],
         equipment_nodes: Set[int],
         min_shared_ratio: float = 0.2,
-        min_shared_count: int = 1
+        min_shared_count: int = 1,
     ) -> nx.Graph:
         """Create equipment similarity graph using Jaccard index or absolute count.
 
@@ -126,20 +129,24 @@ class GraphBuilder:
                 total_unique = len(resources1 | resources2)
                 sharing_ratio = shared / total_unique if total_unique > 0 else 0
 
-                # Connect if they meet the ratio OR the absolute shared count
-                if sharing_ratio >= min_shared_ratio or shared >= min_shared_count:
+                # Connect if they meet BOTH the ratio AND the absolute shared count
+                # This prevents weak edges from high-count-low-ratio pairs that would
+                # add noise to community detection.
+                if sharing_ratio >= min_shared_ratio and shared >= min_shared_count:
                     G.add_edge(
-                        eq1, eq2,
-                        weight=max(sharing_ratio, 0.01), # Ensure non-zero weight for algorithms
-                        shared_count=shared
+                        eq1,
+                        eq2,
+                        weight=max(
+                            sharing_ratio, 0.01
+                        ),  # Ensure non-zero weight for algorithms
+                        shared_count=shared,
                     )
 
         return G
 
     @staticmethod
     def remove_weak_candidates(
-        graph: nx.Graph,
-        min_component_size: int = 2
+        graph: nx.Graph, min_component_size: int = 2
     ) -> nx.Graph:
         """Remove isolated nodes and small connected components.
 
@@ -152,8 +159,7 @@ class GraphBuilder:
         """
         components = list(nx.connected_components(graph))
         meaningful_components = [
-            comp for comp in components
-            if len(comp) >= min_component_size
+            comp for comp in components if len(comp) >= min_component_size
         ]
 
         if not meaningful_components:
@@ -167,7 +173,7 @@ class GraphBuilder:
         equipments: List[Equipment],
         min_shared_ratio: float = 0.2,
         min_shared_count: int = 1,
-        min_component_size: int = 2
+        min_component_size: int = 2,
     ) -> Tuple[nx.Graph, Dict[int, Set[int]]]:
         """Build complete equipment similarity graph from equipments.
 
@@ -191,7 +197,8 @@ class GraphBuilder:
 
         # Step 2: Extract mappings
         equipment_nodes = {
-            n for n, attr in bipartite_graph.nodes(data=True)
+            n
+            for n, attr in bipartite_graph.nodes(data=True)
             if attr.get("bipartite") == 0
         }
         equipment_resources = GraphBuilder.get_equipment_resources(bipartite_graph)
@@ -201,13 +208,23 @@ class GraphBuilder:
             equipment_resources,
             equipment_nodes,
             min_shared_ratio=min_shared_ratio,
-            min_shared_count=min_shared_count
+            min_shared_count=min_shared_count,
         )
 
         # Step 4: Remove weak components
         equipment_graph = GraphBuilder.remove_weak_candidates(
-            equipment_graph,
-            min_component_size=min_component_size
+            equipment_graph, min_component_size=min_component_size
         )
+
+        # Step 5: Filter equipment_resources to only include nodes that survived
+        # component filtering. This ensures consistency between the graph and the
+        # resources dict — downstream consumers won't find resource data for
+        # equipment that was removed.
+        surviving_nodes = set(equipment_graph.nodes())
+        equipment_resources = {
+            eq_id: resources
+            for eq_id, resources in equipment_resources.items()
+            if eq_id in surviving_nodes
+        }
 
         return equipment_graph, equipment_resources

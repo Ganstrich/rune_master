@@ -1,36 +1,38 @@
 """Graph-based grouping expert using Louvain community detection."""
-from typing import List, Dict, Any, Optional, Set
+
+from typing import Any, Dict, List, Optional, Set
+
 import networkx as nx
+
 from models import Equipment
-from processing.experts.base import GroupingExpert
-from processing.config_dataclass import ProcessingConfig
-from processing.graph_builder import GraphBuilder
 from processing.community_detector import CommunityDetector
+from processing.config_dataclass import ProcessingConfig
+from processing.experts.base import GroupingExpert
+from processing.graph_builder import GraphBuilder
 from processing.group_mapper import GroupMapper
+
 
 class GraphGroupingExpert(GroupingExpert):
     """Expert that uses graph theory and community detection to find groups.
-    
+
     Optimizes for modularity and natural clusters in the shared-resource network.
     """
-    
+
     def __init__(
-        self, 
-        cache_manager: Optional[Any] = None,
-        api_client: Optional[Any] = None
+        self, cache_manager: Optional[Any] = None, api_client: Optional[Any] = None
     ):
         super().__init__("GraphExpert", cache_manager, api_client)
 
     def discover_groups(
-        self, 
-        equipments: List[Equipment], 
+        self,
+        equipments: List[Equipment],
         config: ProcessingConfig,
         precomputed_graph: Optional[nx.Graph] = None,
         precomputed_resources: Optional[Dict[int, Set[int]]] = None,
     ) -> List[Dict[str, Any]]:
         """Run the graph-based discovery pipeline."""
         print(f"      [{self.name}] Building graph and detecting communities...")
-        
+
         # 1. Build graph
         if precomputed_graph is not None and precomputed_resources is not None:
             graph = precomputed_graph
@@ -39,10 +41,10 @@ class GraphGroupingExpert(GroupingExpert):
             graph, resources = GraphBuilder.build_equipment_graph(
                 equipments,
                 min_shared_ratio=config.graph_min_shared_ratio,
-                min_shared_count=config.group_min_shared_resources, # NEW: Support absolute count
+                min_shared_count=config.graph_min_shared_count,
                 min_component_size=config.graph_min_component_size,
             )
-        
+
         if graph.number_of_nodes() == 0:
             return []
 
@@ -65,15 +67,14 @@ class GraphGroupingExpert(GroupingExpert):
             for i, component in enumerate(components):
                 for node in component:
                     partition[node] = i
-        
+
         communities = CommunityDetector.partition_to_communities(partition)
-        
+
         # 3. Map to groups
         mapper = GroupMapper(
-            equipments,
-            excluded_resource_ids=config.excluded_resource_ids
+            equipments, excluded_resource_ids=config.excluded_resource_ids
         )
-        
+
         if config.use_inclusive_mapping:
             groups = mapper.map_communities_inclusive(
                 communities,
@@ -94,10 +95,10 @@ class GraphGroupingExpert(GroupingExpert):
                 cache_manager=self.cache_manager,
                 api_client=self.api_client,
             )
-            
+
         # Add metadata
         for group in groups:
             group["selection_method"] = "deterministic"
             group["expert_name"] = self.name
-            
+
         return groups
