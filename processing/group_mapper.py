@@ -34,6 +34,19 @@ class GroupMapper:
     ) -> Tuple[int, int, float]:
         """Calculate shared resources for a group.
 
+        **CANONICAL DEFINITION** of sharing efficiency used across all experts.
+        All other experts (RandomGroupBuilder, GeneticExpert, etc.) must match
+        this definition for consistent MoE gating network fitness scores.
+
+        Definition:
+            sharing_efficiency = resources_used_by_2plus / total_unique_resources
+
+        Where:
+            - resources_used_by_2plus: count of resource IDs that appear in the
+              recipes of 2 or more equipment in the group (excluding excluded_resource_ids)
+            - total_unique_resources: count of distinct resource IDs across all
+              equipment in the group
+
         Returns:
             - shared_count: Resources used by 2+ equipment (excluding excluded_ids)
             - total_shared_count: Resources used by 2+ equipment (including excluded_ids)

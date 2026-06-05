@@ -1,5 +1,5 @@
 """Random-based grouping expert using stochastic selection."""
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Set
 from models import Equipment
 from processing.experts.base import GroupingExpert
 from processing.config_dataclass import ProcessingConfig
@@ -22,7 +22,9 @@ class RandomGroupingExpert(GroupingExpert):
     def discover_groups(
         self, 
         equipments: List[Equipment], 
-        config: ProcessingConfig
+        config: ProcessingConfig,
+        precomputed_graph: Optional[Any] = None,
+        precomputed_resources: Optional[Dict[int, Set[int]]] = None,
     ) -> List[Dict[str, Any]]:
         """Run the random-based discovery pipeline."""
         print(f"      [{self.name}] Filtering pool and generating random groups...")

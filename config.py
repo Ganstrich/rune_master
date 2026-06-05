@@ -37,9 +37,9 @@ class Config:
     GAME = "dofus3"
     SORT_BY = "level"
     SORT_ORDER = "desc"
-    MIN_LEVEL = 5
+    MIN_LEVEL = 50
     MAX_LEVEL = 100
-    ITEM_TYPES = BIJOUTIER
+    ITEM_TYPES = BIJOUTIER + TAILLEUR
 
     FIELDS = ["recipe", "effects"]
     MIN_COMMON_ITEMS = 3
