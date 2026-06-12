@@ -1,123 +1,40 @@
-# Visualization Module
+# Module: Visualization Module
 
-Generates interactive HTML/CSS/JS reports for equipment groups using D3.js for graph visualization.
+## 1. Executive Summary & Purpose
+- **Core Function:** Generates interactive, mobile-responsive HTML/CSS/JS reports representing discovered equipment groups. It provides a visual index dashboard of all groups and detail pages with D3.js force-directed graphs showing equipment-recipe networks.
+- **Target Audience/Users:** End-users (players, crafters) and served by the [serve.py](file:///home/adamb/rune_master/serve.py) server.
+- **Design Philosophy:** Self-contained reports (all styling/JS assets embedded directly, except CDN-based D3.js), mobile-first responsive layout, and client-side sorting/filtering.
 
-## Architecture
+## 2. Architectural & Structural Dependencies
+- **Parent System/Universe:** RuneMaster
+- **Inbound Dependencies:**
+  - [main.py](file:///home/adamb/rune_master/main.py) (starts visual generation after grouping complete).
+  - [serve.py](file:///home/adamb/rune_master/serve.py) (runs HTTP web server hosting output pages).
+- **Outbound Dependencies:**
+  - [processing/PROCESSING.md](file:///home/adamb/rune_master/processing/PROCESSING.md) (uses group lists and schemas).
+  - D3.js library (`https://d3js.org/d3.v7.min.js`).
+- **Interactions/Data Flow:**
+  Takes group dictionaries from the orchestrator -> Feeds records into `html_generator.py` -> Injects style templates and D3 Javascript from `style_templates.py` and `graph_generator.py` -> Writes output `.html` files -> Serves them live to local browser.
 
-```
-visualization/
-├── html_generator.py     - Core HTML page generation
-├── style_templates.py    - CSS and JavaScript templates
-└── graph_generator.py    - D3.js force-directed graph
-```
+### Module Files
+- `visualization/html_generator.py` - Core HTML page layout and file generation
+- `visualization/style_templates.py` - CSS and client-side Javascript templates
+- `visualization/graph_generator.py` - D3.js force-directed graph setup
 
-## HTML Generator (`html_generator.py`)
+## 3. Strict Rules & Mechanics (The "Hard Constraints")
+| Parameter/State | Rule / Constraint | Logical Consequence |
+| :--- | :--- | :--- |
+| External Assets | None allowed on local disk | All CSS/JS must be embedded (except D3.js via CDN link) |
+| Graph Color Coding | Blue = Equipment, Green = Resource | Visually separates entity types in network nodes |
+| Node Sizing | Proportional to importance/quantity | Bigger nodes indicate highly demanded/valuable resources |
+| Page Navigation | URLs formatted as `group_[id].html` | Dashboard links depend on matching group IDs |
 
-### `HTMLGenerator`
-Creates complete HTML pages for equipment groups and index dashboard.
+## 4. Key Concepts & Terminology
+- **Force-Directed Graph:** Physics-based simulation rendering nodes with gravity, collision detection, and drag interactions.
+- **Index Dashboard:** Main page containing overview statistics (total groups, items, average efficiency) and sorting/filtering sliders.
+- **Group Detail Page:** Secondary pages displaying equipment lists, ingredient tables, and interactive network graphs.
 
-**Key Methods:**
-
-| Method | Description |
-|--------|-------------|
-| `generate_group_page(group)` | Single group detail page |
-| `save_group_page(group, path)` | Save group page to disk |
-| `generate_index_page(groups)` | Index dashboard with group cards |
-| `save_index_page(groups, path)` | Save index to disk |
-| `generate_all(groups)` | Generate all pages, return file paths |
-
-**Page Structure (Group Detail):**
-1. **Header** - Group title, efficiency badge, metadata
-2. **Stats Summary** - Equipment count, shared resources, efficiency
-3. **Equipment Gallery** - Cards with images, names, levels
-4. **Ingredient Table** - Aggregated recipe requirements
-5. **Relationship Graph** - D3.js force-directed visualization
-
-**Page Structure (Index Dashboard):**
-1. **Summary Statistics** - Total groups, equipment, avg efficiency
-2. **Group Cards** - Sortable cards linking to detail pages
-3. **Filtering** - By efficiency, size, method (client-side JS)
-
-## Style Templates (`style_templates.py`)
-
-### CSS Functions
-
-| Function | Description |
-|----------|-------------|
-| `get_base_css()` | Core layout, typography, variables |
-| `get_group_css()` | Group detail page styles |
-| `get_index_css()` | Dashboard/card grid styles |
-
-**Design System:**
-- CSS custom properties for theming
-- Mobile-responsive breakpoints
-- Accessible color contrast
-- Dark mode support via `prefers-color-scheme`
-
-### JavaScript Utilities
-
-| Function | Description |
-|----------|-------------|
-| `get_javascript_utils()` | Sorting, filtering, search |
-
-**Features:**
-- Client-side table sorting
-- Real-time search filtering
-- Efficiency threshold slider
-- Group size range filter
-
-## Graph Generator (`graph_generator.py`)
-
-### D3.js Force-Directed Graph
-Interactive visualization of equipment-resource relationships.
-
-**Features:**
-- **Physics simulation** - Force-directed layout with collision detection
-- **Drag interaction** - Reposition nodes by dragging
-- **Zoom/pan** - Mouse wheel zoom, click-drag pan
-- **Tooltips** - Hover for equipment/resource details
-- **Responsive** - Auto-resizes with window
-- **Color coding** - Blue=Equipment, Green=Resource
-- **Node sizing** - Proportional to importance/quantity
-
-**Graph Data Structure:**
-```json
-{
-  "nodes": [
-    {"id": 123, "name": "Equipment Name", "type": "equipment", "level": 50},
-    {"id": 456, "name": "Resource Name", "type": "resource", "total_quantity": 10}
-  ],
-  "links": [
-    {"source": 123, "target": 456, "quantity": 5}
-  ]
-}
-```
-
-**Key Functions:**
-- `get_graph_javascript()` - Returns complete D3.js code block
-- `create_graph_html(graph_data)` - Wraps graph in container with data
-
-## Output Structure
-
-```
-visualizations/
-├── index.html              - Main dashboard
-├── group_12345.html        - Individual group pages
-├── group_12346.html
-└── ...
-```
-
-## Performance
-
-- **Generation:** ~5 seconds for 250 groups
-- **File Size:** ~2-3 MB total for 250 groups
-- **Load Time:** <1 second per page (cached assets)
-- **No External Dependencies:** All CSS/JS embedded (except D3.js CDN)
-
-## Design Principles
-
-1. **Self-contained** - All assets embedded in HTML
-2. **Progressive enhancement** - Works without JavaScript
-3. **Accessible** - ARIA labels, keyboard navigation, color contrast
-4. **Responsive** - Mobile-first design
-5. **Fast** - Minimal DOM, efficient CSS selectors
+## 5. Known Gaps & Future Extensions
+- **Established Backlog:**
+  - Splitting CSS/JS templates into separate static files, implementing resource heatmaps, and building scatter plots (fully documented in [VISUALIZATION_ROADMAP.md](file:///home/adamb/rune_master/VISUALIZATION_ROADMAP.md)).
+- **[PROPOSITION]:** Side-by-side comparison mode, crafting "What If" simulation mode ([VISUALIZATION_ROADMAP.md](file:///home/adamb/rune_master/VISUALIZATION_ROADMAP.md)).

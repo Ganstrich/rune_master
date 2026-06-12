@@ -1,9 +1,11 @@
-# 🔥 RuneMaster - Equipment Group Discovery
+# Module: RuneMaster Orchestrator
 
-A production-ready system for discovering optimal equipment grouping using graph algorithms, community detection, and a Mixture of Experts (MoE) architecture. Generates interactive D3.js visualizations for crafting optimization in Dofus.
+## 1. Executive Summary & Purpose
+- **Core Function:** A production-ready pipeline for discovering optimal equipment groups in Dofus using community detection (Louvain/BiLouvain), genetic algorithms, and a Mixture of Experts (MoE) architecture, generating interactive D3.js visual reports.
+- **Target Audience/Users:** Game developers, players, or data scientists looking to optimize crafting recipes and item grouping.
+- **Design Philosophy:** Performance-oriented (utilizes disk caching), algorithmically flexible (multiple expert algorithms), and visually interactive.
 
-## Quick Start
-
+### Quick Start
 ```bash
 # Install dependencies
 pip install networkx python-louvain numpy requests
@@ -17,128 +19,32 @@ python3 main.py --tune                         # Auto-tune parameters
 python3 main.py --no-serve                     # Generate without server
 ```
 
-## What It Does
+## 2. Architectural & Structural Dependencies
+- **Parent System/Universe:** RuneMaster System
+- **Inbound Dependencies:**
+  - CLI Users / Orchestrator Agents
+- **Outbound Dependencies:**
+  - [models/MODELS.md](file:///home/adamb/rune_master/models/MODELS.md) - Pure dataclasses representing game entities.
+  - [data/DATA.md](file:///home/adamb/rune_master/data/DATA.md) - API client, JSON/SQLite cache, and loaders.
+  - [processing/PROCESSING.md](file:///home/adamb/rune_master/processing/PROCESSING.md) - Graph construction and grouping experts.
+  - [visualization/VISUALIZATION.md](file:///home/adamb/rune_master/visualization/VISUALIZATION.md) - HTML/D3.js report generators.
+  - [serve.py](file:///home/adamb/rune_master/serve.py) - HTTP serving utilities.
+- **Interactions/Data Flow:**
+  CLI parameters are parsed in [main.py](file:///home/adamb/rune_master/main.py). The data module loads API equipment, caches it, passes it to processing experts, maps them to communities/groups, and sends them to visualization generators to output interactive pages.
 
-**Pipeline**: Equipment → Graph → Communities → Groups → Visualizations
-
-1. **Load Equipment** - Fetch from DofusAPI with automatic disk caching
-2. **Build Graphs** - Create bipartite and similarity networks (Jaccard index)
-3. **Detect Communities** - Louvain/BiLouvain modularity optimization
-4. **Map Groups** - Calculate efficiency, aggregate ingredients
-5. **Generate Visualizations** - Interactive D3.js web reports
-6. **Serve Live** - HTTP server with automatic browser open
-
-## Architecture
-
-```
-models/          → Pure dataclasses (Equipment, Resource, EquipmentStat)
-data/            → API client, cache manager, loaders (API → dataclasses)
-processing/      → Graph building, community detection, group mapping, MoE
-visualization/   → HTML/CSS/D3.js report generation
-main.py          → Complete end-to-end orchestration
-config.py        → Global configuration constants
-```
-
-## Grouping Methods
-
-| Method | Description | Best For |
-|--------|-------------|----------|
-| `deterministic` | Louvain community detection on similarity graph | Natural clusters |
-| `random` | Stochastic generation with density filtering | Exploration |
-| `hybrid` | Deterministic + random supplement | Balanced coverage |
-| `committee` | Mixture of Experts ensemble | Best overall quality |
-| `genetic` | Evolutionary optimization | Dense/complex graphs |
-
-## Configuration
-
-```python
-from processing import RuneMaster, ProcessingConfig
-
-config = ProcessingConfig(
-    # Graph building
-    graph_min_shared_ratio=0.2,       # Jaccard similarity threshold
-    graph_min_component_size=2,       # Minimum nodes per component
-    
-    # Community detection
-    algorithm="louvain",              # "louvain", "bilouvain", or "none"
-    resolution_range=(1, 10, 1),      # Resolution search range
-    
-    # Group mapping
-    group_min_size=2,                 # Minimum equipment per group
-    group_max_size=18,                # Maximum equipment per group
-    group_min_shared_resources=2,     # Minimum shared resources
-    group_efficiency_threshold=0.15,  # Minimum efficiency
-    
-    # Filtering
-    use_density_filtering=True,       # Filter by stat_weight/level
-    equipment_density_level_ratio=0.15,
-    
-    # Method
-    grouping_method="deterministic",  # See table above
-)
-
-master = RuneMaster(equipments, config=config)
-groups = master.run_all()
-```
-
-## Key Features
-
-- ✅ **Multiple Algorithms** - Louvain, BiLouvain, Genetic, Random, Hybrid, Committee
-- ✅ **Mixture of Experts** - Ensemble approach for best group quality
-- ✅ **Auto-Tuning** - Grid search for optimal parameters
-- ✅ **High Performance** - 225x speedup with disk caching
-- ✅ **Density Filtering** - Focus on high-value equipment
-- ✅ **Interactive Visualizations** - D3.js force-directed graphs
-- ✅ **Production Ready** - Error handling, logging, type hints
-
-## Module Documentation
-
-- [models/MODELS.md](models/MODELS.md) - Data models (Equipment, Resource, EquipmentStat)
-- [data/DATA.md](data/DATA.md) - API client, caching, and data loading
-- [processing/PROCESSING.md](processing/PROCESSING.md) - Graph algorithms, community detection, MoE
-- [visualization/VISUALIZATION.md](visualization/VISUALIZATION.md) - HTML/D3.js report generation
-
-## Performance
-
-| Stage | Time | Details |
-|-------|------|---------|
-| Load equipment | ~12s | 5000+ items, with caching |
-| Process groups | ~3s | Graph building + community detection |
-| Generate visualizations | ~5s | 250 groups → HTML |
-| **Total** | **~20s** | From API to browser |
-
-## Requirements
-
-- Python 3.6+
-- networkx (graph algorithms)
-- python-louvain (community detection)
-- numpy (numerical operations)
-- requests (HTTP client)
-
-## CLI Options
-
-```
---grouping-method {deterministic,random,hybrid,committee,genetic}
---random-groups N       Number of random groups to generate
---density-ratio R       Density/level ratio filter
---tune                  Search for best grouping parameters
---no-serve              Generate reports without starting server
-```
-
-## Project Structure
-
+### Project Directory Structure
 ```
 rune_master/
-├── models/              # Data layer
+├── models/              # Data layer (MODELS.md)
 │   ├── common.py        # Shared types, enums, stat mappings
 │   ├── equipment.py     # Equipment, EquipmentStat
 │   ├── resource.py      # Resource (crafting ingredients)
 │   └── recipe.py        # ResourceRequirement
-├── data/                # Data access layer
+├── data/                # Data access layer (DATA.md)
 │   ├── api_client.py    # DofusAPI HTTP client
 │   ├── cache_manager.py # JSON disk cache
 │   └── loaders.py       # API → dataclass transformation
-├── processing/          # Business logic
+├── processing/          # Business logic (PROCESSING.md)
 │   ├── experts/         # Grouping algorithms
 │   │   ├── base.py      # Abstract GroupingExpert
 │   │   ├── graph_expert.py
@@ -152,7 +58,7 @@ rune_master/
 │   ├── stat_calculator.py     # Equipment scoring
 │   ├── tuner.py         # Parameter optimization
 │   └── config_dataclass.py    # ProcessingConfig
-├── visualization/       # Report generation
+├── visualization/       # Report generation (VISUALIZATION.md)
 │   ├── html_generator.py      # HTML page generation
 │   ├── style_templates.py     # CSS/JS templates
 │   └── graph_generator.py     # D3.js graphs
@@ -161,16 +67,25 @@ rune_master/
 └── serve.py             # HTTP server
 ```
 
-## Status
+## 3. Strict Rules & Mechanics (The "Hard Constraints")
+| Parameter/State | Rule / Constraint | Logical Consequence |
+| :--- | :--- | :--- |
+| CLI `--grouping-method` | Must choose from: `deterministic`, `random`, `hybrid`, `committee`, `genetic` | Invalid choice raises parser validation error |
+| Execution Environment | Python 3.6+ required | Dependency libraries may not run or import correctly on older versions |
+| CLI `--random-groups` | Expects integer N | Number of random groups generated |
+| CLI `--density-ratio` | Expects float R | Modifies density/level filtering ratio |
+| CLI `--tune` | Triggers parallel parameter search | Executes grid-search optimization of parameters |
 
-**✅ Production Ready**
+## 4. Key Concepts & Terminology
+- **Committee Method:** Ensemble Mixture of Experts (MoE) grouping method combining deterministic, random, genetic, and hybrid experts.
+- **Deterministic Method:** Louvain community detection on a similarity graph of equipment.
+- **Genetic Method:** Evolutionary algorithm optimizing equipment groups on dense/complex graphs.
+- **Hybrid Method:** Combines deterministic clustering with random supplementation for balanced coverage.
+- **Random Method:** Stochastic group selection with density filtering.
 
-- 4000+ lines of clean, documented code
-- 95%+ type hint coverage
-- 100% docstring coverage
-- 4 fully integrated layers
-- Tested with live API data
-
----
-
-**Status**: Complete ✅ | **Quality**: Production Ready ✨ | **Type Safety**: 95%+ 🔒
+## 5. Known Gaps & Future Extensions
+- **Established Backlog:**
+  - SQLite database migration plan ([REFACTOR_PLAN_CACHE.md](file:///home/adamb/rune_master/REFACTOR_PLAN_CACHE.md)).
+  - Separation of CSS/JS, heatmaps, and side-by-side comparison ([VISUALIZATION_ROADMAP.md](file:///home/adamb/rune_master/VISUALIZATION_ROADMAP.md)).
+  - Processing module metrics and dependency cleanup ([REFACTOR_PLAN.md](file:///home/adamb/rune_master/REFACTOR_PLAN.md)).
+- **[PROPOSITION]:** None.

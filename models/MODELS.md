@@ -1,91 +1,48 @@
-# Models Module
+# Module: Models Module
 
-Pure data containers with no business logic. All models are immutable dataclasses (except `Equipment` which allows post-init field setting for the loader layer).
+## 1. Executive Summary & Purpose
+- **Core Function:** Defines immutable dataclasses that act as the structural data containers for game equipment, resources, statistics, and crafting requirements. These classes contain no business logic or API communication.
+- **Target Audience/Users:** Utilized by [data/DATA.md](file:///home/adamb/rune_master/data/DATA.md) for data instantiation and [processing/PROCESSING.md](file:///home/adamb/rune_master/processing/PROCESSING.md) for executing algorithms.
+- **Design Philosophy:** Strict boundary between data definitions and business logic, default immutability to prevent accidental mutations, and type safety with automatic initialization validation.
 
-## Architecture
+## 2. Architectural & Structural Dependencies
+- **Parent System/Universe:** RuneMaster
+- **Inbound Dependencies:**
+  - [data/DATA.md](file:///home/adamb/rune_master/data/DATA.md) (`loaders.py` transforms API data to these models).
+  - [processing/PROCESSING.md](file:///home/adamb/rune_master/processing/PROCESSING.md) (all grouping, graph, filtering, and metric operations rely on these classes).
+  - [visualization/VISUALIZATION.md](file:///home/adamb/rune_master/visualization/VISUALIZATION.md) (uses these models to display attributes in reports).
+- **Outbound Dependencies:**
+  - Standard library (`typing`, `dataclasses`, `enum`).
+- **Interactions/Data Flow:**
+  Raw JSON dictionaries from the API or cache are passed into `loaders.py` to instantiate `Resource`, `Equipment`, `EquipmentStat`, and `ResourceRequirement` objects. Once created, these models are loaded into processing pipelines, graphs, and visual templates.
 
-```
-models/
-├── common.py       - Shared types (ImageURLs, ItemType, StatType, StatWeight)
-├── equipment.py    - Equipment and EquipmentStat models
-├── resource.py     - Resource model (crafting ingredients)
-└── recipe.py       - ResourceRequirement model (recipe entries)
-```
+### Module Files
+- `models/common.py` - Shared types (ImageURLs, ItemType, StatType, StatWeight)
+- `models/equipment.py` - Equipment and EquipmentStat models
+- `models/resource.py` - Resource model (crafting ingredients)
+- `models/recipe.py` - ResourceRequirement model (recipe entries)
 
-## Common Types (`common.py`)
+## 3. Strict Rules & Mechanics (The "Hard Constraints")
+| Parameter/State | Rule / Constraint | Logical Consequence |
+| :--- | :--- | :--- |
+| `Resource` numeric fields | Must be non-negative | Triggers validation error in `__post_init__` |
+| `ResourceRequirement` `resource_id` | Must be non-negative | Triggers validation error in `__post_init__` |
+| `ResourceRequirement` `quantity` | Must be positive | Triggers validation error in `__post_init__` |
+| `Equipment` mutability | Not frozen (`unsafe_hash=False`) | Allows computed fields (e.g. `stat_weight`) to be set after creation |
+| `Equipment` hashability | Hashed by unique `ankama_id` | Allows equipment to be used in Python sets and dictionary keys |
 
-| Type | Description |
-|------|-------------|
-| `ImageURLs` | TypedDict with `icon` and `sd` URL strings |
-| `ItemType` | TypedDict with `name` and `id` for item type metadata |
-| `StatType` | TypedDict with `name` and `id` for stat metadata |
-| `StatWeight` | Enum mapping stat names to importance weights (e.g., `PA=100.0`, `Vitalité=0.2`) |
-| `STAT_ID_TO_NAME` | Read-only mapping of stat IDs to French names |
-| `STAT_NAME_TO_ID` | Reverse mapping of names to IDs |
+## 4. Key Concepts & Terminology
+- **`ImageURLs`:** A TypedDict containing `icon` and `sd` URL strings.
+- **`ItemType`:** A TypedDict containing `name` and `id` representing the category of the item.
+- **`StatType`:** A TypedDict containing `name` and `id` representing the stat identifier.
+- **`StatWeight`:** Enum mapping stat names to importance weights (e.g. `PA=100.0`, `Vitalité=0.2`).
+- **`STAT_ID_TO_NAME`:** Read-only dictionary mapping stat IDs to French names.
+- **`STAT_NAME_TO_ID`:** Reverse mapping of French stat names to IDs.
+- **`EquipmentStat`:** Represents a single equipment effect/stat line with minimum/maximum values, ignoring flags, and formatted string.
+- **`Equipment`:** Core container holding `ankama_id`, `type`, `level`, `name`, `effects` list, calculated `stat_weight`, recipe `ResourceRequirement` list, and `image_urls`.
+- **`Resource`:** Represents a crafting ingredient with `ankama_id`, `name`, `description`, `type`, `level`, `pods`, and `image_urls`.
 
-## Equipment Model (`equipment.py`)
-
-### `EquipmentStat`
-Represents a single equipment effect/stat line with full API metadata.
-
-**Fields:**
-- `stat_type: StatType` - Stat metadata dict with `name` and `id`
-- `int_minimum: int` - Minimum stat value
-- `int_maximum: int` - Maximum stat value
-- `ignore_int_min: bool` - Whether to display minimum
-- `ignore_int_max: bool` - Whether to display maximum
-- `formatted: str` - Pre-formatted display string
-
-**Key Properties:**
-- `stat_name` - Normalized stat name with fuzzy matching (handles singular/plural, case variations)
-- `stat_id` - The stat's numeric ID
-
-### `Equipment`
-Core equipment data container.
-
-**Fields:**
-- `ankama_id: int` - Unique identifier (immutable, used for hashing)
-- `type: ItemType` - Equipment type metadata
-- `level: int` - Required level
-- `name: str` - Equipment name
-- `effects: List[EquipmentStat]` - Stat lines (default: empty)
-- `stat_weight: Optional[float]` - Computed importance score (default: None)
-- `recipe: List[ResourceRequirement]` - Crafting requirements (default: empty)
-- `image_urls: Optional[ImageURLs]` - Image URLs (default: None)
-
-**Note:** Not frozen to allow `EquipmentLoader` to set computed fields after creation.
-
-## Resource Model (`resource.py`)
-
-### `Resource`
-Immutable dataclass representing a crafting ingredient.
-
-**Fields:**
-- `ankama_id: int` - Unique identifier
-- `name: str` - Resource name
-- `description: str` - Flavor text
-- `type: ItemType` - Resource type metadata
-- `level: int` - Resource level
-- `pods: int` - Weight in pods
-- `image_urls: Optional[ImageURLs]` - Image URLs (default: None)
-
-**Validation:** All numeric fields must be non-negative.
-
-## Recipe Model (`recipe.py`)
-
-### `ResourceRequirement`
-Immutable dataclass for a single recipe entry.
-
-**Fields:**
-- `resource_id: int` - Reference to a Resource
-- `quantity: int` - Amount required (must be positive)
-
-**Validation:** `resource_id` must be non-negative, `quantity` must be positive.
-
-## Design Principles
-
-1. **No business logic** - Models are pure data containers
-2. **No API calls** - All external communication happens in `data/`
-3. **Immutable by default** - Prevents accidental mutation
-4. **Validation in `__post_init__`** - Catches invalid data early
-5. **Hashable** - Equipment can be used in sets/dicts via `ankama_id`
+## 5. Known Gaps & Future Extensions
+- **Established Backlog:**
+  - Decoupling of fuzzy stat normalization from model layer (documented in [REFACTOR_PLAN.md](file:///home/adamb/rune_master/REFACTOR_PLAN.md) - Issue 3).
+- **[PROPOSITION]:** None.
