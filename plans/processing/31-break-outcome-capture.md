@@ -8,7 +8,7 @@ the manual entry burden.
 ## Depends On
 
 [30-break-log.md](30-break-log.md),
-[21-price-capture-ingestion.md](21-price-capture-ingestion.md) for shared
+[21-price-capture-ingestion.done.md](21-price-capture-ingestion.done.md) for shared
 pipeline components
 
 ## Scope
@@ -45,7 +45,7 @@ pipeline components
 
 ## Risks
 
-This is independent of [21-price-capture-ingestion.md](21-price-capture-ingestion.md)
+This is independent of [21-price-capture-ingestion.done.md](21-price-capture-ingestion.done.md)
 and can be built first. If market OCR proves difficult, the break-result screen
 is likely the easier target and produces the more valuable data, since prices
 can be entered by hand far more easily than break outcomes can be reconstructed.

@@ -7,7 +7,7 @@ without manual entry.
 
 ## Depends On
 
-[20-price-table-contract.md](20-price-table-contract.md)
+[20-price-table-contract.done.md](20-price-table-contract.done.md)
 
 ## Scope
 
@@ -49,7 +49,7 @@ without manual entry.
 ## Risks
 
 OCR is the most fragile dependency in the system and blocks Phase 2 entirely.
-This is why [20-price-table-contract.md](20-price-table-contract.md) lands first
+This is why [20-price-table-contract.done.md](20-price-table-contract.done.md) lands first
 with a null source and a manual entry path: valuation work can proceed on
 hand-entered prices while capture matures.
 

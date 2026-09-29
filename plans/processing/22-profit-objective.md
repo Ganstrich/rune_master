@@ -7,7 +7,7 @@ expected profit rather than by recipe overlap.
 
 ## Depends On
 
-[20-price-table-contract.md](20-price-table-contract.md),
+[20-price-table-contract.done.md](20-price-table-contract.done.md),
 [08-break-density-and-focus.done.md](08-break-density-and-focus.done.md)
 
 ## Scope

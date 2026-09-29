@@ -1,48 +1,37 @@
 # Capture Module
 
-The **capture** package provides all functionality required to capture and process game screen data for Rune Master.
+The **capture** package currently provides read-only, offline-testable price
+ingestion. Screen acquisition and OCR engine integration are intentionally not
+implemented in this repository.
 
 ## Overview
 
-- **screen_grabber.py** – Captures screenshots from the game window.
-- **preprocessor.py** – Performs image preprocessing (scaling, greyscaling, thresholding) to improve OCR accuracy.
-- **ocr_engine.py** – Wraps Tesseract OCR and provides a simple `extract_text(image)` interface.
-- **layout_matcher.py** – Detects UI elements and matches them against known layouts.
-- **market_parser.py** – Parses market‑related information (prices, items) from the OCR output.
-- **database_writer.py** – Persists parsed data into the SQLite database used by the application.
-- **service.py** – High‑level service that orchestrates the capture pipeline and exposes a clean API for the rest of the project.
-- **__init__.py** – Exposes the most important classes/functions for convenient imports.
+- **price_ingestion.py** validates OCR-like rows, resolves known item names,
+	rejects low-confidence prices, and writes capture/manual observations to
+	`price_cache`.
+- **debug_capture.py** is retained as a historical debug script; it does not
+	imply that screen automation is available.
 
 ## Usage Example
 
 ```python
-from capture.service import CaptureService
+from capture.price_ingestion import PriceCaptureIngestor
 
-service = CaptureService()
-# Capture a frame, process it and store the result
-service.run_once()
+ingestor = PriceCaptureIngestor(cache_manager, {"Iron": 10})
+ingestor.ingest_capture([{"name": "Iron", "price": 1200, "confidence": 0.98}])
 ```
-
-The `CaptureService` handles the full workflow:
-1. Grab a screenshot.
-2. Pre‑process the image.
-3. Run OCR.
-4. Match UI layout.
-5. Parse market data.
-6. Write results to the database.
 
 ## Extending the Module
 
-- Add new layout matchers in **layout_matcher.py** and register them in `CaptureService`.
-- Implement additional parsers in **market_parser.py** for new screen sections.
-- Update **ocr_engine.py** if you switch to a different OCR backend.
+- A future screen/OCR adapter must remain read-only and pass validated rows to
+	`PriceCaptureIngestor`; it must not inject input or read process memory.
 
 ## Testing
 
-Unit tests for each component live in the `tests/capture/` directory. Run them with:
+The offline ingestion tests live in `test/test_price_ingestion.py`. Run them with:
 
 ```bash
-pytest tests/capture
+uv run pytest -q test/test_price_ingestion.py
 ```
 
 ---
