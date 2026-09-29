@@ -62,7 +62,7 @@ proceed first.
 | --- | --- |
 | [20-price-table-contract.done.md](20-price-table-contract.done.md) | Build during Phase 1, null source |
 | [21-price-capture-ingestion.done.md](21-price-capture-ingestion.done.md) | Blocked on capture |
-| [22-profit-objective.md](22-profit-objective.md) | Needs `20`, works with null prices |
+| [22-profit-objective.done.md](22-profit-objective.done.md) | Needs `20`, works with null prices |
 | [23-evolve-under-profit.md](23-evolve-under-profit.md) | Warm-started evolution, not re-ranking |
 
 ## Phase 3 — Coefficient

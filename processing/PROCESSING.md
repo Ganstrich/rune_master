@@ -62,6 +62,9 @@ Every accepted proposal is a canonical group dictionary built by
 | `group_quality_threshold` | `0.0` | All experts | Minimum item-only `quality_score` |
 | `max_line_items` | `12` | Acceptance policy | Maximum distinct resources in the shopping list |
 | `max_total_units` | `500` | Acceptance policy | Maximum total recipe units in the shopping list |
+| `acquisition_cost` | `0.0` | Profit objective | Kama-equivalent fixed cost per distinct resource |
+| `flat_taux` | `1.0` | Profit objective | Theoretical constant until break outcomes are logged |
+| `price_max_age_seconds` | `3600.0` | Price source | Maximum age for a usable cached price |
 | `group_quality_weights` | `0.50/0.30/0.20` | Canonical group evaluator | Weights for compression, reuse, and shared quantity |
 | `use_inclusive_mapping` | `False` | Graph expert | Split oversized communities instead of rejecting them whole |
 | `excluded_resource_ids` | `{15263, 14635}` | Group filters, quality, random/genetic affinity | Resource IDs ignored where explicitly described below |
@@ -288,6 +291,10 @@ thresholds. It does not de-duplicate overlapping equipment across groups.
 injected objective. `processing.harness.run_comparison()` runs the baseline and
 all named production methods offline, returning group-size, line-item, score,
 portfolio, and runtime columns suitable for JSON persistence.
+
+`ProfitObjective` reports theoretical values in kamas, records each selected
+focus, excludes partially priced items from the profit term, and falls back
+explicitly to the compression overlap score when no item can be valued.
 
 ## Genetic Expert
 

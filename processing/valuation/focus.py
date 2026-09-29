@@ -37,7 +37,15 @@ def break_density_focused(item: Equipment, stat: str) -> float:
     )
 
 
-def best_focus(item: Equipment, rho: object = None) -> str | None:
-    """Return no focus until rune price data is available."""
-    del item, rho
-    return None
+def best_focus(item: Equipment, rho: dict[str, float] | None = None) -> str | None:
+    """Return the focus stat with the highest priced focused density."""
+    if not rho:
+        return None
+    candidates = {
+        name
+        for name, _value, _density in _lines(item)
+        if rho.get(name) is not None
+    }
+    if not candidates:
+        return None
+    return max(candidates, key=lambda name: break_density_focused(item, name) * rho[name])

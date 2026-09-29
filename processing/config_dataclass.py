@@ -27,6 +27,9 @@ class ProcessingConfig:
     group_quality_threshold: float = 0.0
     max_line_items: int = 12  # Above observed compact reports; caps shopping effort.
     max_total_units: int = 500  # Carry headroom for compact recipe baskets.
+    acquisition_cost: float = 0.0  # Kama-equivalent effort per distinct resource.
+    flat_taux: float = 1.0  # Theoretical placeholder until break outcomes are logged.
+    price_max_age_seconds: float = 3600.0
     group_quality_weights: GroupQualityWeights = field(default_factory=GroupQualityWeights)
     use_inclusive_mapping: bool = False
 
