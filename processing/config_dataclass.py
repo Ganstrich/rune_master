@@ -28,9 +28,6 @@ class ProcessingConfig:
     group_quality_weights: GroupQualityWeights = field(default_factory=GroupQualityWeights)
     use_inclusive_mapping: bool = False
 
-    # Optimization
-    use_resource_optimizer: bool = False
-
     # Excluded resources (won't count toward sharing efficiency)
     excluded_resource_ids: set = field(default_factory=lambda: {15263, 14635})
 

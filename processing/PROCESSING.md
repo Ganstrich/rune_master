@@ -247,6 +247,9 @@ Accepted groups are sorted by `quality_score` descending.
 
 ## Random Expert
 
+Random and genetic searches use process-local `random.Random` instances seeded
+from `random_seed`; they do not mutate Python's module-level random state.
+
 1. If density filtering is disabled, use the complete input pool.
 2. Otherwise retain equipment satisfying
    `stat_weight >= level * equipment_density_level_ratio`. Equipment with a

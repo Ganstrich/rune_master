@@ -120,12 +120,10 @@ class GroupMetrics:
     def build_group_dict(
         equipments: List[Equipment],
         cache_manager: Any = None,
-        api_client: Any = None,
         excluded_resource_ids: Set[int] | None = None,
         quality_weights: GroupQualityWeights | None = None,
     ) -> Dict[str, Any]:
         """Build the canonical group metadata dictionary."""
-        del api_client
         if not equipments:
             return {}
 

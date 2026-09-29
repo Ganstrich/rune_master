@@ -48,7 +48,7 @@ proceed first.
 | [03-acceptance-policy.done.md](03-acceptance-policy.done.md) | No |
 | [04-experts-consume-objective.md](04-experts-consume-objective.md) | No |
 | [05-selection-module.md](05-selection-module.md) | No |
-| [06-hygiene.md](06-hygiene.md) | No |
+| [06-hygiene.done.md](06-hygiene.done.md) | No |
 | [07-rune-density-relocation.md](07-rune-density-relocation.md) | No |
 | [08-break-density-and-focus.md](08-break-density-and-focus.md) | Additive |
 | [09-compression-term.md](09-compression-term.md) | **Yes** |

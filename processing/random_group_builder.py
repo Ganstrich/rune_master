@@ -46,12 +46,12 @@ class RandomGroupBuilder:
         self.equipments = equipments
         self.excluded_resource_ids = excluded_resource_ids or set()
         self.seed = seed
+        self.rng = random.Random(seed)
         self.cache_manager = cache_manager
         self.quality_weights = quality_weights
         self.objective = objective
         
         if seed is not None:
-            random.seed(seed)
             logger.info(f"RandomGroupBuilder initialized with seed: {seed}")
 
     def _build_resource_index(
@@ -93,7 +93,7 @@ class RandomGroupBuilder:
             logger.warning(f"All {len(equipment_pool)} equipment used as seeds")
             return None
 
-        seed_equipment = random.choice(available)
+        seed_equipment = self.rng.choice(available)
         logger.debug(f"Selected seed: {seed_equipment.name} (id={seed_equipment.ankama_id})")
         return seed_equipment
 

@@ -59,8 +59,7 @@ class GeneticGroupingExpert(GroupingExpert):
         self.elite_count = config.genetic_elite_count
         self.stagnation_limit = config.genetic_stagnation_limit
 
-        if config.random_seed is not None:
-            random.seed(config.random_seed)
+        self.rng = random.Random(config.random_seed)
 
         # 1. Build similarity graph to identify candidate neighbors
         print(f"      [{self.name}] Building equipment similarity graph...")
@@ -108,7 +107,7 @@ class GeneticGroupingExpert(GroupingExpert):
         for gen in range(self.generations):
                 # Evaluate fitness
                 fitness_scores = [
-                    self._calculate_individual_fitness(ind, resource_sets, config)
+                    self._calculate_individual_fitness(ind, config)
                     for ind in population
                 ]
 
@@ -209,11 +208,11 @@ class GeneticGroupingExpert(GroupingExpert):
         """Create one candidate from high-affinity graph neighborhoods."""
         individual: List[Set[Equipment]] = []
         available = set(graph.nodes()) & set(eq_by_id)
-        target_group_count = random.randint(3, 8)
+        target_group_count = self.rng.randint(3, 8)
 
         while available and len(individual) < target_group_count:
-            seed_id = random.choice(tuple(available))
-            target_size = random.randint(config.group_min_size, config.group_max_size)
+            seed_id = self.rng.choice(tuple(available))
+            target_size = self.rng.randint(config.group_min_size, config.group_max_size)
             group_ids = {seed_id}
 
             while len(group_ids) < target_size:
@@ -242,7 +241,7 @@ class GeneticGroupingExpert(GroupingExpert):
                         if self.objective.marginal(current, eq_by_id[candidate])
                         == best_value
                     ]
-                group_ids.add(random.choice(best_candidates))
+                group_ids.add(self.rng.choice(best_candidates))
 
             available -= group_ids
             if len(group_ids) >= config.group_min_size:
@@ -253,10 +252,9 @@ class GeneticGroupingExpert(GroupingExpert):
     def _calculate_individual_fitness(
         self,
         individual: List[Set[Equipment]],
-        resource_sets: Dict[int, Set[int]],
-        config: Optional[ProcessingConfig] = None,
+        config: ProcessingConfig,
     ) -> float:
-        """Fitness = Sum(group_sharing_efficiency) - Overlap Penalty.
+        """Fitness = sum(objective group scores) - overlap penalty.
 
         Uses the canonical "2+" sharing_efficiency definition:
             shared_count / total_unique
@@ -328,7 +326,7 @@ class GeneticGroupingExpert(GroupingExpert):
         """Tournament selection with configurable tournament size."""
         if not population:
             return []
-        candidates = random.sample(range(len(population)), min(k, len(population)))
+        candidates = self.rng.sample(range(len(population)), min(k, len(population)))
         best = max(candidates, key=lambda i: scores[i])
         return population[best]
 
@@ -359,7 +357,7 @@ class GeneticGroupingExpert(GroupingExpert):
         child2_groups: List[Set[Equipment]] = []
 
         for group, _ in all_groups:
-            assignment = random.choice(["c1", "c2", "both"])
+            assignment = self.rng.choice(["c1", "c2", "both"])
             if assignment in ("c1", "both"):
                 child1_groups.append(group.copy())
             if assignment in ("c2", "both"):
@@ -444,14 +442,13 @@ class GeneticGroupingExpert(GroupingExpert):
         config: ProcessingConfig,
     ) -> None:
         """Mutate individual: move item, add item, or merge groups."""
-        del resource_sets
-        if random.random() > self.mutation_rate or not individual:
+        if self.rng.random() > self.mutation_rate or not individual:
             return
 
-        mutation_type = random.choice(["add", "remove", "merge"])
+        mutation_type = self.rng.choice(["add", "remove", "merge"])
         
         if mutation_type == "add":
-            idx = random.randint(0, len(individual) - 1)
+            idx = self.rng.randint(0, len(individual) - 1)
             if len(individual[idx]) >= config.group_max_size:
                 return
             assigned_ids = {
@@ -466,7 +463,7 @@ class GeneticGroupingExpert(GroupingExpert):
             if candidate_ids:
                 candidates = [eq_by_id[candidate_id] for candidate_id in candidate_ids]
                 if self.objective is None:
-                    selected = random.choice(candidates)
+                    selected = self.rng.choice(candidates)
                 else:
                     current = GroupCandidate(
                         list(individual[idx]), config.excluded_resource_ids
@@ -478,12 +475,12 @@ class GeneticGroupingExpert(GroupingExpert):
                 individual[idx].add(selected)
         
         elif mutation_type == "remove":
-            idx = random.randint(0, len(individual) - 1)
+            idx = self.rng.randint(0, len(individual) - 1)
             if len(individual[idx]) > config.group_min_size:
                 individual[idx].pop()
         
         elif mutation_type == "merge" and len(individual) >= 2:
-            i1, i2 = random.sample(range(len(individual)), 2)
+            i1, i2 = self.rng.sample(range(len(individual)), 2)
             if len(individual[i1] | individual[i2]) <= config.group_max_size:
                 individual[i1].update(individual[i2])
                 individual.pop(i2)

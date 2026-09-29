@@ -89,53 +89,6 @@ class CommunityDetector:
         return total_similarity / total_communities
 
     @staticmethod
-    def calculate_bulk_efficiency(
-        partition: Dict[int, int],
-        equipment_resources: Dict[int, Set[int]]
-    ) -> float:
-        """Calculate average bulk acquisition efficiency across communities.
-
-        Efficiency = (shared_resources / total_unique_resources) for each community.
-        Returns average across all multi-equipment communities.
-
-        Args:
-            partition: Dict mapping equipment_id -> community_id
-            equipment_resources: Dict from GraphBuilder.get_equipment_resources()
-
-        Returns:
-            Average efficiency (0.0 to 1.0)
-        """
-        communities_dict = {}
-        for equipment, comm_id in partition.items():
-            communities_dict.setdefault(comm_id, []).append(equipment)
-
-        total_efficiency = 0.0
-        community_count = 0
-
-        for comm_id, equipment_list in communities_dict.items():
-            if len(equipment_list) < 2:
-                continue
-
-            # Calculate resource overlap
-            try:
-                all_resources = [
-                    equipment_resources[eq] for eq in equipment_list
-                ]
-            except KeyError:
-                # Some equipment may not have resources
-                continue
-
-            shared_resources = set.intersection(*all_resources)
-            total_unique_resources = set.union(*all_resources)
-
-            if len(total_unique_resources) > 0:
-                efficiency = len(shared_resources) / len(total_unique_resources)
-                total_efficiency += efficiency
-                community_count += 1
-
-        return (total_efficiency / community_count) if community_count > 0 else 0.0
-
-    @staticmethod
     def find_best_louvain_partition(
         equipment_graph: nx.Graph,
         equipment_resources: Dict[int, Set[int]],

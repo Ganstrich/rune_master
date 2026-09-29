@@ -122,7 +122,6 @@ class GroupMapper:
         return GroupMetrics.build_group_dict(
             group_equipments,
             cache_manager=cache_manager,
-            api_client=api_client,
             excluded_resource_ids=self.excluded_resource_ids,
             quality_weights=self.quality_weights,
         )
