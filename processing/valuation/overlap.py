@@ -5,7 +5,7 @@ from processing.valuation.objective import GroupCandidate, GroupObjective
 
 
 class OverlapObjective(GroupObjective):
-    """Score groups using the existing quality metric without changing it."""
+    """Score groups using the compression-oriented overlap metric."""
 
     def __init__(self, weights: GroupQualityWeights | None = None) -> None:
         self.evaluator = GroupQualityEvaluator(weights)

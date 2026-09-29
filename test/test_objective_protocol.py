@@ -22,10 +22,9 @@ def test_overlap_objective_matches_quality_evaluator() -> None:
         make_equipment(2, [(10, 4), (30, 3)]),
     ]
     weights = GroupQualityWeights(
+        compression=0.4,
         resource_reuse_ratio=0.2,
-        mean_pairwise_jaccard=0.4,
-        overlapping_pair_ratio=0.1,
-        shared_quantity_ratio=0.3,
+        shared_quantity_ratio=0.4,
     )
     candidate = GroupCandidate(equipments, {10})
 

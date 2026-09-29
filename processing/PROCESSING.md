@@ -130,23 +130,24 @@ It emits:
 | `repeated_resource_occurrence_count` | Sum of `max(usage_count - 1, 0)` over resources |
 | `resource_reuse_ratio` | `shared_resource_count / unique_resource_count` |
 | `resource_reuse_depth` | Repeated occurrences divided by `unique_resource_count * (group_size - 1)` |
+| `compression` | `1 - unique_resource_count / resource_occurrence_count` |
 | `shared_quantity_ratio` | Quantity belonging to shared IDs divided by all non-excluded quantity |
 | `mean_pairwise_jaccard` | Mean recipe-set Jaccard over every equipment pair |
 | `minimum_pairwise_jaccard` | Lowest pairwise Jaccard, or zero without a pair |
 | `overlapping_pair_ratio` | Fraction of equipment pairs with positive Jaccard |
 | `quality_score` | Configured weighted score defined below |
 
-With default normalized weights:
+Pairwise Jaccard and overlap remain diagnostics, but are not scored. With
+default normalized weights:
 
 ```text
-quality_score = 0.30 * resource_reuse_ratio
-              + 0.30 * mean_pairwise_jaccard
-              + 0.20 * overlapping_pair_ratio
+quality_score = 0.50 * compression
+              + 0.30 * resource_reuse_ratio
               + 0.20 * shared_quantity_ratio
 ```
 
-Identical non-empty recipes with positive quantities score `1.0`; disjoint
-recipes score `0.0`. The score is a heuristic shortlist target, not observed
+Identical two-item non-empty recipes score `0.75`; disjoint recipes score
+`0.0`. The score is a heuristic shortlist target, not observed
 utility, profit, savings, or a trained prediction.
 
 ## Canonical Group Schema
@@ -161,6 +162,7 @@ All experts ultimately produce the following common fields:
     "sharing_efficiency": float,
     "average_density": float,
    "break_density": dict[int, float],
+   "items_per_line_item": float,
     "total_ingredients": dict[int, dict],
     "unique_ingredients_count": int,
     "total_items_needed": int,

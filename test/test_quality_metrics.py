@@ -32,7 +32,7 @@ def make_equipment(
 
 
 def test_group_quality_has_interpretable_boundary_values() -> None:
-    """Identical recipes should score one and disjoint recipes should score zero."""
+    """Identical recipes score below one because compression is size-aware."""
     identical = [
         make_equipment(1, [(10, 2), (20, 3)]),
         make_equipment(2, [(10, 2), (20, 3)]),
@@ -46,7 +46,7 @@ def test_group_quality_has_interpretable_boundary_values() -> None:
     identical_metrics = evaluator.evaluate(identical)
     disjoint_metrics = evaluator.evaluate(disjoint)
 
-    assert identical_metrics.quality_score == pytest.approx(1.0)
+    assert identical_metrics.quality_score == pytest.approx(0.75)
     assert identical_metrics.resource_reuse_depth == pytest.approx(1.0)
     assert disjoint_metrics.quality_score == pytest.approx(0.0)
 

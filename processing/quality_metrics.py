@@ -11,11 +11,10 @@ from processing.blocks.similarity import jaccard
 
 @dataclass(frozen=True)
 class GroupQualityWeights:
-    """Weights for the initial item-and-recipe-only quality heuristic."""
+    """Weights for the compression-oriented overlap objective."""
 
+    compression: float = 0.50
     resource_reuse_ratio: float = 0.30
-    mean_pairwise_jaccard: float = 0.30
-    overlapping_pair_ratio: float = 0.20
     shared_quantity_ratio: float = 0.20
 
     def normalized(self) -> dict[str, float]:
@@ -40,6 +39,7 @@ class GroupQualityMetrics:
     repeated_resource_occurrence_count: int
     resource_reuse_ratio: float
     resource_reuse_depth: float
+    compression: float
     shared_quantity_ratio: float
     mean_pairwise_jaccard: float
     minimum_pairwise_jaccard: float
@@ -102,6 +102,12 @@ class GroupQualityEvaluator:
             resource_quantities[resource_id] for resource_id in shared_resources
         )
         shared_quantity_ratio = shared_quantity / total_quantity if total_quantity else 0.0
+        resource_occurrences = sum(len(resources) for resources in resource_sets)
+        compression = (
+            1.0 - unique_count / resource_occurrences
+            if resource_occurrences
+            else 0.0
+        )
 
         similarities = [
             jaccard(left, right)
@@ -116,9 +122,8 @@ class GroupQualityEvaluator:
         )
 
         features = {
+            "compression": compression,
             "resource_reuse_ratio": reuse_ratio,
-            "mean_pairwise_jaccard": mean_pairwise,
-            "overlapping_pair_ratio": overlapping_pair_ratio,
             "shared_quantity_ratio": shared_quantity_ratio,
         }
         quality_score = sum(
@@ -134,6 +139,7 @@ class GroupQualityEvaluator:
             repeated_resource_occurrence_count=repeated_occurrences,
             resource_reuse_ratio=reuse_ratio,
             resource_reuse_depth=reuse_depth,
+            compression=compression,
             shared_quantity_ratio=shared_quantity_ratio,
             mean_pairwise_jaccard=mean_pairwise,
             minimum_pairwise_jaccard=minimum_pairwise,

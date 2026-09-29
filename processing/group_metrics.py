@@ -148,6 +148,9 @@ class GroupMetrics:
                 int(equipment.ankama_id): break_density(equipment)
                 for equipment in equipments
             },
+            "items_per_line_item": (
+                len(equipments) / len(total_ingredients) if total_ingredients else 0.0
+            ),
             "total_ingredients": total_ingredients,
             "unique_ingredients_count": len(total_ingredients),
             "total_items_needed": sum(
