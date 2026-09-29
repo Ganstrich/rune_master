@@ -80,6 +80,7 @@ class Equipment:
     stat_weight: Optional[float] = None
     recipe: List[ResourceRequirement] = field(default_factory=list)
     image_urls: Optional[ImageURLs] = None
+    set_id: Optional[int] = None  # None means the item belongs to no panoplie
     
     def __post_init__(self) -> None:
         """Validate fields after initialization."""

@@ -99,6 +99,8 @@ class GraphBuilder:
         equipment_nodes: Set[int],
         min_shared_ratio: float = 0.2,
         min_shared_count: int = 1,
+        equipment_sets: Dict[int, int] | None = None,
+        same_set_edge_discount: float = 1.0,
     ) -> nx.Graph:
         """Create equipment similarity graph using Jaccard index or absolute count.
 
@@ -109,6 +111,8 @@ class GraphBuilder:
             equipment_nodes: Set of equipment IDs
             min_shared_ratio: Minimum Jaccard similarity to create edge (0.0-1.0)
             min_shared_count: Minimum absolute number of shared resources to create edge
+            equipment_sets: Mapping of equipment ID to its set (panoplie) ID
+            same_set_edge_discount: Weight multiplier for edges inside one panoplie
 
         Returns:
             NetworkX graph where edges connect similar equipment
@@ -116,6 +120,7 @@ class GraphBuilder:
         """
         G = nx.Graph()
         G.add_nodes_from(equipment_nodes)
+        sets = equipment_sets or {}
 
         # Build inverted index to find candidate pairs efficiently
         inverted_index = GraphBuilder._build_inverted_index(equipment_resources)
@@ -133,13 +138,21 @@ class GraphBuilder:
                 # This prevents weak edges from high-count-low-ratio pairs that would
                 # add noise to community detection.
                 if sharing_ratio >= min_shared_ratio and shared >= min_shared_count:
+                    set1 = sets.get(eq1)
+                    same_set = set1 is not None and set1 == sets.get(eq2)
+                    # Panoplie items share resources by design; damping their edges
+                    # stops Louvain from rediscovering the set as a community.
+                    weight = sharing_ratio * (
+                        same_set_edge_discount if same_set else 1.0
+                    )
                     G.add_edge(
                         eq1,
                         eq2,
                         weight=max(
-                            sharing_ratio, 0.01
+                            weight, 0.01
                         ),  # Ensure non-zero weight for algorithms
                         shared_count=shared,
+                        same_set=same_set,
                     )
 
         return G
@@ -174,6 +187,7 @@ class GraphBuilder:
         min_shared_ratio: float = 0.2,
         min_shared_count: int = 1,
         min_component_size: int = 2,
+        same_set_edge_discount: float = 1.0,
     ) -> Tuple[nx.Graph, Dict[int, Set[int]]]:
         """Build complete equipment similarity graph from equipments.
 
@@ -188,6 +202,7 @@ class GraphBuilder:
             min_shared_ratio: Threshold for similarity ratio
             min_shared_count: Threshold for absolute shared resources
             min_component_size: Minimum nodes to keep in component
+            same_set_edge_discount: Weight multiplier for edges inside one panoplie
 
         Returns:
             Tuple of (equipment_graph, equipment_resources_mapping)
@@ -209,6 +224,12 @@ class GraphBuilder:
             equipment_nodes,
             min_shared_ratio=min_shared_ratio,
             min_shared_count=min_shared_count,
+            equipment_sets={
+                int(equipment.ankama_id): int(equipment.set_id)
+                for equipment in equipments
+                if isinstance(getattr(equipment, "set_id", None), int)
+            },
+            same_set_edge_discount=same_set_edge_discount,
         )
 
         # Step 4: Remove weak components

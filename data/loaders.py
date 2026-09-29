@@ -22,13 +22,19 @@ from processing.config_dataclass import ProcessingConfig
 class EquipmentLoader:
     """Transform raw equipment API responses → Equipment dataclasses."""
     
-    def __init__(self, cache: Optional[CacheManager] = None):
+    def __init__(
+        self,
+        cache: Optional[CacheManager] = None,
+        set_index: Optional[Dict[int, int]] = None,
+    ):
         """Initialize loader.
         
         Args:
             cache: CacheManager instance for caching effects/weights
+            set_index: Mapping of equipment ankama_id to its set (panoplie) id
         """
         self.cache = cache or CacheManager()
+        self.set_index = set_index or {}
     
     @staticmethod
     def _parse_effects(effects_data: List[Dict[str, Any]]) -> List[EquipmentStat]:
@@ -133,7 +139,8 @@ class EquipmentLoader:
             level=int(raw.get('level', 0)),
             image_urls=self._parse_image_urls(raw.get('image_urls')),
             effects=self._parse_effects(raw.get('effects', [])),
-            recipe=self._parse_recipe(raw.get('recipe', []))
+            recipe=self._parse_recipe(raw.get('recipe', [])),
+            set_id=self.set_index.get(ankama_id),
         )
         
         # Compute and cache stat weight

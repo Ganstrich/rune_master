@@ -172,6 +172,47 @@ class DofusAPIClient:
         endpoint = f"/{self.game}/v1/{self.language}/items/equipment/{equipment_id}"
         return self._make_request(endpoint)
     
+    def get_equipment_set_index(self) -> Dict[int, int]:
+        """Fetch the equipment_id → set_id map by walking the sets endpoint.
+
+        The item endpoints carry no set field, so membership is only reachable
+        from the sets side via ``fields[set]=equipment_ids``.
+
+        Returns:
+            Mapping of equipment ankama_id to its set ankama_id
+        """
+        endpoint = f"/{self.game}/v1/{self.language}/sets"
+        index: Dict[int, int] = {}
+        page = 1
+        while True:
+            params = {
+                "fields[set]": "equipment_ids",
+                "page[size]": self.DEFAULT_PAGE_SIZE,
+                "page[number]": page,
+            }
+            data = self._make_request(endpoint, params)
+            if not data:
+                break
+            item_sets = data.get("sets", [])
+            if not isinstance(item_sets, list):
+                print("❌ API sets response contained an invalid sets field")
+                break
+            for item_set in item_sets:
+                if not isinstance(item_set, dict):
+                    continue
+                set_id = item_set.get("ankama_id")
+                equipment_ids = item_set.get("equipment_ids") or []
+                if set_id is None or not isinstance(equipment_ids, list):
+                    continue
+                for equipment_id in equipment_ids:
+                    index[int(equipment_id)] = int(set_id)
+            if len(item_sets) < self.DEFAULT_PAGE_SIZE:
+                break
+            page += 1
+
+        print(f"✅ Mapped {len(index)} equipments to a set")
+        return index
+    
     def get_resource(self, resource_id: int) -> Optional[Dict[str, Any]]:
         """Fetch single resource by ID.
         

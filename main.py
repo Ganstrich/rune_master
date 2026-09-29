@@ -119,7 +119,7 @@ def load_equipment(
     # Initialize cache and API
     cache = CacheManager(cache_file=Config.CACHE_FILE)
     api = DofusAPIClient()
-    loader = EquipmentLoader(cache=cache)
+    loader = EquipmentLoader(cache=cache, set_index=_load_set_index(cache, api))
 
     # Load equipments
     print(f"\n📡 Fetching equipment from API...")
@@ -144,6 +144,17 @@ def load_equipment(
     _cache_equipment_resources(equipments, cache, api)
 
     return equipments, cache, api
+
+
+def _load_set_index(cache: CacheManager, api: DofusAPIClient) -> dict[int, int]:
+    """Return the equipment → panoplie map, fetching it once per cache lifetime."""
+    index = cache.get_equipment_set_index()
+    if index:
+        return index
+    index = api.get_equipment_set_index()
+    if index:
+        cache.set_equipment_set_index(index)
+    return index
 
 
 def _cache_equipment_resources(equipments: List[Equipment], cache: CacheManager, api: DofusAPIClient) -> None:

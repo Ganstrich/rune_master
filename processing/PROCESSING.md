@@ -65,7 +65,7 @@ Every accepted proposal is a canonical group dictionary built by
 | `acquisition_cost` | `0.0` | Profit objective | Kama-equivalent fixed cost per distinct resource |
 | `flat_taux` | `1.0` | Profit objective | Theoretical constant until break outcomes are logged |
 | `price_max_age_seconds` | `3600.0` | Price source | Maximum age for a usable cached price |
-| `group_quality_weights` | `0.50/0.30/0.20` | Canonical group evaluator | Weights for compression, reuse, and shared quantity |
+| `group_quality_weights` | `0.45/0.25/0.15/0.15` + `0.45` penalty | Canonical group evaluator | Weights for compression, reuse, shared quantity, and set-free share, plus the same-set concentration penalty |
 | `use_inclusive_mapping` | `False` | Graph expert | Split oversized communities instead of rejecting them whole |
 | `excluded_resource_ids` | `{15263, 14635}` | Group filters, quality, random/genetic affinity | Resource IDs ignored where explicitly described below |
 | `density_percentile` | `0.0` | Loader pool | Within-level-band stat-density percentile; zero disables filtering |

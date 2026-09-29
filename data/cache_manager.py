@@ -27,6 +27,7 @@ class CacheManager:
         resources (id INTEGER PRIMARY KEY, name TEXT, data BLOB, fetched_at TEXT)
         equipment_effects (equipment_id INTEGER PRIMARY KEY, effects BLOB, fetched_at TEXT)
         stat_weights (equipment_id INTEGER PRIMARY KEY, weight REAL NOT NULL, computed_at TEXT DEFAULT (datetime('now')))
+        equipment_sets (equipment_id INTEGER PRIMARY KEY, set_id INTEGER NOT NULL, fetched_at TEXT DEFAULT (datetime('now')))
         price_cache (item_id INTEGER NOT NULL, kind TEXT NOT NULL, unit_price REAL NOT NULL, observed_at REAL NOT NULL, source TEXT NOT NULL, PRIMARY KEY (item_id, kind, source))
     """
 
@@ -80,6 +81,11 @@ class CacheManager:
                 equipment_id INTEGER PRIMARY KEY,
                 weight REAL NOT NULL,
                 computed_at TEXT DEFAULT (datetime('now'))
+            );
+            CREATE TABLE IF NOT EXISTS equipment_sets (
+                equipment_id INTEGER PRIMARY KEY,
+                set_id INTEGER NOT NULL,
+                fetched_at TEXT DEFAULT (datetime('now'))
             );
             CREATE TABLE IF NOT EXISTS price_cache (
                 item_id INTEGER NOT NULL,
@@ -182,6 +188,22 @@ class CacheManager:
             "SELECT 1 FROM resources WHERE id = ?", (resource_id,)
         ).fetchone()
         return row is not None
+
+    def get_equipment_set_index(self) -> Dict[int, int]:
+        """Return the cached equipment_id → set_id map (empty when never fetched)."""
+        rows = self._conn.execute(
+            "SELECT equipment_id, set_id FROM equipment_sets"
+        ).fetchall()
+        return {int(row["equipment_id"]): int(row["set_id"]) for row in rows}
+
+    def set_equipment_set_index(self, index: Dict[int, int]) -> None:
+        """Replace the cached equipment_id → set_id map."""
+        self._conn.execute("DELETE FROM equipment_sets")
+        self._conn.executemany(
+            "INSERT OR REPLACE INTO equipment_sets (equipment_id, set_id) VALUES (?, ?)",
+            [(int(equipment_id), int(set_id)) for equipment_id, set_id in index.items()],
+        )
+        self._conn.commit()
 
     def set_price(
         self,

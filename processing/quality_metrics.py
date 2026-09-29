@@ -13,14 +13,23 @@ from processing.blocks.similarity import jaccard
 class GroupQualityWeights:
     """Weights for the compression-oriented overlap objective."""
 
-    compression: float = 0.50
-    resource_reuse_ratio: float = 0.30
-    shared_quantity_ratio: float = 0.20
+    compression: float = 0.45
+    resource_reuse_ratio: float = 0.25
+    shared_quantity_ratio: float = 0.15
+    set_free_ratio: float = 0.15
+    set_concentration_penalty: float = 0.45
+
+    REWARD_FIELDS = (
+        "compression",
+        "resource_reuse_ratio",
+        "shared_quantity_ratio",
+        "set_free_ratio",
+    )
 
     def normalized(self) -> dict[str, float]:
-        """Return non-negative weights normalized to sum to one."""
-        values = asdict(self)
-        if any(value < 0 for value in values.values()):
+        """Return non-negative reward weights normalized to sum to one."""
+        values = {name: getattr(self, name) for name in self.REWARD_FIELDS}
+        if any(value < 0 for value in values.values()) or self.set_concentration_penalty < 0:
             raise ValueError("Group quality weights must be non-negative")
         total = sum(values.values())
         if total <= 0:
@@ -41,6 +50,9 @@ class GroupQualityMetrics:
     resource_reuse_depth: float
     compression: float
     shared_quantity_ratio: float
+    set_free_count: int
+    set_free_ratio: float
+    largest_set_share: float
     mean_pairwise_jaccard: float
     minimum_pairwise_jaccard: float
     overlapping_pair_ratio: float
@@ -121,15 +133,22 @@ class GroupQualityEvaluator:
             else 0.0
         )
 
+        set_free_count, set_free_ratio, largest_set_share = self._set_membership_features(
+            equipment_list
+        )
+
         features = {
             "compression": compression,
             "resource_reuse_ratio": reuse_ratio,
             "shared_quantity_ratio": shared_quantity_ratio,
+            "set_free_ratio": set_free_ratio,
         }
         quality_score = sum(
             features[name] * weight
             for name, weight in self.weights.normalized().items()
         )
+        quality_score -= largest_set_share * self.weights.set_concentration_penalty
+        quality_score = min(max(quality_score, 0.0), 1.0)
 
         return GroupQualityMetrics(
             group_size=group_size,
@@ -141,11 +160,33 @@ class GroupQualityEvaluator:
             resource_reuse_depth=reuse_depth,
             compression=compression,
             shared_quantity_ratio=shared_quantity_ratio,
+            set_free_count=set_free_count,
+            set_free_ratio=set_free_ratio,
+            largest_set_share=largest_set_share,
             mean_pairwise_jaccard=mean_pairwise,
             minimum_pairwise_jaccard=minimum_pairwise,
             overlapping_pair_ratio=overlapping_pair_ratio,
             quality_score=quality_score,
         )
+
+    @staticmethod
+    def _set_membership_features(
+        equipment_list: list[Equipment],
+    ) -> tuple[int, float, float]:
+        """Reward items outside panoplies, which the game already promotes."""
+        group_size = len(equipment_list)
+        if not group_size:
+            return 0, 0.0, 0.0
+        set_counts: dict[int, int] = defaultdict(int)
+        set_free_count = 0
+        for equipment in equipment_list:
+            set_id = getattr(equipment, "set_id", None)
+            if set_id is None:
+                set_free_count += 1
+            else:
+                set_counts[int(set_id)] += 1
+        largest_set_share = max(set_counts.values(), default=0) / group_size
+        return set_free_count, set_free_count / group_size, largest_set_share
 
     @staticmethod
     def _resource_quantities(

@@ -16,6 +16,7 @@ from processing.group_metrics import GroupMetrics
 def make_equipment(
     equipment_id: int,
     recipe: list[tuple[int, int]],
+    set_id: int | None = None,
 ) -> Equipment:
     """Create one minimal equipment record with a normalized recipe."""
     return Equipment(
@@ -28,34 +29,58 @@ def make_equipment(
             ResourceRequirement(resource_id=resource_id, quantity=quantity)
             for resource_id, quantity in recipe
         ],
+        set_id=set_id,
     )
 
 
 def test_group_quality_has_interpretable_boundary_values() -> None:
     """Identical recipes score below one because compression is size-aware."""
     identical = [
-        make_equipment(1, [(10, 2), (20, 3)]),
-        make_equipment(2, [(10, 2), (20, 3)]),
+        make_equipment(1, [(10, 2), (20, 3)], set_id=1),
+        make_equipment(2, [(10, 2), (20, 3)], set_id=1),
     ]
     disjoint = [
-        make_equipment(3, [(30, 2)]),
-        make_equipment(4, [(40, 2)]),
+        make_equipment(3, [(30, 2)], set_id=1),
+        make_equipment(4, [(40, 2)], set_id=1),
     ]
 
     evaluator = GroupQualityEvaluator()
     identical_metrics = evaluator.evaluate(identical)
     disjoint_metrics = evaluator.evaluate(disjoint)
 
-    assert identical_metrics.quality_score == pytest.approx(0.75)
+    assert identical_metrics.quality_score == pytest.approx(0.175)
     assert identical_metrics.resource_reuse_depth == pytest.approx(1.0)
     assert disjoint_metrics.quality_score == pytest.approx(0.0)
+
+
+def test_set_free_items_outrank_identical_panoplie_items() -> None:
+    """Panoplie items are already well known, so set-free groups must score higher."""
+    recipe = [(10, 2), (20, 3)]
+    panoplie = [
+        make_equipment(1, recipe, set_id=7),
+        make_equipment(2, recipe, set_id=7),
+    ]
+    set_free = [
+        make_equipment(3, recipe),
+        make_equipment(4, recipe),
+    ]
+
+    evaluator = GroupQualityEvaluator()
+    panoplie_metrics = evaluator.evaluate(panoplie)
+    set_free_metrics = evaluator.evaluate(set_free)
+
+    assert panoplie_metrics.set_free_ratio == 0.0
+    assert panoplie_metrics.largest_set_share == pytest.approx(1.0)
+    assert set_free_metrics.set_free_ratio == pytest.approx(1.0)
+    assert set_free_metrics.largest_set_share == 0.0
+    assert set_free_metrics.quality_score > panoplie_metrics.quality_score
 
 
 def test_group_quality_excludes_configured_resources_from_all_features() -> None:
     """Common filler resources should not improve any quality component."""
     equipments = [
-        make_equipment(1, [(99, 100), (10, 1)]),
-        make_equipment(2, [(99, 100), (20, 1)]),
+        make_equipment(1, [(99, 100), (10, 1)], set_id=1),
+        make_equipment(2, [(99, 100), (20, 1)], set_id=1),
     ]
 
     metrics = GroupQualityEvaluator().evaluate(equipments, {99})
