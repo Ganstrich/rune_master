@@ -44,8 +44,8 @@ proceed first.
 | Plan | Behavior change |
 | --- | --- |
 | [01-pure-blocks.done.md](01-pure-blocks.done.md) | No |
-| [02-objective-protocol.md](02-objective-protocol.md) | No |
-| [03-acceptance-policy.md](03-acceptance-policy.md) | No |
+| [02-objective-protocol.done.md](02-objective-protocol.done.md) | No |
+| [03-acceptance-policy.done.md](03-acceptance-policy.done.md) | No |
 | [04-experts-consume-objective.md](04-experts-consume-objective.md) | No |
 | [05-selection-module.md](05-selection-module.md) | No |
 | [06-hygiene.md](06-hygiene.md) | No |

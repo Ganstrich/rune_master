@@ -7,7 +7,7 @@ large, varied groups the project needs rather than converging on item pairs.
 
 ## Depends On
 
-[02-objective-protocol.md](02-objective-protocol.md),
+[02-objective-protocol.done.md](02-objective-protocol.done.md),
 [12-baseline-harness.md](12-baseline-harness.md)
 
 ## Scope

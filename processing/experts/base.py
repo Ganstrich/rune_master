@@ -5,6 +5,7 @@ from models import Equipment
 # Avoid circular import by importing inside methods or using type hints with string if needed
 # but ProcessingConfig is usually safe to import.
 from processing.config_dataclass import ProcessingConfig
+from processing.valuation.objective import GroupObjective
 
 if TYPE_CHECKING:
     import networkx as nx
@@ -20,11 +21,15 @@ class GroupingExpert(ABC):
         self, 
         name: str,
         cache_manager: Optional[Any] = None,
-        api_client: Optional[Any] = None
+        api_client: Optional[Any] = None,
+        objective: Optional[GroupObjective] = None,
+        policy: Optional[Any] = None,
     ):
         self.name = name
         self.cache_manager = cache_manager
         self.api_client = api_client
+        self.objective = objective
+        self.policy = policy
 
     @abstractmethod
     def discover_groups(
@@ -46,11 +51,3 @@ class GroupingExpert(ABC):
             List of group dictionaries with consistent format.
         """
         pass
-
-    def evaluate_group(self, group: Dict[str, Any]) -> float:
-        """Calculate a fitness score for a group.
-        
-        Default implementation uses the configured price-independent group
-        quality score embedded in every canonical group dictionary.
-        """
-        return group.get("quality_score", 0.0)

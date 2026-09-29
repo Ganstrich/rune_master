@@ -7,7 +7,7 @@ and the way a final set of groups is chosen becomes a testable component.
 
 ## Depends On
 
-[02-objective-protocol.md](02-objective-protocol.md)
+[02-objective-protocol.done.md](02-objective-protocol.done.md)
 
 ## Scope
 

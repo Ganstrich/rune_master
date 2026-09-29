@@ -7,7 +7,7 @@ every later change can be shown to help rather than assumed to.
 
 ## Depends On
 
-[02-objective-protocol.md](02-objective-protocol.md)
+[02-objective-protocol.done.md](02-objective-protocol.done.md)
 
 ## Scope
 

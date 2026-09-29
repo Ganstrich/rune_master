@@ -11,6 +11,7 @@ from processing.experts.base import GroupingExpert
 from processing.graph_builder import GraphBuilder
 from processing.group_mapper import GroupMapper
 from processing.policy import GroupAcceptancePolicy
+from processing.valuation.objective import GroupObjective
 
 
 class GraphGroupingExpert(GroupingExpert):
@@ -20,9 +21,13 @@ class GraphGroupingExpert(GroupingExpert):
     """
 
     def __init__(
-        self, cache_manager: Optional[Any] = None, api_client: Optional[Any] = None
+        self,
+        cache_manager: Optional[Any] = None,
+        api_client: Optional[Any] = None,
+        objective: Optional[GroupObjective] = None,
+        policy: Optional[GroupAcceptancePolicy] = None,
     ):
-        super().__init__("GraphExpert", cache_manager, api_client)
+        super().__init__("GraphExpert", cache_manager, api_client, objective, policy)
 
     def discover_groups(
         self,
@@ -87,7 +92,7 @@ class GraphGroupingExpert(GroupingExpert):
             equipments,
             excluded_resource_ids=config.excluded_resource_ids,
             quality_weights=config.group_quality_weights,
-            acceptance_policy=GroupAcceptancePolicy(config),
+            acceptance_policy=self.policy or GroupAcceptancePolicy(config),
         )
 
         if config.use_inclusive_mapping:

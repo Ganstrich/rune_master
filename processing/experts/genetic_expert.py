@@ -12,8 +12,9 @@ from processing.experts.base import GroupingExpert
 from processing.config_dataclass import ProcessingConfig
 from processing.graph_builder import GraphBuilder
 from processing.group_mapper import GroupMapper
-from processing.quality_metrics import GroupQualityEvaluator
+from processing.group_metrics import GroupMetrics
 from processing.policy import GroupAcceptancePolicy
+from processing.valuation.objective import GroupCandidate, GroupObjective
 
 class GeneticGroupingExpert(GroupingExpert):
     """Expert that uses Genetic Algorithms to discover optimal groups.
@@ -31,8 +32,10 @@ class GeneticGroupingExpert(GroupingExpert):
         mutation_rate: float = 0.3,
         elite_count: int = 3,
         stagnation_limit: int = 15,
+        objective: Optional[GroupObjective] = None,
+        policy: Optional[GroupAcceptancePolicy] = None,
     ):
-        super().__init__("GeneticExpert", cache_manager, api_client)
+        super().__init__("GeneticExpert", cache_manager, api_client, objective, policy)
         self.population_size = population_size
         self.generations = generations
         self.mutation_rate = mutation_rate
@@ -49,6 +52,12 @@ class GeneticGroupingExpert(GroupingExpert):
         """Run the genetic discovery pipeline."""
         if not equipments:
             return []
+
+        self.population_size = config.genetic_population_size
+        self.generations = config.genetic_generations
+        self.mutation_rate = config.genetic_mutation_rate
+        self.elite_count = config.genetic_elite_count
+        self.stagnation_limit = config.genetic_stagnation_limit
 
         if config.random_seed is not None:
             random.seed(config.random_seed)
@@ -216,22 +225,23 @@ class GeneticGroupingExpert(GroupingExpert):
                 }
                 if not candidates:
                     break
-                best_weight = max(
-                    sum(
-                        graph.get_edge_data(candidate, member, {}).get("weight", 0.0)
-                        for member in group_ids
+                if self.objective is None:
+                    best_candidates = list(candidates)
+                else:
+                    current = GroupCandidate(
+                        [eq_by_id[equipment_id] for equipment_id in group_ids],
+                        config.excluded_resource_ids,
                     )
-                    for candidate in candidates
-                )
-                best_candidates = [
-                    candidate
-                    for candidate in candidates
-                    if sum(
-                        graph.get_edge_data(candidate, member, {}).get("weight", 0.0)
-                        for member in group_ids
+                    best_value = max(
+                        self.objective.marginal(current, eq_by_id[candidate])
+                        for candidate in candidates
                     )
-                    == best_weight
-                ]
+                    best_candidates = [
+                        candidate
+                        for candidate in candidates
+                        if self.objective.marginal(current, eq_by_id[candidate])
+                        == best_value
+                    ]
                 group_ids.add(random.choice(best_candidates))
 
             available -= group_ids
@@ -259,7 +269,7 @@ class GeneticGroupingExpert(GroupingExpert):
         total_score = 0.0
         seen_ids = set()
         overlap_penalty = 0.0
-        policy = GroupAcceptancePolicy(config) if config is not None else None
+        policy = self.policy or (GroupAcceptancePolicy(config) if config is not None else None)
         
         if not individual:
             return -100.0
@@ -268,21 +278,26 @@ class GeneticGroupingExpert(GroupingExpert):
             if not eq_set:
                 continue
 
-            quality = GroupQualityEvaluator(config.group_quality_weights).evaluate(
-                eq_set, config.excluded_resource_ids
+            group_data = GroupMetrics.build_group_dict(
+                list(eq_set), excluded_resource_ids=config.excluded_resource_ids,
+                quality_weights=config.group_quality_weights,
             )
             candidate = {
                 "equipments": eq_set,
                 "group_size": len(eq_set),
-                "shared_resources_count": quality.shared_resource_count,
-                "sharing_efficiency": quality.shared_resource_count / quality.unique_resource_count
-                if quality.unique_resource_count
-                else 0.0,
-                "quality_score": quality.quality_score,
+                "shared_resources_count": group_data["shared_resources_count"],
+                "sharing_efficiency": group_data["sharing_efficiency"],
+                "quality_score": group_data["quality_score"],
             }
             if policy is not None and not policy.accepts(candidate):
                 continue
-            total_score += quality.quality_score
+            total_score += (
+                self.objective.score(
+                    GroupCandidate(list(eq_set), config.excluded_resource_ids)
+                )
+                if self.objective is not None
+                else group_data["quality_score"]
+            )
 
             # Overlap penalty
             for eq in eq_set:
@@ -449,7 +464,18 @@ class GeneticGroupingExpert(GroupingExpert):
                 if neighbor not in assigned_ids and neighbor in eq_by_id
             }
             if candidate_ids:
-                individual[idx].add(eq_by_id[random.choice(tuple(candidate_ids))])
+                candidates = [eq_by_id[candidate_id] for candidate_id in candidate_ids]
+                if self.objective is None:
+                    selected = random.choice(candidates)
+                else:
+                    current = GroupCandidate(
+                        list(individual[idx]), config.excluded_resource_ids
+                    )
+                    selected = max(
+                        candidates,
+                        key=lambda candidate: self.objective.marginal(current, candidate),
+                    )
+                individual[idx].add(selected)
         
         elif mutation_type == "remove":
             idx = random.randint(0, len(individual) - 1)

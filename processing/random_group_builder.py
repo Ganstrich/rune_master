@@ -12,6 +12,7 @@ from data.cache_manager import CacheManager
 from processing.blocks.recipes import recipe_resource_ids
 from processing.group_metrics import GroupMetrics
 from processing.quality_metrics import GroupQualityWeights
+from processing.valuation.objective import GroupCandidate, GroupObjective
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +33,7 @@ class RandomGroupBuilder:
         seed: Optional[int] = None,
         cache_manager: Optional[CacheManager] = None,
         quality_weights: GroupQualityWeights | None = None,
+        objective: Optional[GroupObjective] = None,
     ):
         """Initialize RandomGroupBuilder.
         
@@ -46,6 +48,7 @@ class RandomGroupBuilder:
         self.seed = seed
         self.cache_manager = cache_manager
         self.quality_weights = quality_weights
+        self.objective = objective
         
         if seed is not None:
             random.seed(seed)
@@ -162,7 +165,14 @@ class RandomGroupBuilder:
                 efficiency = shared_count / len(seed_resources) if seed_resources else 0
                 companions.append((eq, shared_count, efficiency))
 
-        companions.sort(key=lambda item: (item[1], item[2]), reverse=True)
+        if self.objective is None:
+            companions.sort(key=lambda item: (item[1], item[2]), reverse=True)
+        else:
+            seed_group = GroupCandidate([seed_equipment], self.excluded_resource_ids)
+            companions.sort(
+                key=lambda item: self.objective.marginal(seed_group, item[0]),
+                reverse=True,
+            )
         return [companion[0] for companion in companions]
 
     def build_random_group(

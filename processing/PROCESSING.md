@@ -260,9 +260,10 @@ Accepted groups are sorted by `quality_score` descending.
 For each attempt, the builder randomly selects a seed not previously used by a
 successful group. Companion candidates must share at least
 `group_min_shared_resources` non-excluded resources with the seed. Candidates
-are sorted first by absolute shared count and then by
-`shared_count / seed_resource_count`; the first `group_max_size - 1` are added.
-Companions are compared with the seed, not with each other.
+are ranked by the injected objective's marginal value for adding each candidate
+to the seed group; the first `group_max_size - 1` are added. Without an
+injected objective, the legacy shared-count ordering is retained for direct
+builder compatibility.
 
 A seed without a companion produces no group and still consumes one generation
 attempt. Its ID is not marked used, so it may be selected again later. Every
@@ -281,7 +282,7 @@ The genetic expert first builds or reuses the same filtered Jaccard similarity
 graph used by the graph expert. An empty graph returns no groups. Excluded
 resource IDs are removed from resource sets used for conflict affinity.
 
-Default search parameters are:
+Default search parameters, now configurable through `ProcessingConfig`, are:
 
 | Parameter | Default |
 | --- | ---: |

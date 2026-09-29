@@ -45,6 +45,13 @@ class ProcessingConfig:
     random_group_count: int = 50
     random_seed: Optional[int] = None
 
+    # Genetic search hyperparameters
+    genetic_population_size: int = 30
+    genetic_generations: int = 50
+    genetic_mutation_rate: float = 0.3
+    genetic_elite_count: int = 3
+    genetic_stagnation_limit: int = 15
+
     # Equipment pre-filtering
     min_equipment_density: float = 0.0  # Minimum stat_weight per level (0 = no filter)
 

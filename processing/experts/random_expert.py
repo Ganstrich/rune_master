@@ -6,6 +6,7 @@ from processing.config_dataclass import ProcessingConfig
 from processing.equipment_filter import EquipmentFilteringStrategy
 from processing.random_group_builder import RandomGroupBuilder
 from processing.policy import GroupAcceptancePolicy
+from processing.valuation.objective import GroupObjective
 
 class RandomGroupingExpert(GroupingExpert):
     """Expert that uses random selection and density filtering to find groups.
@@ -16,9 +17,11 @@ class RandomGroupingExpert(GroupingExpert):
     def __init__(
         self, 
         cache_manager: Optional[Any] = None,
-        api_client: Optional[Any] = None
+        api_client: Optional[Any] = None,
+        objective: Optional[GroupObjective] = None,
+        policy: Optional[GroupAcceptancePolicy] = None,
     ):
-        super().__init__("RandomExpert", cache_manager, api_client)
+        super().__init__("RandomExpert", cache_manager, api_client, objective, policy)
 
     def discover_groups(
         self, 
@@ -49,6 +52,7 @@ class RandomGroupingExpert(GroupingExpert):
             seed=config.random_seed,
             cache_manager=self.cache_manager,
             quality_weights=config.group_quality_weights,
+            objective=self.objective,
         )
 
         groups = builder.build_multiple_random_groups(
@@ -58,7 +62,7 @@ class RandomGroupingExpert(GroupingExpert):
             max_group_size=config.group_max_size,
             avoid_seed_duplicates=True,
         )
-        policy = GroupAcceptancePolicy(config)
+        policy = self.policy or GroupAcceptancePolicy(config)
         groups = [group for group in groups if policy.accepts(group)]
 
         # Add metadata

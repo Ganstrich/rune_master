@@ -13,7 +13,10 @@ from processing.experts.genetic_expert import GeneticGroupingExpert
 from processing.experts.graph_expert import GraphGroupingExpert
 from processing.experts.random_expert import RandomGroupingExpert
 from processing.graph_builder import GraphBuilder
+from processing.policy import GroupAcceptancePolicy
 from processing.quality_metrics import PortfolioQualityEvaluator
+from processing.valuation.objective import GroupCandidate
+from processing.valuation.overlap import OverlapObjective
 
 
 class RuneMaster:
@@ -42,11 +45,19 @@ class RuneMaster:
         self.cache_manager = cache_manager
         self.api_client = api_client
 
+        self.objective = OverlapObjective(self.config.group_quality_weights)
+        self.policy = GroupAcceptancePolicy(self.config)
         # Initialize Experts
         self.experts = {
-            "deterministic": GraphGroupingExpert(cache_manager, api_client),
-            "random": RandomGroupingExpert(cache_manager, api_client),
-            "genetic": GeneticGroupingExpert(cache_manager, api_client),
+            "deterministic": GraphGroupingExpert(
+                cache_manager, api_client, self.objective, self.policy
+            ),
+            "random": RandomGroupingExpert(
+                cache_manager, api_client, self.objective, self.policy
+            ),
+            "genetic": GeneticGroupingExpert(
+                cache_manager, api_client, objective=self.objective, policy=self.policy
+            ),
         }
 
         # Results
@@ -90,7 +101,6 @@ class RuneMaster:
         self.print_summary()
         return self.groups
 
-    def run_genetic_grouping(self) -> List[Dict[str, Any]]:
         """Run genetic grouping with the canonical result and summary contract."""
         print("\n" + "=" * 60)
         print("RuneMaster: Genetic Pipeline (Genetic Expert)")
@@ -170,7 +180,10 @@ class RuneMaster:
 
             # Evaluate each group using the expert's fitness function
             for group in expert_groups:
-                group["fitness_score"] = expert.evaluate_group(group)
+                candidate = GroupCandidate(
+                    group["equipments"], self.config.excluded_resource_ids
+                )
+                group["fitness_score"] = self.objective.score(candidate)
                 all_potential_groups.append(group)
 
         # 2. Gating Network: Evaluate and De-duplicate

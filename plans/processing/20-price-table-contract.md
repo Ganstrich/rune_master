@@ -8,7 +8,7 @@ rather than a refactor.
 
 ## Depends On
 
-[02-objective-protocol.md](02-objective-protocol.md)
+[02-objective-protocol.done.md](02-objective-protocol.done.md)
 
 ## Scope
 

@@ -7,7 +7,7 @@ distinct line items and total units to carry.
 
 ## Depends On
 
-[03-acceptance-policy.md](03-acceptance-policy.md),
+[03-acceptance-policy.done.md](03-acceptance-policy.done.md),
 [01-pure-blocks.done.md](01-pure-blocks.done.md)
 
 ## Scope

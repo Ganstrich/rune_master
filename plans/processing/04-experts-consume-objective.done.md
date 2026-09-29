@@ -7,8 +7,8 @@ given, so the objective can be swapped without rewriting the experts.
 
 ## Depends On
 
-[02-objective-protocol.md](02-objective-protocol.md),
-[03-acceptance-policy.md](03-acceptance-policy.md)
+[02-objective-protocol.done.md](02-objective-protocol.done.md),
+[03-acceptance-policy.done.md](03-acceptance-policy.done.md)
 
 ## Scope
 
