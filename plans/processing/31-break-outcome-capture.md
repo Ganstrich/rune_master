@@ -7,7 +7,7 @@ the manual entry burden.
 
 ## Depends On
 
-[30-break-log.md](30-break-log.md),
+[30-break-log.done.md](30-break-log.done.md),
 [21-price-capture-ingestion.done.md](21-price-capture-ingestion.done.md) for shared
 pipeline components
 

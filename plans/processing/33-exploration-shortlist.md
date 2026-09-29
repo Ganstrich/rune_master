@@ -7,7 +7,7 @@ stale but whose theoretical value and craft cost make them cheap to test.
 
 ## Depends On
 
-[30-break-log.md](30-break-log.md). Works with manual observations only; does
+[30-break-log.done.md](30-break-log.done.md). Works with manual observations only; does
 not require capture or prices.
 
 ## Scope

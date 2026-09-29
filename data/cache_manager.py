@@ -11,6 +11,7 @@ SQLite-backed storage with WAL mode for safe concurrent reads.
 import json
 import os
 import sqlite3
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 from config import Config
@@ -87,6 +88,16 @@ class CacheManager:
                 observed_at REAL NOT NULL,
                 source TEXT NOT NULL,
                 PRIMARY KEY (item_id, kind, source)
+            );
+            CREATE TABLE IF NOT EXISTS break_log (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                item_id INTEGER NOT NULL,
+                item_level INTEGER NOT NULL,
+                focus TEXT,
+                runes_received_json TEXT NOT NULL,
+                observed_density REAL NOT NULL,
+                observed_at TEXT NOT NULL,
+                source TEXT NOT NULL
             );
         """)
         self._conn.execute(
@@ -189,6 +200,59 @@ class CacheManager:
             (item_id, kind, float(unit_price), observed_at or time.time(), source),
         )
         self._conn.commit()
+
+    def record_break_observation(
+        self,
+        item_id: int,
+        item_level: int,
+        focus: str | None,
+        runes_received: Dict[str, int],
+        observed_density: float,
+        source: str = "manual",
+        observed_at: str | None = None,
+    ) -> int:
+        """Append one immutable break observation and return its row ID."""
+        timestamp = observed_at or datetime.now(timezone.utc).isoformat()
+        cursor = self._conn.execute(
+            """INSERT INTO break_log
+            (item_id, item_level, focus, runes_received_json, observed_density, observed_at, source)
+            VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (
+                item_id,
+                item_level,
+                focus,
+                json.dumps(runes_received, ensure_ascii=False, sort_keys=True),
+                float(observed_density),
+                timestamp,
+                source,
+            ),
+        )
+        self._conn.commit()
+        return int(cursor.lastrowid)
+
+    def list_break_observations(self) -> list[Dict[str, Any]]:
+        """Return append-only break observations in insertion order."""
+        rows = self._conn.execute(
+            """SELECT id, item_id, item_level, focus, runes_received_json,
+            observed_density, observed_at, source FROM break_log ORDER BY id"""
+        ).fetchall()
+        return [
+            {
+                "id": int(row["id"]),
+                "item_id": int(row["item_id"]),
+                "item_level": int(row["item_level"]),
+                "focus": row["focus"],
+                "runes_received": self._decode_json(row["runes_received_json"], "break log") or {},
+                "observed_density": float(row["observed_density"]),
+                "observed_at": row["observed_at"],
+                "source": row["source"],
+            }
+            for row in rows
+        ]
+
+    def export_break_log(self) -> list[Dict[str, Any]]:
+        """Return a portable representation for migration or analysis."""
+        return self.list_break_observations()
 
     def get_price_status(
         self, item_id: int, kind: str, max_age_seconds: float | None = None

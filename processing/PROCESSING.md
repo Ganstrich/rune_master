@@ -299,6 +299,10 @@ portfolio, and runtime columns suitable for JSON persistence.
 focus, excludes partially priced items from the profit term, and falls back
 explicitly to the compression overlap score when no item can be valued.
 
+`break_log` is append-only user data, separate from cache invalidation. Use
+`python break_log.py` for manual observations; each row stores UTC time, source,
+runes received, and observed density so taux can be computed later.
+
 ## Genetic Expert
 
 The genetic expert first builds or reuses the same filtered Jaccard similarity
