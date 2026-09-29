@@ -99,6 +99,10 @@ from processing.policy import GroupAcceptancePolicy
 from processing.quality_metrics import PortfolioQualityEvaluator
 from processing.valuation.objective import GroupCandidate, GroupObjective
 
+# Caps on generation retries so infeasible candidates cannot spin forever.
+_COLD_START_ATTEMPT_FACTOR = 10
+_OFFSPRING_ATTEMPT_FACTOR = 20
+
 
 class PortfolioFitnessEvaluator:
     """Evaluate fitness of complete portfolios (not just sum of groups).
@@ -573,11 +577,20 @@ class PortfolioEvolutionEngine:
 
         # Build equipment graph
         from processing.graph_builder import GraphBuilder
+        print(
+            f"  [EvolutionEngine] Building equipment graph ({len(self.equipments)} items)...",
+            flush=True,
+        )
         self.graph, self.equipment_resources = GraphBuilder.build_equipment_graph(
             self.equipments,
             min_shared_ratio=self.config.graph_min_shared_ratio,
             min_shared_count=self.config.graph_min_shared_count,
             min_component_size=self.config.graph_min_component_size,
+        )
+        print(
+            f"  [EvolutionEngine] Graph ready: {self.graph.number_of_nodes()} nodes, "
+            f"{self.graph.number_of_edges()} edges",
+            flush=True,
         )
 
         if self.graph.number_of_nodes() == 0:
@@ -605,8 +618,18 @@ class PortfolioEvolutionEngine:
         )
 
         # Initialize population
+        print(
+            f"  [EvolutionEngine] Initializing population "
+            f"(target: {self.config.evolutionary_population_size}, "
+            f"{len(initial_proposals)} expert proposals)...",
+            flush=True,
+        )
         population = self._initialize_population(
             initial_proposals, operators, fitness_eval, warm_start_config
+        )
+        print(
+            f"  [EvolutionEngine] Population initialized: {len(population)} candidates",
+            flush=True,
         )
 
         if not population:
@@ -621,14 +644,22 @@ class PortfolioEvolutionEngine:
         # Evolution loop
         for round_num in range(self.config.evolutionary_rounds):
             print(
-                f"  [EvolutionEngine] Round {round_num + 1}/{self.config.evolutionary_rounds}"
+                f"  [EvolutionEngine] Round {round_num + 1}/{self.config.evolutionary_rounds}",
+                flush=True,
             )
 
             # Evaluate current population
-            population = [
-                fitness_eval.evaluate(candidate, self.config.excluded_resource_ids)
-                for candidate in population
-            ]
+            evaluated_population = []
+            for idx, candidate in enumerate(population, start=1):
+                evaluated_population.append(
+                    fitness_eval.evaluate(candidate, self.config.excluded_resource_ids)
+                )
+                if idx % 10 == 0 or idx == len(population):
+                    print(
+                        f"      Evaluating: {idx}/{len(population)}",
+                        flush=True,
+                    )
+            population = evaluated_population
 
             # Update archive
             for candidate in population:
@@ -639,12 +670,12 @@ class PortfolioEvolutionEngine:
             if round_best.score > best_ever.score:
                 best_ever = round_best
                 stagnation_counter = 0
-                print(f"      New best score: {round_best.score:.4f}")
+                print(f"      New best score: {round_best.score:.4f}", flush=True)
             else:
                 stagnation_counter += 1
 
             if stagnation_counter >= self.config.evolutionary_stagnation_limit:
-                print(f"      Stagnation limit reached. Stopping.")
+                print("      Stagnation limit reached. Stopping.", flush=True)
                 break
 
             # Update elite
@@ -673,7 +704,20 @@ class PortfolioEvolutionEngine:
                 next_population.append(evaluated)
 
             # Generate via mutation and crossover
-            while len(next_population) < self.config.evolutionary_population_size:
+            max_attempts = self.config.evolutionary_population_size * _OFFSPRING_ATTEMPT_FACTOR
+            attempts = 0
+            while (
+                len(next_population) < self.config.evolutionary_population_size
+                and attempts < max_attempts
+            ):
+                attempts += 1
+                if attempts % 50 == 0:
+                    print(
+                        f"      Breeding: {len(next_population)}/"
+                        f"{self.config.evolutionary_population_size} "
+                        f"(attempt {attempts}/{max_attempts})",
+                        flush=True,
+                    )
                 if self.rng.random() < self.config.evolutionary_crossover_rate:
                     # Crossover: blend two parents
                     parent1 = self._tournament_select(population)
@@ -691,15 +735,23 @@ class PortfolioEvolutionEngine:
                     if evaluated.is_feasible():
                         next_population.append(evaluated)
 
+            if attempts >= max_attempts:
+                print(
+                    f"      Offspring attempt cap reached; continuing with "
+                    f"{len(next_population)} candidates",
+                    flush=True,
+                )
+
             population = next_population[: self.config.evolutionary_population_size]
 
             print(
                 f"      Population: {len(population)}, "
                 f"Archive: {len(self.archive.candidates)}, "
-                f"Best: {best_ever.score:.4f}"
+                f"Best: {best_ever.score:.4f}",
+                flush=True,
             )
 
-        print(f"  [EvolutionEngine] Final best score: {best_ever.score:.4f}")
+        print(f"  [EvolutionEngine] Final best score: {best_ever.score:.4f}", flush=True)
         return best_ever
 
     def _initialize_population(
@@ -741,14 +793,39 @@ class PortfolioEvolutionEngine:
                     if evaluated.is_feasible():
                         population.append(evaluated)
 
+        print(
+            f"      Seeded {len(population)} candidates from proposals/warm starts",
+            flush=True,
+        )
+
         # Fill with cold-start random portfolios
-        while len(population) < self.config.evolutionary_population_size:
+        max_attempts = self.config.evolutionary_population_size * _COLD_START_ATTEMPT_FACTOR
+        attempts = 0
+        while (
+            len(population) < self.config.evolutionary_population_size
+            and attempts < max_attempts
+        ):
+            attempts += 1
+            if attempts % 25 == 0:
+                print(
+                    f"      Cold start: {len(population)}/"
+                    f"{self.config.evolutionary_population_size} "
+                    f"(attempt {attempts}/{max_attempts})",
+                    flush=True,
+                )
             cold_start = operators.cold_start_portfolio()
             evaluated = fitness_eval.evaluate(
                 cold_start, self.config.excluded_resource_ids
             )
             if evaluated.is_feasible():
                 population.append(evaluated)
+
+        if attempts >= max_attempts:
+            print(
+                f"      Cold-start attempt cap reached; population size "
+                f"{len(population)}",
+                flush=True,
+            )
 
         return population
 

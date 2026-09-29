@@ -278,7 +278,7 @@ class RuneMaster:
             print(f"  [WarmStart] {len(warm_start_portfolios)} seed portfolios loaded")
 
         # 3. Run evolutionary search
-        print("\n[EvolutionEngine] Starting iterative portfolio optimization...")
+        print("\n[EvolutionEngine] Starting iterative portfolio optimization...", flush=True)
         engine = PortfolioEvolutionEngine(
             self.equipments,
             self.config,
