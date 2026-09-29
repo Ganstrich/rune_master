@@ -33,7 +33,7 @@ Nothing here requires capture. Manual entry is sufficient to start.
   `source` distinguishes manual entry from capture.
 - `observed_density` is the total rune density received, which is directly
   comparable to the theoretical `break_density` from
-  [08-break-density-and-focus.md](08-break-density-and-focus.md). Their ratio is
+  [08-break-density-and-focus.done.md](08-break-density-and-focus.done.md). Their ratio is
   the observed taux.
 - Add a manual entry path: a CLI command or a small form accepting item, focus,
   and runes received.

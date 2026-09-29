@@ -7,7 +7,7 @@ expert, and make the threshold scale correctly with level.
 
 ## Depends On
 
-[07-rune-density-relocation.md](07-rune-density-relocation.md)
+[07-rune-density-relocation.done.md](07-rune-density-relocation.done.md)
 
 ## Scope
 

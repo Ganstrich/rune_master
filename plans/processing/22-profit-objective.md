@@ -8,7 +8,7 @@ expected profit rather than by recipe overlap.
 ## Depends On
 
 [20-price-table-contract.md](20-price-table-contract.md),
-[08-break-density-and-focus.md](08-break-density-and-focus.md)
+[08-break-density-and-focus.done.md](08-break-density-and-focus.done.md)
 
 ## Scope
 
@@ -20,7 +20,7 @@ expected profit rather than by recipe overlap.
 - Add `FlatTauxModel` returning a constant $\tau$, so this ships before any break
   data exists.
 - Activate `best_focus(item, rho)` from
-  [08-break-density-and-focus.md](08-break-density-and-focus.md). Focus is a
+  [08-break-density-and-focus.done.md](08-break-density-and-focus.done.md). Focus is a
   decision variable: the chosen focus must be recorded on the group.
 - Add $\lambda$ to config as the kama-equivalent fixed cost of acquiring one
   distinct resource, with a documented default.

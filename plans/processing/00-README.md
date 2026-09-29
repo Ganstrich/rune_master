@@ -49,9 +49,9 @@ proceed first.
 | [04-experts-consume-objective.md](04-experts-consume-objective.md) | No |
 | [05-selection-module.md](05-selection-module.md) | No |
 | [06-hygiene.done.md](06-hygiene.done.md) | No |
-| [07-rune-density-relocation.md](07-rune-density-relocation.md) | No |
-| [08-break-density-and-focus.md](08-break-density-and-focus.md) | Additive |
-| [09-compression-term.md](09-compression-term.md) | **Yes** |
+| [07-rune-density-relocation.done.md](07-rune-density-relocation.done.md) | No |
+| [08-break-density-and-focus.done.md](08-break-density-and-focus.done.md) | Additive |
+| [09-compression-term.done.md](09-compression-term.done.md) | **Yes** |
 | [10-shopping-list-constraints.md](10-shopping-list-constraints.md) | **Yes** |
 | [11-value-gate-unification.md](11-value-gate-unification.md) | **Yes** |
 | [12-baseline-harness.md](12-baseline-harness.md) | No |

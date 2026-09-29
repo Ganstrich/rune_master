@@ -14,6 +14,8 @@ class GroupAcceptancePolicy:
         self.min_shared_resources = config.group_min_shared_resources
         self.efficiency_threshold = config.group_efficiency_threshold
         self.quality_threshold = config.group_quality_threshold
+        self.max_line_items = config.max_line_items
+        self.max_total_units = config.max_total_units
 
     @classmethod
     def from_values(
@@ -31,6 +33,8 @@ class GroupAcceptancePolicy:
         policy.min_shared_resources = min_shared_resources
         policy.efficiency_threshold = efficiency_threshold
         policy.quality_threshold = quality_threshold
+        policy.max_line_items = float("inf")
+        policy.max_total_units = float("inf")
         return policy
 
     def rejection_reason(self, group: Mapping[str, Any]) -> str | None:
@@ -44,6 +48,10 @@ class GroupAcceptancePolicy:
             return "sharing_efficiency"
         if float(group.get("quality_score", 0.0)) < self.quality_threshold:
             return "quality_score"
+        if int(group.get("unique_ingredients_count", 0)) > self.max_line_items:
+            return "max_line_items"
+        if int(group.get("total_items_needed", 0)) > self.max_total_units:
+            return "max_total_units"
         return None
 
     def accepts(self, group: Mapping[str, Any]) -> bool:

@@ -21,10 +21,12 @@ class ProcessingConfig:
 
     # Group mapping
     group_min_size: int = 2
-    group_max_size: int = 18
+    group_max_size: int = 32  # Generous headroom above the former 18-item ceiling.
     group_min_shared_resources: int = 3
     group_efficiency_threshold: float = 0.15
     group_quality_threshold: float = 0.0
+    max_line_items: int = 12  # Above observed compact reports; caps shopping effort.
+    max_total_units: int = 500  # Carry headroom for compact recipe baskets.
     group_quality_weights: GroupQualityWeights = field(default_factory=GroupQualityWeights)
     use_inclusive_mapping: bool = False
 

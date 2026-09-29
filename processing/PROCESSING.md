@@ -56,13 +56,14 @@ Every accepted proposal is a canonical group dictionary built by
 | `algorithm` | `louvain` | Graph expert | `louvain`, `bilouvain`, or any other value for connected components |
 | `resolution_range` | `(1, 10, 1)` | Louvain and BiLouvain | Passed to `np.arange(start, stop, step)`; the stop value is excluded |
 | `group_min_size` | `2` | All experts | Minimum accepted group size, except the documented inclusive-split edge case |
-| `group_max_size` | `18` | All experts | Maximum accepted group size or random companion cap |
+| `group_max_size` | `32` | All experts | Generous upper bound; shopping-list caps are primary |
 | `group_min_shared_resources` | `3` | All experts | Minimum number of non-excluded resource IDs used by at least two items |
 | `group_efficiency_threshold` | `0.15` | All experts | Minimum legacy `sharing_efficiency` |
 | `group_quality_threshold` | `0.0` | All experts | Minimum item-only `quality_score` |
-| `group_quality_weights` | `0.30/0.30/0.20/0.20` | Canonical group evaluator | Weights for reuse, pairwise Jaccard, overlapping pairs, and shared quantity |
+| `max_line_items` | `12` | Acceptance policy | Maximum distinct resources in the shopping list |
+| `max_total_units` | `500` | Acceptance policy | Maximum total recipe units in the shopping list |
+| `group_quality_weights` | `0.50/0.30/0.20` | Canonical group evaluator | Weights for compression, reuse, and shared quantity |
 | `use_inclusive_mapping` | `False` | Graph expert | Split oversized communities instead of rejecting them whole |
-| `use_resource_optimizer` | `False` | None | Reserved field; no current processing path reads it |
 | `excluded_resource_ids` | `{15263, 14635}` | Group filters, quality, random/genetic affinity | Resource IDs ignored where explicitly described below |
 | `use_density_filtering` | `True` | Random expert only | Enables `stat_weight >= level * ratio` filtering |
 | `equipment_density_level_ratio` | `3.0` | Random expert only | Density ratio used by that filter |
@@ -461,7 +462,7 @@ returns:
 Each of the 12 configurations runs in a separate process with its own cache
 manager and a newly constructed config. Worker configs use processing defaults
 except for the two searched fields, requested method,
-`use_resource_optimizer=False`, `use_density_filtering=True`,
+`use_density_filtering=True`,
 `equipment_density_level_ratio=1.5`, and `random_seed=0`.
 
 The objective is `portfolio_quality_score`; no groups means score zero. Ties are
@@ -540,7 +541,6 @@ available.
   and pairwise rather than globally optimal.
 - Committee selection ranks individual groups and only evaluates portfolio
   quality afterward.
-- `use_resource_optimizer` and `resource_optimizer.py` currently do nothing.
 - `processing/valuation/density.py` owns the game's `RUNE_DENSITY` table; the
    calculator retains a compatibility alias and uses it to populate equipment
    stat weights.
