@@ -43,7 +43,7 @@ proceed first.
 
 | Plan | Behavior change |
 | --- | --- |
-| [01-pure-blocks.md](01-pure-blocks.md) | No |
+| [01-pure-blocks.done.md](01-pure-blocks.done.md) | No |
 | [02-objective-protocol.md](02-objective-protocol.md) | No |
 | [03-acceptance-policy.md](03-acceptance-policy.md) | No |
 | [04-experts-consume-objective.md](04-experts-consume-objective.md) | No |

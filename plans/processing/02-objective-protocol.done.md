@@ -7,7 +7,7 @@ injectable component rather than logic embedded in four places.
 
 ## Depends On
 
-[01-pure-blocks.md](01-pure-blocks.md)
+[01-pure-blocks.done.md](01-pure-blocks.done.md)
 
 ## Scope
 

@@ -7,7 +7,7 @@ rejected by exactly one rule set, applied once.
 
 ## Depends On
 
-[01-pure-blocks.md](01-pure-blocks.md)
+[01-pure-blocks.done.md](01-pure-blocks.done.md)
 
 ## Scope
 
