@@ -4,7 +4,9 @@ from pathlib import Path
 import json
 
 import pytest
+import requests
 
+from data.cache_manager import CacheManager
 from data.api_client import DofusAPIClient
 from main import parse_args
 from models import Equipment, ResourceRequirement
@@ -221,3 +223,74 @@ def test_api_query_receives_effective_scope(monkeypatch: pytest.MonkeyPatch) -> 
     assert captured["filter[min_level]"] == 80
     assert captured["filter[max_level]"] == 120
     assert captured["filter[type.name_id]"] == "ring"
+
+
+def test_api_retries_transient_failure_and_classifies_success(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A transient transport error retries, then reports a successful response."""
+    calls = 0
+
+    class Response:
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict[str, list[dict[str, object]]]:
+            return {"items": []}
+
+    def get(*args: object, **kwargs: object) -> Response:
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise requests.exceptions.Timeout("temporary")
+        return Response()
+
+    monkeypatch.setattr("data.api_client.requests.get", get)
+    monkeypatch.setattr("data.api_client.time.sleep", lambda _: None)
+    client = DofusAPIClient()
+
+    assert client._make_request("/test") == {"items": []}
+    assert calls == 2
+    assert client.last_request_status == {"endpoint": "/test", "status": "success", "attempts": 2}
+
+
+def test_api_classifies_missing_and_invalid_payloads(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Permanent missing resources and malformed payloads do not retry."""
+    class MissingResponse:
+        status_code = 404
+
+        def raise_for_status(self) -> None:
+            raise requests.exceptions.HTTPError(response=self)
+
+    monkeypatch.setattr("data.api_client.requests.get", lambda *args, **kwargs: MissingResponse())
+    client = DofusAPIClient()
+    assert client._make_request("/missing") is None
+    assert client.last_request_status["status"] == "missing_resource"
+    assert client.last_request_status["attempts"] == 1
+
+    class InvalidResponse:
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> list[object]:
+            return []
+
+    monkeypatch.setattr("data.api_client.requests.get", lambda *args, **kwargs: InvalidResponse())
+    assert client._make_request("/invalid") is None
+    assert client.last_request_status["status"] == "invalid_payload"
+    assert client.last_request_status["attempts"] == 1
+
+
+def test_cache_reports_resource_coverage_and_freshness(tmp_path: Path) -> None:
+    """Cached resources remain usable and expose explicit coverage metadata."""
+    cache = CacheManager(str(tmp_path / "cache.db"))
+    cache.set_resource(100, {"name": "Shared Ore"})
+
+    status = cache.get_resource_cache_status({100, 200})
+    assert status["requested"] == 2
+    assert status["cached"] == 1
+    assert status["oldest"] is not None
+    assert cache.get_resource(100) == {"name": "Shared Ore"}
+    cache.close()

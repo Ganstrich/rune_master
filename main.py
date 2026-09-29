@@ -159,6 +159,11 @@ def _cache_equipment_resources(equipments: List[Equipment], cache: CacheManager,
     
     if uncached <= 0:
         print(f"\n✅ All {total_resources} resources already cached")
+        api.resource_cache_status = {
+            **cache.get_resource_cache_status(resource_ids),
+            "status": "complete",
+            "failed_ids": [],
+        }
         return
     
     print(f"\n📚 Caching {uncached} resources ({cached_before}/{total_resources} already cached)...")
@@ -188,6 +193,11 @@ def _cache_equipment_resources(equipments: List[Equipment], cache: CacheManager,
     print(f"✅ Cached {fetched} new resources in {elapsed:.2f}s")
     if failed:
         print(f"⚠️  Failed resources ({len(failed)}): {sorted(failed)}")
+    api.resource_cache_status = {
+        **cache.get_resource_cache_status(resource_ids),
+        "status": "degraded" if failed else "complete",
+        "failed_ids": sorted(failed),
+    }
 
 
 def process_equipment(
@@ -359,6 +369,7 @@ def main():
             processing_config,
             {key: value for key, value in vars(args).items() if value not in (None, False)},
             scope=scope,
+            cache_status=getattr(api_client, "resource_cache_status", {"status": "unavailable"}),
         )
         index_path = generate_visualizations(groups, manifest=manifest)
 

@@ -463,6 +463,10 @@ class HTMLGenerator:
         report_id = self._escape_html(self.manifest.get("run_id", "unidentified"))
         scope = self.manifest.get("scope", {})
         scope_text = self._escape_html(scope.get("summary", "Scope not recorded"))
+        cache = self.manifest.get("source", {}).get("cache", {})
+        cache_text = self._escape_html(
+            f"Resource metadata: {cache.get('status', 'unavailable')}"
+        )
         
         html_content = f"""<!DOCTYPE html>
 <html lang="en">
@@ -480,7 +484,7 @@ class HTMLGenerator:
         <div class="container-full">
             <h1>⚔️ Equipment Crafting Groups</h1>
             <p>Optimized equipment combinations for efficient crafting</p>
-            <p class="report-meta">Report <code>{report_id}</code> | {scope_text}</p>
+            <p class="report-meta">Report <code>{report_id}</code> | {scope_text} | {cache_text}</p>
             {summary_stats}
         </div>
     </header>

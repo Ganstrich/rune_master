@@ -45,6 +45,7 @@ class DofusAPIClient:
         self.game = game
         self.language = language
         self.timeout = timeout
+        self.last_request_status: Dict[str, Any] = {"status": "idle", "attempts": 0}
     
     def _make_request(
         self,
@@ -61,17 +62,48 @@ class DofusAPIClient:
             Raw JSON response as dict, or None if request failed
         """
         url = f"{self.BASE_URL}{endpoint}"
-        
+        self.last_request_status = {"endpoint": endpoint, "status": "started", "attempts": 0}
         for attempt in range(self.MAX_RETRIES):
+            self.last_request_status["attempts"] = attempt + 1
             try:
                 response = requests.get(url, params=params, timeout=self.timeout)
                 response.raise_for_status()
                 payload = response.json()
                 if not isinstance(payload, dict):
+                    self.last_request_status["status"] = "invalid_payload"
                     print(f"❌ API returned unexpected payload for {endpoint}")
                     return None
+                self.last_request_status["status"] = "success"
                 return payload
-            except (requests.exceptions.RequestException, ValueError) as error:
+            except requests.exceptions.HTTPError as error:
+                response = error.response
+                status_code = response.status_code if response is not None else None
+                if status_code == 404:
+                    self.last_request_status["status"] = "missing_resource"
+                    print(f"⚠️ API resource was not found for {endpoint}")
+                    return None
+                if status_code is None or status_code < 500:
+                    self.last_request_status["status"] = "permanent_failure"
+                    print(f"❌ Permanent API failure for {endpoint}: {error}")
+                    return None
+                error_kind = "transient_http_failure"
+                self.last_request_status["status"] = error_kind
+                if attempt == self.MAX_RETRIES - 1:
+                    print(f"❌ Request failed for {endpoint}: {error}")
+                    return None
+                time.sleep(2**attempt)
+            except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as error:
+                self.last_request_status["status"] = "transient_transport_failure"
+                if attempt == self.MAX_RETRIES - 1:
+                    print(f"❌ Request failed for {endpoint}: {error}")
+                    return None
+                time.sleep(2**attempt)
+            except ValueError as error:
+                self.last_request_status["status"] = "invalid_payload"
+                print(f"❌ Invalid API payload for {endpoint}: {error}")
+                return None
+            except requests.exceptions.RequestException as error:
+                self.last_request_status["status"] = "transport_failure"
                 if attempt == self.MAX_RETRIES - 1:
                     print(f"❌ Request failed for {endpoint}: {error}")
                     return None

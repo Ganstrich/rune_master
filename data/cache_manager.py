@@ -428,6 +428,23 @@ class CacheManager:
             "cached_weights": weights,
         }
 
+    def get_resource_cache_status(self, resource_ids: set[int]) -> Dict[str, Any]:
+        """Return cache coverage and freshness for a requested resource set."""
+        if not resource_ids:
+            return {"requested": 0, "cached": 0, "oldest": None, "newest": None}
+        placeholders = ",".join("?" for _ in resource_ids)
+        row = self._conn.execute(
+            f"""SELECT COUNT(*) AS cached, MIN(fetched_at) AS oldest,
+            MAX(fetched_at) AS newest FROM resources WHERE id IN ({placeholders})""",
+            tuple(resource_ids),
+        ).fetchone()
+        return {
+            "requested": len(resource_ids),
+            "cached": int(row["cached"]),
+            "oldest": row["oldest"],
+            "newest": row["newest"],
+        }
+
     def clear(self) -> None:
         """Clear all cache (for testing purposes)."""
         self._conn.execute("DELETE FROM resources")
