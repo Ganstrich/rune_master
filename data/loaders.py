@@ -9,6 +9,7 @@ Loaders handle:
 
 No business logic here - just transformations.
 """
+import math
 from typing import List, Dict, Any, Optional
 from models import Equipment, EquipmentStat, Resource, ResourceRequirement
 from models import StatType, ItemType, ImageURLs
@@ -160,17 +161,46 @@ class EquipmentLoader:
             try:
                 eq = self.from_raw_api(raw)
                 
-                # Filter by minimum density (stat_weight) if threshold is set
-                if processing_config and processing_config.min_equipment_density > 0:
-                    if (eq.stat_weight or 0) < processing_config.min_equipment_density:
-                        continue
-                
                 equipments.append(eq)
             except (ValueError, KeyError) as e:
                 print(f"⚠️  Skipping invalid equipment: {e}")
                 continue
+        if processing_config and processing_config.density_percentile > 0:
+            return self._filter_by_density_percentile(
+                equipments,
+                processing_config.density_percentile,
+                processing_config.density_level_band,
+            )
         return equipments
-    
+
+    @staticmethod
+    def _filter_by_density_percentile(
+        equipments: List[Equipment], percentile: float, band_width: int
+    ) -> List[Equipment]:
+        """Keep items at or above a density percentile within level bands."""
+        if not 0 <= percentile <= 1 or band_width <= 0:
+            raise ValueError("density percentile must be in [0, 1] and band width positive")
+        bands: Dict[int, List[Equipment]] = {}
+        for equipment in equipments:
+            bands.setdefault(equipment.level // band_width, []).append(equipment)
+        retained: List[Equipment] = []
+        for band in bands.values():
+            weighted = sorted(
+                (equipment for equipment in band if equipment.stat_weight is not None),
+                key=lambda equipment: equipment.stat_weight or 0.0,
+            )
+            if not weighted:
+                continue
+            threshold_index = min(
+                math.floor(percentile * (len(weighted) - 1)), len(weighted) - 1
+            )
+            threshold = weighted[threshold_index].stat_weight or 0.0
+            retained.extend(
+                equipment
+                for equipment in band
+                if (equipment.stat_weight or 0.0) >= threshold
+            )
+        return retained
     @staticmethod
     def compute_stat_weight(equipment: Equipment) -> float:
         """Compute importance weight for equipment based on its effects.

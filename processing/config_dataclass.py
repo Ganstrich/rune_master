@@ -53,6 +53,8 @@ class ProcessingConfig:
 
     # Equipment pre-filtering
     min_equipment_density: float = 0.0  # Minimum stat_weight per level (0 = no filter)
+    density_percentile: float = 0.0  # Within-level-band percentile; zero disables the gate.
+    density_level_band: int = 20  # Level width used for percentile bands.
 
     # MoE De-duplication
     dedup_overlap_threshold: float = (

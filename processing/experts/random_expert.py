@@ -3,7 +3,6 @@ from typing import List, Dict, Any, Optional, Set
 from models import Equipment
 from processing.experts.base import GroupingExpert
 from processing.config_dataclass import ProcessingConfig
-from processing.equipment_filter import EquipmentFilteringStrategy
 from processing.random_group_builder import RandomGroupBuilder
 from processing.policy import GroupAcceptancePolicy
 from processing.valuation.objective import GroupObjective
@@ -33,19 +32,10 @@ class RandomGroupingExpert(GroupingExpert):
         """Run the random-based discovery pipeline."""
         print(f"      [{self.name}] Filtering pool and generating random groups...")
         
-        # 1. Get active pool (possibly filtered)
-        active_pool, was_filtered = EquipmentFilteringStrategy.get_active_pool(
-            equipments,
-            use_filtering=config.use_density_filtering,
-            density_ratio=config.equipment_density_level_ratio,
-            fallback_to_unfiltered=config.fallback_to_unfiltered,
-            min_pool_size=config.min_filtered_pool_size,
-        )
+        # The loader supplies the shared value-filtered pool for every method.
+        active_pool = equipments
 
-        filter_status = "filtered" if was_filtered else "unfiltered"
-        print(f"      [{self.name}] Active pool: {len(active_pool)} equipment ({filter_status})")
-
-        # 2. Build random groups
+        # Build random groups
         builder = RandomGroupBuilder(
             equipments,
             excluded_resource_ids=config.excluded_resource_ids,

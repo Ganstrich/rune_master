@@ -65,10 +65,8 @@ Every accepted proposal is a canonical group dictionary built by
 | `group_quality_weights` | `0.50/0.30/0.20` | Canonical group evaluator | Weights for compression, reuse, and shared quantity |
 | `use_inclusive_mapping` | `False` | Graph expert | Split oversized communities instead of rejecting them whole |
 | `excluded_resource_ids` | `{15263, 14635}` | Group filters, quality, random/genetic affinity | Resource IDs ignored where explicitly described below |
-| `use_density_filtering` | `True` | Random expert only | Enables `stat_weight >= level * ratio` filtering |
-| `equipment_density_level_ratio` | `3.0` | Random expert only | Density ratio used by that filter |
-| `fallback_to_unfiltered` | `False` | Random expert only | If true and the filtered pool is too small, use the original pool |
-| `min_filtered_pool_size` | `10` | Random expert only | Pool size that triggers the optional fallback |
+| `density_percentile` | `0.0` | Loader pool | Within-level-band stat-density percentile; zero disables filtering |
+| `density_level_band` | `20` | Loader pool | Level width used for percentile filtering |
 | `grouping_method` | `hybrid` | `main.py` dispatch | Selects the orchestrator path; `RuneMaster.run_all()` ignores it |
 | `random_group_count` | `50` | Random and hybrid | Maximum number of random generation attempts and hybrid threshold input |
 | `random_seed` | `None` | Louvain, random, genetic | Seeds the corresponding stochastic operations when set |
