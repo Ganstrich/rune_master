@@ -160,8 +160,8 @@ class EquipmentLoader:
         for raw in raw_list:
             try:
                 eq = self.from_raw_api(raw)
-                
-                equipments.append(eq)
+                if eq.stat_weight is not None and eq.stat_weight > 0:
+                    equipments.append(eq)
             except (ValueError, KeyError) as e:
                 print(f"⚠️  Skipping invalid equipment: {e}")
                 continue
