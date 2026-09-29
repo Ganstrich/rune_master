@@ -31,11 +31,10 @@ profitable to *sell* is a price question, not a density question.
 
 ## The Density Table Already Exists In This Repository
 
-**[VERIFIED-CODE]** `STAT_WEIGHTS` in
-[../processing/stat_calculator.py](../processing/stat_calculator.py) is the rune
-density table, not a hand-authored value model as
-[../processing/PROCESSING.md](../processing/PROCESSING.md) currently describes
-it. Representative entries:
+**[VERIFIED-CODE]** `RUNE_DENSITY` in
+[../processing/valuation/density.py](../processing/valuation/density.py) is the
+rune density table. `stat_calculator.py` retains a compatibility alias for
+callers. Representative entries:
 
 ```python
 "PA": 100, "PM": 90, "Portée": 51, "Invocation": 30,

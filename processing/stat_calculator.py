@@ -38,6 +38,7 @@ since we match on stat names instead.
 from typing import Dict, Any, Optional
 from dataclasses import dataclass
 from models import Equipment
+from processing.valuation.density import RUNE_DENSITY, resolve_stat_name
 
 
 # ============================================================================
@@ -47,124 +48,13 @@ from models import Equipment
 # These weights represent the importance/value of each stat type
 # Values to be completed by user
 
-STAT_WEIGHTS: Dict[str, float] = {
-    # Stats like "Vitalité", "Sagesse", etc.
-    # Format: "stat_name": weight_value
-    # Example:
-    # "Vitalité": 0.5,
-    # "Sagesse": 0.3,
-    # "Intelligence": 0.8,
-    "PA": 100,
-    "PM": 90,
-    "Portée": 51,
-    "Invocation": 30,
-    "Dommage": 5,
-    "Dommages": 5,  # Plural variant
-    "Dommage Terre": 5,
-    "Dommages Terre": 5,  # Plural variant
-    "Dommage Feu": 5,
-    "Dommages Feu": 5,  # Plural variant
-    "Dommage Eau": 5,
-    "Dommages Eau": 5,  # Plural variant
-    "Dommage Air": 5,
-    "Dommages Air": 5,  # Plural variant
-    "Dommage Neutre": 5,
-    "Dommages Neutre": 5,  # Plural variant
-    "Dommage Critiques": 5,
-    "Dommages Critiques": 5,  # Plural variant
-    "Dommages poussée": 5,
-    "Dommage poussée": 5,  # Singular variant
-    "Dommage Pièges": 5,
-    "Dommages Pièges": 5,  # Plural variant
-    "% Résistance terre": 6,
-    "% Résistances terre": 6,  # Plural variant
-    "% Résistance feu": 6,
-    "% Résistances feu": 6,  # Plural variant
-    "% Résistance eau": 6,
-    "% Résistances eau": 6,  # Plural variant
-    "% Résistance air": 6,
-    "% Résistances air": 6,  # Plural variant
-    "% Résistance neutre": 6,
-    "% Résistances neutre": 6,  # Plural variant
-    "Retrait PA": 7,
-    "Retraits PA": 7,  # Plural variant
-    "Retrait PM": 7,
-    "Retraits PM": 7,  # Plural variant
-    "Esquive PA": 7,
-    "Esquives PA": 7,  # Plural variant
-    "Esquive PM": 7,
-    "Esquives PM": 7,  # Plural variant
-    "% Critique": 10,
-    "% Critiques": 10,  # Plural variant
-    "Soin": 10,
-    "Soins": 10,  # Plural variant
-    "Renvoi dommages": 10,
-    "Renvois dommages": 10,  # Plural variant
-    "Tacle": 4,
-    "Tacles": 4,  # Plural variant
-    "Fuite": 4,
-    "Fuites": 4,  # Plural variant
-    "Sagesse": 3,
-    "Prospection": 3,
-    "Puissance": 2,
-    "Résistance Terre": 2,
-    "Résistances Terre": 2,  # Plural variant
-    "Résistance Feu": 2,
-    "Résistances Feu": 2,  # Plural variant
-    "Résistance Eau": 2,
-    "Résistances Eau": 2,  # Plural variant
-    "Résistance Air": 2,
-    "Résistances Air": 2,  # Plural variant
-    "Résistance Neutre": 2,
-    "Résistances Neutre": 2,  # Plural variant
-    "Résistance Critiques": 2,
-    "Résistances Critiques": 2,  # Plural variant
-    "Résistance Poussée": 2,
-    "Résistances Poussée": 2,  # Plural variant
-    "Force": 1,
-    "Intelligence": 1,
-    "Agilité": 1,
-    "Chance": 1,
-    "Vitalité": 0.2,
-    "Pod": 0.25,
-    "Initiative": 0.1,
-}
+STAT_WEIGHTS: Dict[str, float] = RUNE_DENSITY
+"""Backward-compatible name for the valuation-layer density table."""
 
 
 # ============================================================================
 # CALCULATION FUNCTIONS
 # ============================================================================
-
-def resolve_stat_name(raw_name: str, stat_weights: Dict[str, float]) -> str:
-    """Resolve an API stat name to a key in a stat weight mapping."""
-    if raw_name in stat_weights:
-        return raw_name
-
-    for key in stat_weights:
-        if key.lower() == raw_name.lower():
-            return key
-
-    def normalize_for_matching(name: str) -> list[str]:
-        name_lower = name.lower()
-        variants = [name_lower]
-        if name_lower.endswith('s'):
-            variants.append(name_lower[:-1])
-        if name_lower.endswith('es'):
-            variants.append(name_lower[:-2])
-        return variants
-
-    raw_variants = normalize_for_matching(raw_name)
-    for key in stat_weights:
-        key_variants = normalize_for_matching(key)
-        if set(raw_variants) & set(key_variants):
-            return key
-
-    similar = [key for key in stat_weights if key.lower().startswith(raw_name.lower()[:3])]
-    raise KeyError(
-        f"Unknown stat type: '{raw_name}'. "
-        f"Did you mean: {similar if similar else 'See available stats below'}? "
-        f"Available: {list(stat_weights.keys())}"
-    )
 
 def calculate_stat_line_weight(
     stat_type: str,

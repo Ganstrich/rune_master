@@ -511,7 +511,7 @@ processing/
 |-- random_group_builder.py   Seed-and-companion proposal construction
 |-- orchestrator.py           Method dispatch, hybrid, committee, summaries
 |-- tuner.py                  Parallel heuristic grid search
-|-- stat_calculator.py        Stat weights used upstream by data loaders
+|-- stat_calculator.py        Stat-weight calculation used upstream by data loaders
 |-- resource_optimizer.py     Empty placeholder; no runtime behavior
 `-- experts/
     |-- base.py               Shared expert interface and default evaluator
@@ -537,7 +537,9 @@ available.
 - Committee selection ranks individual groups and only evaluates portfolio
   quality afterward.
 - `use_resource_optimizer` and `resource_optimizer.py` currently do nothing.
-- Stat weights encode a hand-authored value model and are used only for density
+- `processing/valuation/density.py` owns the game's `RUNE_DENSITY` table; the
+   calculator retains a compatibility alias and uses it to populate equipment
+   stat weights.
   filtering and reporting, not item-only recipe quality.
 
 ## Executable Contracts
