@@ -61,14 +61,20 @@ server.
      missing and stored in SQLite so reports can show resource names and images.
 4. **Discover groups**: the selected expert builds groups using graph,
      stochastic, genetic, or committee logic.
-5. **Measure groups**: shared-resource efficiency, average stat density, and
-     total ingredient quantities are calculated with one canonical metric layer.
+5. **Measure groups**: recipe reuse, pairwise cohesion, quantity concentration,
+    average stat density, and total ingredients are calculated canonically.
 6. **Generate reports**: an index and one page per group are written as static
      HTML with copied CSS and JavaScript assets.
 
 Sharing efficiency is the fraction of distinct recipe resources that occur in
 at least two equipment recipes in a group. Configured excluded resource IDs do
 not count as shared resources.
+
+The primary item-only quality score combines resource-type reuse, mean pairwise
+recipe Jaccard similarity, the fraction of overlapping equipment pairs, and the
+quantity associated with reused resources. Algorithm summaries separately
+report unique equipment coverage and duplicate assignments. These are heuristic
+shortlist metrics, not estimates of profit or material savings.
 
 ## Grouping Methods
 
@@ -86,6 +92,12 @@ The default method is `hybrid`.
 
 The authoritative defaults are defined by `ProcessingConfig`:
 
+For the authoritative end-to-end specification of group construction,
+method-specific parameter behavior, filtering, metrics, schemas, ensemble
+selection, and tuning, see
+[processing/PROCESSING.md](processing/PROCESSING.md). Other documentation gives
+only a user-level summary and defers to that specification when details differ.
+
 | Setting | Default |
 | --- | ---: |
 | Jaccard threshold | `0.3` |
@@ -95,6 +107,7 @@ The authoritative defaults are defined by `ProcessingConfig`:
 | Group size | `2` to `18` |
 | Minimum shared resources per group | `3` |
 | Minimum sharing efficiency | `0.15` |
+| Minimum item-only quality | `0.0` |
 | Density filtering | enabled |
 | Density/level ratio | `3.0` |
 | Fall back to the unfiltered pool | disabled |
@@ -124,9 +137,10 @@ uv run main.py --grouping-method committee --tune --no-serve
 ```
 
 `--tune` searches Jaccard thresholds `0.15`, `0.2`, `0.25`, and `0.3` against
-minimum shared-resource counts `2`, `3`, and `4`. It scores retention,
-efficiency, and group size in worker processes. It is a narrow parameter search,
-not a general optimizer for every configuration field.
+minimum shared-resource counts `2`, `3`, and `4`. It scores assignment-weighted
+group quality and unique equipment coverage while penalizing repeated equipment
+assignments. It is a narrow, seeded heuristic search, not a trained model or a
+general optimizer for every configuration field.
 
 Equivalent Make targets include `make sync`, `make dev`, `make compute`,
 `make tune`, `make method METHOD=genetic`, and `make serve`. Note that

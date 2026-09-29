@@ -11,8 +11,8 @@ from models import Equipment
 from processing.experts.base import GroupingExpert
 from processing.config_dataclass import ProcessingConfig
 from processing.graph_builder import GraphBuilder
-from processing.group_metrics import GroupMetrics
 from processing.group_mapper import GroupMapper
+from processing.quality_metrics import GroupQualityEvaluator
 
 class GeneticGroupingExpert(GroupingExpert):
     """Expert that uses Genetic Algorithms to discover optimal groups.
@@ -48,6 +48,9 @@ class GeneticGroupingExpert(GroupingExpert):
         """Run the genetic discovery pipeline."""
         if not equipments:
             return []
+
+        if config.random_seed is not None:
+            random.seed(config.random_seed)
 
         # 1. Build similarity graph to identify candidate neighbors
         print(f"      [{self.name}] Building equipment similarity graph...")
@@ -149,12 +152,16 @@ class GeneticGroupingExpert(GroupingExpert):
         best_individual = best_ever_individual
             
         # 4. Convert best individual to standardized Group format
-        mapper = GroupMapper(equipments, excluded_resource_ids=config.excluded_resource_ids)
+        mapper = GroupMapper(
+            equipments,
+            excluded_resource_ids=config.excluded_resource_ids,
+            quality_weights=config.group_quality_weights,
+        )
             
         # Our individual is a list of sets of equipments
         final_groups = []
         for eq_set in best_individual:
-            if len(eq_set) < config.group_min_size:
+            if not config.group_min_size <= len(eq_set) <= config.group_max_size:
                 continue
                     
             # Use GroupMapper to get full metadata (efficiency, ingredients, etc.)
@@ -164,7 +171,14 @@ class GeneticGroupingExpert(GroupingExpert):
                 api_client=self.api_client
             )
                 
-            if group_data.get("sharing_efficiency", 0) >= config.group_efficiency_threshold:
+            if (
+                group_data.get("shared_resources_count", 0)
+                >= config.group_min_shared_resources
+                and group_data.get("sharing_efficiency", 0)
+                >= config.group_efficiency_threshold
+                and group_data.get("quality_score", 0)
+                >= config.group_quality_threshold
+            ):
                 group_data["expert_name"] = self.name
                 group_data["selection_method"] = "genetic"
                 final_groups.append(group_data)
@@ -178,28 +192,60 @@ class GeneticGroupingExpert(GroupingExpert):
         resource_sets: Dict[int, Set[int]],
         config: ProcessingConfig,
     ) -> List[List[Set[Equipment]]]:
-        """Create initial diverse individuals."""
-        del graph, resource_sets
-        equipments = list(eq_by_id.values())
+        """Create initial individuals from connected graph neighborhoods."""
+        del resource_sets
         population = []
         for _ in range(self.population_size):
-            population.append(self._create_random_individual(equipments, config))
+            population.append(self._create_graph_individual(graph, eq_by_id, config))
         return population
 
-    def _create_random_individual(self, equipments: List[Equipment], config: ProcessingConfig) -> List[Set[Equipment]]:
-        """Create a single random individual."""
-        individual = []
-        num_groups = random.randint(3, 8)
-        available = list(equipments)
-        random.shuffle(available)
-        
-        for _ in range(num_groups):
-            if not available: break
-            size = random.randint(config.group_min_size, config.group_max_size)
-            group_set = set(available[:size])
-            available = available[size:]
-            if group_set:
-                individual.append(group_set)
+    def _create_graph_individual(
+        self,
+        graph: Any,
+        eq_by_id: Dict[int, Equipment],
+        config: ProcessingConfig,
+    ) -> List[Set[Equipment]]:
+        """Create one candidate from high-affinity graph neighborhoods."""
+        individual: List[Set[Equipment]] = []
+        available = set(graph.nodes()) & set(eq_by_id)
+        target_group_count = random.randint(3, 8)
+
+        while available and len(individual) < target_group_count:
+            seed_id = random.choice(tuple(available))
+            target_size = random.randint(config.group_min_size, config.group_max_size)
+            group_ids = {seed_id}
+
+            while len(group_ids) < target_size:
+                candidates = {
+                    neighbor
+                    for equipment_id in group_ids
+                    for neighbor in graph.neighbors(equipment_id)
+                    if neighbor in available and neighbor not in group_ids
+                }
+                if not candidates:
+                    break
+                best_weight = max(
+                    sum(
+                        graph.get_edge_data(candidate, member, {}).get("weight", 0.0)
+                        for member in group_ids
+                    )
+                    for candidate in candidates
+                )
+                best_candidates = [
+                    candidate
+                    for candidate in candidates
+                    if sum(
+                        graph.get_edge_data(candidate, member, {}).get("weight", 0.0)
+                        for member in group_ids
+                    )
+                    == best_weight
+                ]
+                group_ids.add(random.choice(best_candidates))
+
+            available -= group_ids
+            if len(group_ids) >= config.group_min_size:
+                individual.append({eq_by_id[equipment_id] for equipment_id in group_ids})
+
         return individual
 
     def _calculate_individual_fitness(
@@ -229,15 +275,21 @@ class GeneticGroupingExpert(GroupingExpert):
             if not eq_set:
                 continue
 
-            if config is not None and len(eq_set) < config.group_min_size:
+            if config is not None and not (
+                config.group_min_size <= len(eq_set) <= config.group_max_size
+            ):
                 continue
 
-            sharing_efficiency = GroupMetrics.sharing_efficiency(
-                list(eq_set), config.excluded_resource_ids
+            quality = GroupQualityEvaluator(config.group_quality_weights).evaluate(
+                eq_set, config.excluded_resource_ids
             )
-            if sharing_efficiency == 0:
+            if (
+                quality.shared_resource_count < config.group_min_shared_resources
+                or quality.resource_reuse_ratio < config.group_efficiency_threshold
+                or quality.quality_score < config.group_quality_threshold
+            ):
                 continue
-            total_score += sharing_efficiency
+            total_score += quality.quality_score
 
             # Overlap penalty
             for eq in eq_set:
@@ -384,8 +436,7 @@ class GeneticGroupingExpert(GroupingExpert):
         config: ProcessingConfig,
     ) -> None:
         """Mutate individual: move item, add item, or merge groups."""
-        del graph, resource_sets, config
-        all_equipments = list(eq_by_id.values())
+        del resource_sets
         if random.random() > self.mutation_rate or not individual:
             return
 
@@ -393,17 +444,27 @@ class GeneticGroupingExpert(GroupingExpert):
         
         if mutation_type == "add":
             idx = random.randint(0, len(individual) - 1)
-            new_eq = random.choice(all_equipments)
-            individual[idx].add(new_eq)
+            if len(individual[idx]) >= config.group_max_size:
+                return
+            assigned_ids = {
+                equipment.ankama_id for group in individual for equipment in group
+            }
+            candidate_ids = {
+                neighbor
+                for equipment in individual[idx]
+                for neighbor in graph.neighbors(equipment.ankama_id)
+                if neighbor not in assigned_ids and neighbor in eq_by_id
+            }
+            if candidate_ids:
+                individual[idx].add(eq_by_id[random.choice(tuple(candidate_ids))])
         
         elif mutation_type == "remove":
             idx = random.randint(0, len(individual) - 1)
-            if len(individual[idx]) > 1:
+            if len(individual[idx]) > config.group_min_size:
                 individual[idx].pop()
-            else:
-                individual.pop(idx) # Remove group if it becomes too small
         
         elif mutation_type == "merge" and len(individual) >= 2:
             i1, i2 = random.sample(range(len(individual)), 2)
-            individual[i1].update(individual[i2])
-            individual.pop(i2)
+            if len(individual[i1] | individual[i2]) <= config.group_max_size:
+                individual[i1].update(individual[i2])
+                individual.pop(i2)

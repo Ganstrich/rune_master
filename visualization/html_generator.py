@@ -481,6 +481,8 @@ class HTMLGenerator:
             equipments = group.get('equipments', [])
             ingredients = group.get('total_ingredients', {})
             efficiency = group.get('sharing_efficiency', 0)
+            shared_resources = group.get('shared_resources_count', 0)
+            average_density = group.get('average_density', 0)
             total_items = sum(i.get('total_quantity', 0) for i in ingredients.values())
             
             # Build equipment list
@@ -492,6 +494,7 @@ class HTMLGenerator:
             cards.append(f"""
             <div class="group-card">
                 <div class="group-card-header">
+                    <div class="group-card-rank">Rank {idx + 1}{' - Highest-ranked' if idx == 0 else ''}</div>
                     <h3 class="group-card-title">Group {idx + 1}</h3>
                 </div>
                 <div class="group-card-body">
@@ -500,20 +503,24 @@ class HTMLGenerator:
                         <span class="group-card-equipment-list">{equip_list}</span>
                     </div>
                     <div class="group-card-stat">
-                        <span class="group-card-stat-label">Count</span>
+                        <span class="group-card-stat-label">Group size</span>
                         <span class="group-card-stat-value">{len(equipments)}</span>
                     </div>
                     <div class="group-card-stat">
-                        <span class="group-card-stat-label">Resources</span>
-                        <span class="group-card-stat-value">{len(ingredients)}</span>
+                        <span class="group-card-stat-label">Shared resources</span>
+                        <span class="group-card-stat-value">{shared_resources}</span>
                     </div>
                     <div class="group-card-stat">
-                        <span class="group-card-stat-label">Total Items</span>
-                        <span class="group-card-stat-value">{total_items}</span>
+                        <span class="group-card-stat-label">Average density</span>
+                        <span class="group-card-stat-value">{average_density:.2f}</span>
                     </div>
                     <div class="group-card-stat">
-                        <span class="group-card-stat-label">Efficiency</span>
+                        <span class="group-card-stat-label">Sharing efficiency</span>
                         <span class="group-card-stat-value">{efficiency:.1%}</span>
+                    </div>
+                    <div class="group-card-stat">
+                        <span class="group-card-stat-label">Total items</span>
+                        <span class="group-card-stat-value">{total_items}</span>
                     </div>
                 </div>
                 <div class="group-card-footer">
@@ -586,17 +593,33 @@ class HTMLGenerator:
             List of generated file paths
         """
         files = []
+        ranked_groups = self._rank_groups_for_crafting(groups)
         
         # Copy static files first
         self._copy_static_files()
         
         # Generate individual group pages
-        for idx, group in enumerate(groups):
+        for idx, group in enumerate(ranked_groups):
             filepath = self.save_group_page(group, idx)
             files.append(filepath)
         
         # Generate index page
-        index_filepath = self.save_index_page(groups)
+        index_filepath = self.save_index_page(ranked_groups)
         files.append(index_filepath)
         
         return files
+
+    @staticmethod
+    def _rank_groups_for_crafting(groups: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Rank groups by transparent recipe-sharing evidence for the report."""
+        ranked = sorted(
+            enumerate(groups),
+            key=lambda indexed_group: (
+                -indexed_group[1].get("sharing_efficiency", 0.0),
+                -indexed_group[1].get("shared_resources_count", 0),
+                -indexed_group[1].get("average_density", 0.0),
+                -len(indexed_group[1].get("equipments", [])),
+                indexed_group[0],
+            ),
+        )
+        return [group for _index, group in ranked]

@@ -119,3 +119,35 @@ def test_visualization_generates_index_and_group_page(tmp_path: Path) -> None:
     assert "index.html" in generated_names
     assert any(name.startswith("group_") for name in generated_names)
     assert (tmp_path / "static").is_dir()
+
+
+def test_visualization_ranks_groups_by_crafting_evidence(tmp_path: Path) -> None:
+    """The report should put higher-sharing groups first with stable tie-breakers."""
+    generator = HTMLGenerator(output_dir=str(tmp_path))
+    lower_priority = {
+        "equipments": make_equipments()[:2],
+        "sharing_efficiency": 0.25,
+        "shared_resources_count": 1,
+        "average_density": 2.0,
+    }
+    higher_priority = {
+        "equipments": make_equipments()[2:],
+        "sharing_efficiency": 0.75,
+        "shared_resources_count": 2,
+        "average_density": 3.0,
+    }
+
+    generator.generate_all([lower_priority, higher_priority])
+
+    index_html = (tmp_path / "index.html").read_text(encoding="utf-8")
+    assert index_html.index("Group 1") < index_html.index("Group 2")
+    assert "Rank 1 - Highest-ranked" in index_html
+    assert "Sharing efficiency" in index_html
+    assert "Shared resources" in index_html
+    assert "Average density" in index_html
+    assert "Group size" in index_html
+    assert "75.0%" in index_html
+    assert "3.00" in index_html
+    assert "group_001.html" in index_html
+    assert "Offline Equipment 3" in (tmp_path / "group_001.html").read_text(encoding="utf-8")
+    assert "Offline Equipment 1" in (tmp_path / "group_002.html").read_text(encoding="utf-8")

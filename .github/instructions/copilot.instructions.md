@@ -12,6 +12,17 @@
 **Python Version**: 3.12+
 **Entry Point**: `main.py`
 
+### Read This First
+
+`docs/` holds the domain model, the objective the project is actually
+optimizing, an audit of known failings, and the target architecture. Start at
+[docs/README.md](../../docs/README.md). Grouping exists because an item's rune
+yield coefficient (`taux`) is unknowable before breaking and decays with use, so
+cheap variety is the goal — not recipe overlap for its own sake.
+
+`processing/PROCESSING.md` stays authoritative for what the code does **today**;
+`docs/` describes the domain and the destination.
+
 ---
 
 ## Architecture Overview

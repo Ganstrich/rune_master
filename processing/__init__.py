@@ -12,6 +12,14 @@ from processing.group_mapper import GroupMapper
 from processing.group_metrics import GroupMetrics
 from processing.equipment_filter import EquipmentFilteringStrategy
 from processing.random_group_builder import RandomGroupBuilder
+from processing.quality_metrics import (
+    GroupQualityEvaluator,
+    GroupQualityMetrics,
+    GroupQualityWeights,
+    PortfolioQualityEvaluator,
+    PortfolioQualityMetrics,
+    PortfolioQualityWeights,
+)
 
 __all__ = [
     "ProcessingConfig",
@@ -22,4 +30,10 @@ __all__ = [
     "GroupMetrics",
     "EquipmentFilteringStrategy",
     "RandomGroupBuilder",
+    "GroupQualityEvaluator",
+    "GroupQualityMetrics",
+    "GroupQualityWeights",
+    "PortfolioQualityEvaluator",
+    "PortfolioQualityMetrics",
+    "PortfolioQualityWeights",
 ]

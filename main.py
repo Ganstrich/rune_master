@@ -15,6 +15,7 @@ import sys
 import time
 import argparse
 import webbrowser
+from dataclasses import replace
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 from typing import List
@@ -137,11 +138,12 @@ def process_equipment(
 
     if tune_params:
         tuner = ParameterTuner(equipments, cache_manager, api_client)
-        config, _ = tuner.tune(method=processing_config.grouping_method)
-        config.grouping_method = processing_config.grouping_method
-        config.random_group_count = processing_config.random_group_count
-        config.equipment_density_level_ratio = processing_config.equipment_density_level_ratio
-        config.min_equipment_density = processing_config.min_equipment_density
+        tuned_config, _ = tuner.tune(method=processing_config.grouping_method)
+        config = replace(
+            processing_config,
+            graph_min_shared_ratio=tuned_config.graph_min_shared_ratio,
+            group_min_shared_resources=tuned_config.group_min_shared_resources,
+        )
     else:
         config = processing_config
 
@@ -158,8 +160,7 @@ def process_equipment(
     elif config.grouping_method == "committee":
         groups = master.run_committee()
     elif config.grouping_method == "genetic":
-        expert = master.experts["genetic"]
-        groups = expert.discover_groups(equipments, config)
+        groups = master.run_genetic_grouping()
     else:
         groups = master.run_all()
 

@@ -10,6 +10,7 @@ from typing import List, Dict, Any, Optional, Set
 from models import Equipment
 from data.cache_manager import CacheManager
 from processing.group_metrics import GroupMetrics
+from processing.quality_metrics import GroupQualityWeights
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +30,7 @@ class RandomGroupBuilder:
         excluded_resource_ids: Optional[Set[int]] = None,
         seed: Optional[int] = None,
         cache_manager: Optional[CacheManager] = None,
+        quality_weights: GroupQualityWeights | None = None,
     ):
         """Initialize RandomGroupBuilder.
         
@@ -42,6 +44,7 @@ class RandomGroupBuilder:
         self.excluded_resource_ids = excluded_resource_ids or set()
         self.seed = seed
         self.cache_manager = cache_manager
+        self.quality_weights = quality_weights
         
         if seed is not None:
             random.seed(seed)
@@ -192,6 +195,7 @@ class RandomGroupBuilder:
             group_equipments,
             cache_manager=self.cache_manager,
             excluded_resource_ids=self.excluded_resource_ids,
+            quality_weights=self.quality_weights,
         )
         group.update({
             "selection_method": "random",

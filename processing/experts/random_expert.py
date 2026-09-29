@@ -47,6 +47,7 @@ class RandomGroupingExpert(GroupingExpert):
             excluded_resource_ids=config.excluded_resource_ids,
             seed=config.random_seed,
             cache_manager=self.cache_manager,
+            quality_weights=config.group_quality_weights,
         )
 
         groups = builder.build_multiple_random_groups(
@@ -56,6 +57,14 @@ class RandomGroupingExpert(GroupingExpert):
             max_group_size=config.group_max_size,
             avoid_seed_duplicates=True,
         )
+        groups = [
+            group
+            for group in groups
+            if config.group_min_size <= group["group_size"] <= config.group_max_size
+            and group["shared_resources_count"] >= config.group_min_shared_resources
+            and group["sharing_efficiency"] >= config.group_efficiency_threshold
+            and group["quality_score"] >= config.group_quality_threshold
+        ]
 
         # Add metadata
         for group in groups:

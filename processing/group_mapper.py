@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Tuple
 from tqdm.auto import tqdm
 from models import Equipment, ResourceRequirement
 from processing.group_metrics import GroupMetrics
+from processing.quality_metrics import GroupQualityWeights
 
 
 class GroupMapper:
@@ -16,7 +17,8 @@ class GroupMapper:
     def __init__(
         self,
         equipments: List[Equipment],
-        excluded_resource_ids: set = None
+        excluded_resource_ids: set = None,
+        quality_weights: GroupQualityWeights | None = None,
     ):
         """Initialize group mapper.
 
@@ -27,6 +29,7 @@ class GroupMapper:
         self.equipments = equipments
         self.equipment_dict = {int(e.ankama_id): e for e in equipments}
         self.excluded_resource_ids = excluded_resource_ids or set()
+        self.quality_weights = quality_weights
 
     def calculate_shared_resources(
         self,
@@ -117,6 +120,7 @@ class GroupMapper:
             cache_manager=cache_manager,
             api_client=api_client,
             excluded_resource_ids=self.excluded_resource_ids,
+            quality_weights=self.quality_weights,
         )
 
     def map_communities(
@@ -126,6 +130,7 @@ class GroupMapper:
         max_group_size: int = 18,
         min_shared_resources: int = 2,
         efficiency_threshold: float = 0.15,
+        quality_threshold: float = 0.0,
         cache_manager=None,
         api_client=None
     ) -> List[Dict[str, Any]]:
@@ -170,29 +175,16 @@ class GroupMapper:
             if efficiency < efficiency_threshold:
                 continue
 
-            # Calculate ingredients and density
-            total_ingredients = self.calculate_total_ingredients(
+            group = self.create_group(
                 group_equipments,
                 cache_manager=cache_manager,
                 api_client=api_client
             )
-            average_density = self.calculate_average_density(group_equipments)
+            if group["quality_score"] < quality_threshold:
+                continue
+            groups.append(group)
 
-            groups.append({
-                "equipments": group_equipments,
-                "shared_resources_count": shared_count,
-                "total_shared_resources": shared_resources,
-                "sharing_efficiency": efficiency,
-                "average_density": average_density,
-                "total_ingredients": total_ingredients,
-                "unique_ingredients_count": len(total_ingredients),
-                "total_items_needed": sum(
-                    ing["total_quantity"] for ing in total_ingredients.values()
-                ),
-            })
-
-        # Sort by efficiency descending
-        groups.sort(key=lambda x: x["sharing_efficiency"], reverse=True)
+        groups.sort(key=lambda group: group["quality_score"], reverse=True)
 
         print(f"✓ Mapped {len(groups)} groups from {len(communities)} communities")
 
@@ -205,6 +197,7 @@ class GroupMapper:
         max_group_size: int = 15,
         min_shared_resources: int = 1,
         efficiency_threshold: float = 0.1,
+        quality_threshold: float = 0.0,
         cache_manager=None,
         api_client=None
     ) -> List[Dict[str, Any]]:
@@ -257,7 +250,7 @@ class GroupMapper:
                 for subgroup in subgroups:
                     self._process_subgroup(
                         subgroup, groups, stats,
-                        min_shared_resources, efficiency_threshold,
+                        min_shared_resources, efficiency_threshold, quality_threshold,
                         cache_manager, api_client
                     )
                 continue
@@ -265,12 +258,11 @@ class GroupMapper:
             # Process normal-sized group
             self._process_subgroup(
                 group_equipments, groups, stats,
-                min_shared_resources, efficiency_threshold,
+                min_shared_resources, efficiency_threshold, quality_threshold,
                 cache_manager, api_client
             )
 
-        # Sort by efficiency descending
-        groups.sort(key=lambda x: x["sharing_efficiency"], reverse=True)
+        groups.sort(key=lambda group: group["quality_score"], reverse=True)
 
         # Print statistics
         self._print_retention_stats(stats)
@@ -284,6 +276,7 @@ class GroupMapper:
         stats: Dict,
         min_shared: int,
         efficiency_threshold: float,
+        quality_threshold: float,
         cache_manager,
         api_client=None
     ) -> None:
@@ -302,27 +295,14 @@ class GroupMapper:
             stats["excluded_by_efficiency"] += len(group_equipments)
             return
 
-        # Calculate ingredients and density
-        total_ingredients = self.calculate_total_ingredients(
+        group = self.create_group(
             group_equipments,
             cache_manager=cache_manager,
             api_client=api_client
         )
-        average_density = self.calculate_average_density(group_equipments)
-
-        groups.append({
-            "equipments": group_equipments,
-            "shared_resources_count": shared_count,
-            "total_shared_resources": shared_resources,
-            "sharing_efficiency": efficiency,
-            "average_density": average_density,
-            "total_ingredients": total_ingredients,
-            "unique_ingredients_count": len(total_ingredients),
-            "total_items_needed": sum(
-                ing["total_quantity"] for ing in total_ingredients.values()
-            ),
-            "group_size": len(group_equipments),
-        })
+        if group["quality_score"] < quality_threshold:
+            return
+        groups.append(group)
 
         stats["processed"] += len(group_equipments)
 

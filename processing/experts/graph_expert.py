@@ -33,8 +33,11 @@ class GraphGroupingExpert(GroupingExpert):
         """Run the graph-based discovery pipeline."""
         print(f"      [{self.name}] Building graph and detecting communities...")
 
-        # 1. Build graph
-        if precomputed_graph is not None and precomputed_resources is not None:
+        # 1. Build the graph required by the configured algorithm.
+        if config.algorithm == "bilouvain":
+            graph = GraphBuilder.create_bipartite_graph(equipments)
+            resources: Dict[int, Set[int]] = {}
+        elif precomputed_graph is not None and precomputed_resources is not None:
             graph = precomputed_graph
             resources = precomputed_resources
         else:
@@ -54,12 +57,20 @@ class GraphGroupingExpert(GroupingExpert):
                 graph,
                 resources,
                 resolution_range=config.resolution_range,
+                random_seed=config.random_seed,
             )
         elif config.algorithm == "bilouvain":
             partition = CommunityDetector.find_best_bilouvain_partition(
                 graph,
                 resolution_range=config.resolution_range,
+                random_seed=config.random_seed,
             )
+            equipment_ids = {equipment.ankama_id for equipment in equipments}
+            partition = {
+                node: community_id
+                for node, community_id in partition.items()
+                if node in equipment_ids
+            }
         else:
             # Fallback to connected components
             components = nx.connected_components(graph)
@@ -72,7 +83,9 @@ class GraphGroupingExpert(GroupingExpert):
 
         # 3. Map to groups
         mapper = GroupMapper(
-            equipments, excluded_resource_ids=config.excluded_resource_ids
+            equipments,
+            excluded_resource_ids=config.excluded_resource_ids,
+            quality_weights=config.group_quality_weights,
         )
 
         if config.use_inclusive_mapping:
@@ -82,6 +95,7 @@ class GraphGroupingExpert(GroupingExpert):
                 max_group_size=config.group_max_size,
                 min_shared_resources=config.group_min_shared_resources,
                 efficiency_threshold=config.group_efficiency_threshold,
+                quality_threshold=config.group_quality_threshold,
                 cache_manager=self.cache_manager,
                 api_client=self.api_client,
             )
@@ -92,6 +106,7 @@ class GraphGroupingExpert(GroupingExpert):
                 max_group_size=config.group_max_size,
                 min_shared_resources=config.group_min_shared_resources,
                 efficiency_threshold=config.group_efficiency_threshold,
+                quality_threshold=config.group_quality_threshold,
                 cache_manager=self.cache_manager,
                 api_client=self.api_client,
             )

@@ -12,6 +12,7 @@ from processing.experts.genetic_expert import GeneticGroupingExpert
 from processing.experts.graph_expert import GraphGroupingExpert
 from processing.experts.random_expert import RandomGroupingExpert
 from processing.graph_builder import GraphBuilder
+from processing.quality_metrics import PortfolioQualityEvaluator
 
 
 class RuneMaster:
@@ -85,6 +86,18 @@ class RuneMaster:
         print("=" * 60)
 
         expert = self.experts["random"]
+        self.groups = expert.discover_groups(self.equipments, self.config)
+
+        self.print_summary()
+        return self.groups
+
+    def run_genetic_grouping(self) -> List[Dict[str, Any]]:
+        """Run genetic grouping with the canonical result and summary contract."""
+        print("\n" + "=" * 60)
+        print("RuneMaster: Genetic Pipeline (Genetic Expert)")
+        print("=" * 60)
+
+        expert = self.experts["genetic"]
         self.groups = expert.discover_groups(self.equipments, self.config)
 
         self.print_summary()
@@ -214,7 +227,10 @@ class RuneMaster:
         if not self.groups:
             return {}
 
-        total_equipment_in_groups = sum(len(g["equipments"]) for g in self.groups)
+        portfolio = PortfolioQualityEvaluator(
+            self.config.portfolio_quality_weights
+        ).evaluate(self.groups, len(self.equipments))
+        total_equipment_in_groups = portfolio.total_assignments
         total_efficiency = (
             sum(g["sharing_efficiency"] for g in self.groups) / len(self.groups)
             if self.groups
@@ -226,11 +242,20 @@ class RuneMaster:
         return {
             "total_groups": len(self.groups),
             "total_equipment_in_groups": total_equipment_in_groups,
+            "unique_equipment_in_groups": portfolio.unique_equipment_count,
             "total_equipment": len(self.equipments),
-            "retention_rate": total_equipment_in_groups / len(self.equipments)
-            if self.equipments
-            else 0,
+            "retention_rate": portfolio.equipment_coverage_rate,
+            "equipment_coverage_rate": portfolio.equipment_coverage_rate,
+            "duplicate_assignment_count": portfolio.duplicate_assignment_count,
+            "assignment_overlap_rate": portfolio.assignment_overlap_rate,
             "average_efficiency": total_efficiency,
+            "average_quality_score": portfolio.mean_group_quality,
+            "assignment_weighted_quality_score": (
+                portfolio.assignment_weighted_group_quality
+            ),
+            "mean_group_overlap": portfolio.mean_group_overlap,
+            "maximum_group_overlap": portfolio.maximum_group_overlap,
+            "portfolio_quality_score": portfolio.portfolio_quality_score,
             "max_efficiency": max(
                 (g["sharing_efficiency"] for g in self.groups), default=0
             ),
@@ -256,9 +281,13 @@ class RuneMaster:
         print("=" * 60)
         print(f"Total Groups:           {summary['total_groups']}")
         print(f"Total Equipment:        {summary['total_equipment']}")
-        print(f"Equipment in Groups:    {summary['total_equipment_in_groups']}")
-        print(f"Retention Rate:         {summary['retention_rate']:.1%}")
+        print(f"Equipment Assignments:  {summary['total_equipment_in_groups']}")
+        print(f"Unique Equipment:       {summary['unique_equipment_in_groups']}")
+        print(f"Equipment Coverage:     {summary['equipment_coverage_rate']:.1%}")
+        print(f"Assignment Overlap:     {summary['assignment_overlap_rate']:.1%}")
         print(f"Avg Group Size:         {summary['average_group_size']:.1f}")
+        print(f"Average Group Quality:  {summary['average_quality_score']:.1%}")
+        print(f"Portfolio Quality:      {summary['portfolio_quality_score']:.1%}")
         print(f"Average Efficiency:     {summary['average_efficiency']:.1%}")
         print(
             f"Efficiency Range:       {summary['min_efficiency']:.1%} - {summary['max_efficiency']:.1%}"

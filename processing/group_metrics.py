@@ -4,6 +4,7 @@ from collections import defaultdict
 from typing import Any, Dict, Iterable, Iterator, List, Set
 
 from models import Equipment, ResourceRequirement
+from processing.quality_metrics import GroupQualityEvaluator, GroupQualityWeights
 
 
 class GroupMetrics:
@@ -108,6 +109,7 @@ class GroupMetrics:
             equipment.stat_weight / equipment.level
             for equipment in equipments
             if getattr(equipment, "level", 0)
+            and getattr(equipment, "stat_weight", None) is not None
         ]
         if not densities:
             return 0.0
@@ -119,6 +121,7 @@ class GroupMetrics:
         cache_manager: Any = None,
         api_client: Any = None,
         excluded_resource_ids: Set[int] | None = None,
+        quality_weights: GroupQualityWeights | None = None,
     ) -> Dict[str, Any]:
         """Build the canonical group metadata dictionary."""
         del api_client
@@ -126,6 +129,9 @@ class GroupMetrics:
             return {}
 
         total_ingredients = GroupMetrics.aggregate_resources(equipments, cache_manager)
+        quality_metrics = GroupQualityEvaluator(quality_weights).evaluate(
+            equipments, excluded_resource_ids
+        )
         return {
             "equipments": equipments,
             "shared_resources_count": GroupMetrics.shared_resources_count(
@@ -144,6 +150,8 @@ class GroupMetrics:
                 ingredient["total_quantity"] for ingredient in total_ingredients.values()
             ),
             "group_size": len(equipments),
+            "quality_metrics": quality_metrics.to_dict(),
+            "quality_score": quality_metrics.quality_score,
         }
 
     @staticmethod

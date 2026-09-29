@@ -10,9 +10,6 @@ from typing import Dict, List, Optional, Set, Tuple
 import community
 import networkx as nx
 import numpy as np
-import networkx as nx
-import community
-from itertools import combinations
 
 
 class CommunityDetector:
@@ -142,7 +139,8 @@ class CommunityDetector:
     def find_best_louvain_partition(
         equipment_graph: nx.Graph,
         equipment_resources: Dict[int, Set[int]],
-        resolution_range: tuple = (1, 10, 1)
+        resolution_range: tuple = (1, 10, 1),
+        random_seed: int | None = None,
     ) -> Dict[int, int]:
         """Find best Louvain partition using modularity optimization.
 
@@ -169,7 +167,7 @@ class CommunityDetector:
             partition = community.best_partition(
                 equipment_graph,
                 resolution=resolution,
-                randomize=True
+                random_state=random_seed,
             )
 
             # Score based on average pairwise similarity
@@ -192,7 +190,8 @@ class CommunityDetector:
     @staticmethod
     def find_best_bilouvain_partition(
         equipment_graph: nx.Graph,
-        resolution_range: tuple = (1, 10, 1)
+        resolution_range: tuple = (1, 10, 1),
+        random_seed: int | None = None,
     ) -> Dict[int, int]:
         """Find best partition using BiLouvain for bipartite graphs.
 
@@ -231,7 +230,8 @@ class CommunityDetector:
             partition = CommunityDetector.find_best_louvain_partition(
                 equipment_projection,
                 equipment_resources,
-                resolution_range
+                resolution_range,
+                random_seed=random_seed,
             )
         else:
             partition = {}

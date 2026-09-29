@@ -2,6 +2,8 @@
 from dataclasses import dataclass, field
 from typing import Optional
 
+from processing.quality_metrics import GroupQualityWeights, PortfolioQualityWeights
+
 @dataclass
 class ProcessingConfig:
     """Configuration for RuneMaster processing pipeline."""
@@ -22,6 +24,8 @@ class ProcessingConfig:
     group_max_size: int = 18
     group_min_shared_resources: int = 3
     group_efficiency_threshold: float = 0.15
+    group_quality_threshold: float = 0.0
+    group_quality_weights: GroupQualityWeights = field(default_factory=GroupQualityWeights)
     use_inclusive_mapping: bool = False
 
     # Optimization
@@ -47,4 +51,7 @@ class ProcessingConfig:
     # MoE De-duplication
     dedup_overlap_threshold: float = (
         0.7  # Jaccard similarity threshold for considering groups as duplicates
+    )
+    portfolio_quality_weights: PortfolioQualityWeights = field(
+        default_factory=PortfolioQualityWeights
     )

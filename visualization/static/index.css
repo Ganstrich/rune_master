@@ -112,6 +112,15 @@
     font-family: 'Outfit', sans-serif;
 }
 
+.group-card-rank {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    margin-bottom: var(--spacing-xs);
+    text-transform: uppercase;
+}
+
 @media (prefers-color-scheme: dark) {
     .group-card-title {
         color: var(--color-primary-light);
