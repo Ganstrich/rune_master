@@ -25,7 +25,8 @@ class CacheManager:
     Schema:
         resources (id INTEGER PRIMARY KEY, name TEXT, data BLOB, fetched_at TEXT)
         equipment_effects (equipment_id INTEGER PRIMARY KEY, effects BLOB, fetched_at TEXT)
-        stat_weights (equipment_id INTEGER PRIMARY KEY, weight REAL, computed_at TEXT)
+        stat_weights (equipment_id INTEGER PRIMARY KEY, weight REAL NOT NULL, computed_at TEXT DEFAULT (datetime('now')))
+        price_cache (item_id INTEGER NOT NULL, kind TEXT NOT NULL, unit_price REAL NOT NULL, observed_at REAL NOT NULL, source TEXT NOT NULL, PRIMARY KEY (item_id, kind, source))
     """
 
     def __init__(self, cache_file: str = Config.CACHE_FILE):
@@ -78,6 +79,14 @@ class CacheManager:
                 equipment_id INTEGER PRIMARY KEY,
                 weight REAL NOT NULL,
                 computed_at TEXT DEFAULT (datetime('now'))
+            );
+            CREATE TABLE IF NOT EXISTS price_cache (
+                item_id INTEGER NOT NULL,
+                kind TEXT NOT NULL,
+                unit_price REAL NOT NULL,
+                observed_at REAL NOT NULL,
+                source TEXT NOT NULL,
+                PRIMARY KEY (item_id, kind, source)
             );
         """)
         self._conn.execute(
@@ -162,6 +171,57 @@ class CacheManager:
             "SELECT 1 FROM resources WHERE id = ?", (resource_id,)
         ).fetchone()
         return row is not None
+
+    def set_price(
+        self,
+        item_id: int,
+        kind: str,
+        unit_price: float,
+        source: str = "manual",
+        observed_at: float | None = None,
+    ) -> None:
+        """Store a manual or captured price observation."""
+        import time
+
+        self._conn.execute(
+            """INSERT OR REPLACE INTO price_cache
+            (item_id, kind, unit_price, observed_at, source) VALUES (?, ?, ?, ?, ?)""",
+            (item_id, kind, float(unit_price), observed_at or time.time(), source),
+        )
+        self._conn.commit()
+
+    def get_price_status(
+        self, item_id: int, kind: str, max_age_seconds: float | None = None
+    ) -> dict[str, Any] | None:
+        """Return a price record with explicit missing/stale status."""
+        import time
+
+        row = self._conn.execute(
+            """SELECT item_id, kind, unit_price, observed_at, source
+            FROM price_cache WHERE item_id = ? AND kind = ?
+            ORDER BY observed_at DESC LIMIT 1""",
+            (item_id, kind),
+        ).fetchone()
+        if row is None:
+            return None
+        age = max(time.time() - float(row["observed_at"]), 0.0)
+        return {
+            "item_id": int(row["item_id"]),
+            "kind": row["kind"],
+            "unit_price": float(row["unit_price"]),
+            "observed_at": float(row["observed_at"]),
+            "source": row["source"],
+            "stale": max_age_seconds is not None and age > max_age_seconds,
+        }
+
+    def get_current_price(
+        self, item_id: int, kind: str, max_age_seconds: float | None = None
+    ) -> float | None:
+        """Return a fresh price, or None for a miss or stale observation."""
+        record = self.get_price_status(item_id, kind, max_age_seconds)
+        if record is None or record["stale"]:
+            return None
+        return float(record["unit_price"])
 
     def get_resource_name(self, resource_id: int) -> Optional[str]:
         """Get cached resource name.
