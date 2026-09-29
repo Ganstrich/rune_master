@@ -459,6 +459,7 @@ class HTMLGenerator:
             cards_html = self._build_group_cards(groups)
         
         summary_stats = self._build_index_summary(groups)
+        group_data = self._build_group_data(groups)
         report_id = self._escape_html(self.manifest.get("run_id", "unidentified"))
         scope = self.manifest.get("scope", {})
         scope_text = self._escape_html(scope.get("summary", "Scope not recorded"))
@@ -485,6 +486,17 @@ class HTMLGenerator:
     </header>
     
     <main id="main" class="container">
+        <section class="combined-list" aria-labelledby="combined-list-title">
+            <div class="flex-between">
+                <div>
+                    <h2 id="combined-list-title">Recipe requirement summary</h2>
+                    <p>Select groups to total their ingredients. This is not an inventory or cost estimate.</p>
+                </div>
+                <button id="copy-combined-list" class="btn btn-secondary" type="button" disabled>Copy list</button>
+            </div>
+            <p id="combined-list-empty">No groups selected.</p>
+            <div id="combined-list-output" hidden></div>
+        </section>
         <div class="index-controls" aria-label="Filter and sort groups">
             <label class="sr-only" for="group-search">Filter groups</label>
             <input id="group-search" class="search-box" type="search" placeholder="Filter groups" />
@@ -509,6 +521,7 @@ class HTMLGenerator:
     </footer>
     
     <script src="static/utils.js"></script>
+    <script type="application/json" id="group-data">{group_data}</script>
 </body>
 </html>
 """
@@ -543,6 +556,7 @@ class HTMLGenerator:
                 data-efficiency="{efficiency}" data-density="{average_density}"
                 data-size="{len(equipments)}" data-resources="{shared_resources}">
                 <div class="group-card-header">
+                    <label><input class="group-selector" type="checkbox" data-group-id="{idx + 1}"> Select group</label>
                     <div class="group-card-rank">Rank {idx + 1}{' - Highest-ranked' if idx == 0 else ''}</div>
                     <h3 class="group-card-title">Group {idx + 1}</h3>
                 </div>
@@ -579,6 +593,21 @@ class HTMLGenerator:
             """)
         
         return ''.join(cards)
+
+    def _build_group_data(self, groups: List[Dict[str, Any]]) -> str:
+        """Serialize only the ingredient data needed for combined totals."""
+        data = []
+        for index, group in enumerate(groups, start=1):
+            resources = {}
+            for resource_id, info in group.get("total_ingredients", {}).items():
+                resource_key = str(resource_id)
+                resources[resource_key] = {
+                    "name": info.get("name") or f"Resource {resource_key} (metadata unavailable)",
+                    "image_url": info.get("image_url"),
+                    "quantity": info.get("total_quantity", 0),
+                }
+            data.append({"id": str(index), "label": f"Group {index}", "resources": resources})
+        return json.dumps(data, ensure_ascii=True).replace("<", "\\u003c")
     
     def _build_index_summary(self, groups: List[Dict[str, Any]]) -> str:
         """Build summary statistics for index page.

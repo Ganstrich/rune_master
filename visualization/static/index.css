@@ -28,6 +28,37 @@
     margin-top: var(--spacing-lg);
 }
 
+.combined-list {
+    margin-bottom: var(--spacing-xl);
+    padding: var(--spacing-lg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    background: var(--bg-card);
+}
+
+.combined-list h2 {
+    margin-bottom: var(--spacing-xs);
+}
+
+.combined-list p {
+    color: var(--text-muted);
+}
+
+.combined-list ul {
+    columns: 2;
+    margin: var(--spacing-md) 0 0;
+}
+
+.group-selector {
+    margin-right: var(--spacing-xs);
+}
+
+@media (max-width: 768px) {
+    .combined-list ul {
+        columns: 1;
+    }
+}
+
 .search-box {
     background: rgba(255, 255, 255, 0.15);
     border: 1px solid rgba(255, 255, 255, 0.25);

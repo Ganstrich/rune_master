@@ -159,6 +159,57 @@ function resetGroupControls() {
     updateGroupCards();
 }
 
+function updateCombinedList() {
+    const dataElement = document.getElementById('group-data');
+    if (!dataElement) return;
+    const groups = JSON.parse(dataElement.textContent || '[]');
+    const selected = new Set(Array.from(document.querySelectorAll('.group-selector:checked'))
+        .map(input => input.dataset.groupId));
+    const totals = new Map();
+    selected.forEach(groupId => {
+        const group = groups.find(item => item.id === groupId);
+        if (!group) return;
+        Object.entries(group.resources).forEach(([resourceId, resource]) => {
+            const entry = totals.get(resourceId) || { ...resource, quantity: 0, groups: [] };
+            entry.quantity += Number(resource.quantity) || 0;
+            entry.groups.push(`${group.label}: ${resource.quantity}`);
+            totals.set(resourceId, entry);
+        });
+    });
+
+    const output = document.getElementById('combined-list-output');
+    const empty = document.getElementById('combined-list-empty');
+    const copy = document.getElementById('copy-combined-list');
+    const rows = Array.from(totals.entries()).sort(([a], [b]) => Number(a) - Number(b));
+    const escapeHtml = value => String(value).replace(/[&<>"']/g, character => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[character]));
+    if (output) {
+        output.innerHTML = rows.length
+            ? `<ul>${rows.map(([, resource]) => `<li><strong>${escapeHtml(resource.name)}</strong>: ${resource.quantity}
+                <span>(${resource.groups.join(', ')})</span></li>`).join('')}</ul>`
+            : '';
+        output.hidden = rows.length === 0;
+    }
+    if (empty) empty.hidden = rows.length !== 0;
+    if (copy) copy.disabled = rows.length === 0;
+    window.combinedListText = rows.map(([, resource]) => `${resource.name}: ${resource.quantity}`).join('\n');
+}
+
+function copyCombinedList() {
+    if (!window.combinedListText) return;
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(window.combinedListText);
+        return;
+    }
+    const textarea = document.createElement('textarea');
+    textarea.value = window.combinedListText;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    textarea.remove();
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     // Add click listeners to equipment names
@@ -193,4 +244,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (groupSearch) groupSearch.addEventListener('input', updateGroupCards);
     if (groupSort) groupSort.addEventListener('change', updateGroupCards);
     if (groupReset) groupReset.addEventListener('click', resetGroupControls);
+
+    document.querySelectorAll('.group-selector').forEach(input => {
+        input.addEventListener('change', updateCombinedList);
+    });
+    const copyCombined = document.getElementById('copy-combined-list');
+    if (copyCombined) copyCombined.addEventListener('click', copyCombinedList);
+    updateCombinedList();
 });

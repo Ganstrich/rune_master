@@ -170,3 +170,22 @@ def test_visualization_writes_reproducible_manifest(tmp_path: Path) -> None:
     index_html = (tmp_path / "index.html").read_text(encoding="utf-8")
     assert "fixed-run" in index_html
     assert "Levels 50-100; types: ring" in index_html
+
+
+def test_visualization_exposes_id_based_combined_recipe_data(tmp_path: Path) -> None:
+    """The index includes selectable groups and resource IDs for browser totals."""
+    group = {
+        "equipments": make_equipments()[:2],
+        "total_ingredients": {
+            100: {"name": "Shared Ore", "total_quantity": 4},
+            200: {"name": "Unique Ore", "total_quantity": 1},
+        },
+    }
+
+    HTMLGenerator(output_dir=str(tmp_path)).generate_all([group, group])
+
+    index_html = (tmp_path / "index.html").read_text(encoding="utf-8")
+    assert index_html.count('class="group-selector"') == 2
+    assert '"id": "1"' in index_html
+    assert '"100": {"name": "Shared Ore"' in index_html
+    assert "recipe requirement summary" in index_html.lower()
