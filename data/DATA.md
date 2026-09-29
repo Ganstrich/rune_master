@@ -7,7 +7,7 @@ Handles all external communication, caching, and data transformation. Bridges th
 ```
 data/
 ├── api_client.py    - Low-level HTTP client for DofusAPI
-├── cache_manager.py - Persistent disk-based JSON caching
+├── cache_manager.py - Persistent disk-based SQLite caching
 └── loaders.py       - Transform raw API dicts → dataclasses
 ```
 

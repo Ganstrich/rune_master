@@ -40,7 +40,8 @@ htmlcov
 # Output files
 output
 *.json
-!requirements.txt
+!pyproject.toml
+!uv.lock
 
 # Temporary files
 tmp

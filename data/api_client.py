@@ -3,8 +3,11 @@
 Responsible ONLY for HTTP communication and raw response handling.
 NO dataclass conversions - returns raw dicts.
 """
-from typing import List, Dict, Any, Optional
+import time
+from typing import Any, Dict, List, Optional
+
 import requests
+
 from config import Config
 
 
@@ -23,6 +26,8 @@ class DofusAPIClient:
     
     BASE_URL = "https://api.dofusdu.de"
     DEFAULT_TIMEOUT = 30
+    DEFAULT_PAGE_SIZE = 100
+    MAX_RETRIES = 3
     
     def __init__(
         self,
@@ -57,27 +62,21 @@ class DofusAPIClient:
         """
         url = f"{self.BASE_URL}{endpoint}"
         
-        try:
-            response = requests.get(url, params=params, timeout=self.timeout)
-            
-            if response.status_code == 200:
-                return response.json()
-            else:
-                print(f"❌ API Error {response.status_code}: {response.text[:100]}")
-                return None
-                
-        except requests.exceptions.Timeout:
-            print(f"❌ Request timeout after {self.timeout}s: {endpoint}")
-            return None
-        except requests.exceptions.ConnectionError as e:
-            print(f"❌ Connection error: {str(e)}")
-            return None
-        except requests.exceptions.RequestException as e:
-            print(f"❌ Request error: {str(e)}")
-            return None
-        except ValueError as e:
-            print(f"❌ Invalid JSON response: {str(e)}")
-            return None
+        for attempt in range(self.MAX_RETRIES):
+            try:
+                response = requests.get(url, params=params, timeout=self.timeout)
+                response.raise_for_status()
+                payload = response.json()
+                if not isinstance(payload, dict):
+                    print(f"❌ API returned unexpected payload for {endpoint}")
+                    return None
+                return payload
+            except (requests.exceptions.RequestException, ValueError) as error:
+                if attempt == self.MAX_RETRIES - 1:
+                    print(f"❌ Request failed for {endpoint}: {error}")
+                    return None
+                time.sleep(2**attempt)
+        return None
     
     def get_all_equipments(
         self,
@@ -107,18 +106,24 @@ class DofusAPIClient:
             'filter[max_level]': max_level,
             'fields[item]': ','.join(Config.FIELDS),
             'filter[type.name_id]': ','.join(item_types),
-            'page[size]': -1  # Get all results
+            'page[size]': self.DEFAULT_PAGE_SIZE,
         }
-        
-        data = self._make_request(endpoint, params)
-        if not data:
-            return []
-        
-        # Filter only equipments with recipes
-        equipments = [
-            item for item in data.get('items', [])
-            if 'recipe' in item
-        ]
+
+        equipments: List[Dict[str, Any]] = []
+        page = 1
+        while True:
+            page_params = {**params, "page[number]": page}
+            data = self._make_request(endpoint, page_params)
+            if not data:
+                break
+            items = data.get("items", [])
+            if not isinstance(items, list):
+                print("❌ API equipment response contained an invalid items field")
+                break
+            equipments.extend(item for item in items if isinstance(item, dict) and "recipe" in item)
+            if len(items) < self.DEFAULT_PAGE_SIZE:
+                break
+            page += 1
         
         print(f"✅ Fetched {len(equipments)} equipments with recipes")
         return equipments
@@ -158,9 +163,9 @@ class DofusAPIClient:
         Returns:
             List of raw resource dicts
         """
-        resources = []
+        resources: List[Dict[str, Any]] = []
         for res_id in resource_ids:
             res_data = self.get_resource(res_id)
-            if res_data:
+            if isinstance(res_data, dict):
                 resources.append(res_data)
         return resources

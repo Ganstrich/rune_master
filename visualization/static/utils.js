@@ -103,15 +103,6 @@ function sortIngredientsBy(columnIndex, order = 'asc') {
 }
 
 /**
- * D3.js graph initialization (called by graph-specific pages)
- * This is a placeholder - actual D3 setup is in graph_generator.py
- */
-function initializeGraph(graphData) {
-    console.log('Graph data loaded:', graphData);
-    // D3 setup code will go here
-}
-
-/**
  * Smooth scroll to element
  */
 function scrollToElement(elementId) {

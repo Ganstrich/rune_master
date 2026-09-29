@@ -1,0 +1,32 @@
+[project]
+name = "rune-master"
+version = "0.1.0"
+description = "Equipment group discovery for Dofus crafting optimization"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "networkx==3.4.2",
+    "python-louvain==0.16",
+    "numpy==2.2.6",
+    "requests==2.32.3",
+    "tqdm",
+]
+
+[project.optional-dependencies]
+capture = [
+    "mss",
+    "pynput",
+    "easyocr",
+    "opencv-python",
+]
+
+[dependency-groups]
+dev = [
+    "pytest==8.3.5",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
+[tool.uv]
+package = false

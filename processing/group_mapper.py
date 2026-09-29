@@ -4,10 +4,10 @@ This module handles the conversion of detected communities into optimized
 equipment groups with ingredient analysis and efficiency metrics.
 """
 
-from collections import defaultdict
-from typing import Dict, List, Tuple, Any, Optional
+from typing import Any, Dict, List, Tuple
 from tqdm.auto import tqdm
 from models import Equipment, ResourceRequirement
+from processing.group_metrics import GroupMetrics
 
 
 class GroupMapper:
@@ -31,7 +31,7 @@ class GroupMapper:
     def calculate_shared_resources(
         self,
         group_equipments: List[Equipment]
-    ) -> Tuple[int, int, float]:
+    ) -> Tuple[int, set[int], float]:
         """Calculate shared resources for a group.
 
         **CANONICAL DEFINITION** of sharing efficiency used across all experts.
@@ -49,35 +49,17 @@ class GroupMapper:
 
         Returns:
             - shared_count: Resources used by 2+ equipment (excluding excluded_ids)
-            - total_shared_count: Resources used by 2+ equipment (including excluded_ids)
+            - total_shared_resources: Resource IDs used by 2+ equipment (including excluded_ids)
             - efficiency: shared_count / total_unique_resources in group
         """
-        resource_usage = defaultdict(int)
-        all_resources = set()
-
-        for equipment in group_equipments:
-            for resource_id, _qty in self._iter_equipment_recipe(equipment):
-                resource_id = int(resource_id)
-                resource_usage[resource_id] += 1
-                all_resources.add(resource_id)
-
-        # Count shared resources (used by 2+ equipment)
-        shared_resources = {
-            rid: count for rid, count in resource_usage.items()
-            if count > 1 and rid not in self.excluded_resource_ids
-        }
-
-        total_shared_resources = {
-            rid: count for rid, count in resource_usage.items()
-            if count > 1
-        }
-
-        # Calculate efficiency
-        total_unique = len(all_resources)
-        shared_count = len(shared_resources)
-        efficiency = (shared_count / total_unique) if total_unique > 0 else 0
-
-        return shared_count, len(total_shared_resources), efficiency
+        shared_resources = GroupMetrics.shared_resources(
+            group_equipments, self.excluded_resource_ids
+        )
+        all_shared_resources = GroupMetrics.shared_resources(group_equipments)
+        efficiency = GroupMetrics.sharing_efficiency(
+            group_equipments, self.excluded_resource_ids
+        )
+        return len(shared_resources), all_shared_resources, efficiency
 
     def calculate_average_density(
         self,
@@ -94,11 +76,7 @@ class GroupMapper:
         Returns:
             Average stat_weight across all equipment in the group
         """
-        if not group_equipments:
-            return 0.0
-
-        total_weight = sum((eq.stat_weight or 0) for eq in group_equipments)
-        return total_weight / len(group_equipments)
+        return GroupMetrics.average_density(group_equipments)
 
     def calculate_total_ingredients(
         self,
@@ -116,47 +94,7 @@ class GroupMapper:
         Returns:
             Dict mapping resource_id -> {name, total_quantity, quantity_per_equipment}
         """
-        ingredients = defaultdict(
-            lambda: {
-                "name": None,
-                "total_quantity": 0,
-                "used_in_equipments": [],
-                "quantity_per_equipment": {},
-                "image_url": None,
-            }
-        )
-
-        # Process equipment recipes
-        for equipment in group_equipments:
-            for resource_id, quantity in self._iter_equipment_recipe(equipment):
-                resource_id = int(resource_id)
-                ingredients[resource_id]["total_quantity"] += int(quantity)
-
-                eq_name = getattr(equipment, "name", None) or str(
-                    getattr(equipment, "ankama_id", "?")
-                )
-                ingredients[resource_id]["used_in_equipments"].append(eq_name)
-                ingredients[resource_id]["quantity_per_equipment"][eq_name] = int(quantity)
-
-                # Get resource name and image from cache
-                if ingredients[resource_id]["name"] is None:
-                    if cache_manager:
-                        try:
-                            resource_data = cache_manager.get_resource(resource_id)
-                            if resource_data:
-                                ingredients[resource_id]["name"] = resource_data.get('name', f'Resource {resource_id}')
-                                # Extract image URL
-                                img_urls = resource_data.get('image_urls', {})
-                                if img_urls:
-                                    ingredients[resource_id]["image_url"] = img_urls.get('icon') or img_urls.get('sd')
-                        except Exception:
-                            pass
-
-                    # Fallback to generic name if cache lookup failed or no cache manager
-                    if ingredients[resource_id]["name"] is None:
-                        ingredients[resource_id]["name"] = f"Resource {resource_id}"
-
-        return dict(ingredients)
+        return GroupMetrics.aggregate_resources(group_equipments, cache_manager)
 
     def create_group(
         self,
@@ -174,35 +112,12 @@ class GroupMapper:
         Returns:
             Dictionary with all group metadata (efficiency, ingredients, etc.)
         """
-        if not group_equipments:
-            return {}
-
-        # Calculate metrics
-        shared_count, total_shared, efficiency = self.calculate_shared_resources(
-            group_equipments
-        )
-
-        # Calculate ingredients and density
-        total_ingredients = self.calculate_total_ingredients(
+        return GroupMetrics.build_group_dict(
             group_equipments,
             cache_manager=cache_manager,
-            api_client=api_client
+            api_client=api_client,
+            excluded_resource_ids=self.excluded_resource_ids,
         )
-        average_density = self.calculate_average_density(group_equipments)
-
-        return {
-            "equipments": group_equipments,
-            "shared_resources_count": shared_count,
-            "total_shared_resources": total_shared,
-            "sharing_efficiency": efficiency,
-            "average_density": average_density,
-            "total_ingredients": total_ingredients,
-            "unique_ingredients_count": len(total_ingredients),
-            "total_items_needed": sum(
-                ing["total_quantity"] for ing in total_ingredients.values()
-            ),
-            "group_size": len(group_equipments),
-        }
 
     def map_communities(
         self,
@@ -244,7 +159,7 @@ class GroupMapper:
                 continue
 
             # Calculate metrics
-            shared_count, total_shared, efficiency = self.calculate_shared_resources(
+            shared_count, shared_resources, efficiency = self.calculate_shared_resources(
                 group_equipments
             )
 
@@ -266,7 +181,7 @@ class GroupMapper:
             groups.append({
                 "equipments": group_equipments,
                 "shared_resources_count": shared_count,
-                "total_shared_resources": total_shared,
+                "total_shared_resources": shared_resources,
                 "sharing_efficiency": efficiency,
                 "average_density": average_density,
                 "total_ingredients": total_ingredients,
@@ -373,7 +288,7 @@ class GroupMapper:
         api_client=None
     ) -> None:
         """Process a subgroup and add to groups list if it meets criteria."""
-        shared_count, total_shared, efficiency = self.calculate_shared_resources(
+        shared_count, shared_resources, efficiency = self.calculate_shared_resources(
             group_equipments
         )
 
@@ -398,7 +313,7 @@ class GroupMapper:
         groups.append({
             "equipments": group_equipments,
             "shared_resources_count": shared_count,
-            "total_shared_resources": total_shared,
+            "total_shared_resources": shared_resources,
             "sharing_efficiency": efficiency,
             "average_density": average_density,
             "total_ingredients": total_ingredients,

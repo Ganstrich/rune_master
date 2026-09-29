@@ -5,10 +5,13 @@ optimal equipment groups by maximizing a global fitness function.
 """
 
 import random
-from typing import List, Dict, Any, Optional, Set
+from typing import Any, Dict, List, Optional, Set, Tuple
+
 from models import Equipment
 from processing.experts.base import GroupingExpert
 from processing.config_dataclass import ProcessingConfig
+from processing.graph_builder import GraphBuilder
+from processing.group_metrics import GroupMetrics
 from processing.group_mapper import GroupMapper
 
 class GeneticGroupingExpert(GroupingExpert):
@@ -46,47 +49,50 @@ class GeneticGroupingExpert(GroupingExpert):
         if not equipments:
             return []
 
-        try:
-            # 1. Build similarity graph to identify candidate neighbors
-            print(f"      [{self.name}] Building equipment similarity graph...")
-            if precomputed_graph is not None and precomputed_resources is not None:
-                graph = precomputed_graph
-                equipment_resources = precomputed_resources
-            else:
-                graph, equipment_resources = GraphBuilder.build_equipment_graph(
-                    equipments,
-                    min_shared_ratio=config.graph_min_shared_ratio,
-                    min_shared_count=config.graph_min_shared_count,
-                    min_component_size=config.graph_min_component_size,
-                )
-
-            if graph.number_of_nodes() == 0:
-                print(f"      [{self.name}] ⚠️ No connected equipment found.")
-                return []
-
-            # Map ankama_id -> Equipment for quick lookup
-            eq_by_id = {eq.ankama_id: eq for eq in equipments}
-
-            # Resource sets per equipment (filtered by excluded IDs)
-            excluded = config.excluded_resource_ids or set()
-            resource_sets: Dict[int, Set[int]] = {}
-            for eq_id, neighbors in equipment_resources.items():
-                resource_sets[eq_id] = {r for r in neighbors if r not in excluded}
-
-            # 2. Initialize population using graph-aware seeding
-            print(
-                f"      [{self.name}] Initializing population (size: {self.population_size})..."
-            )
-            population = self._initialize_population(
-                graph, eq_by_id, resource_sets, config
+        # 1. Build similarity graph to identify candidate neighbors
+        print(f"      [{self.name}] Building equipment similarity graph...")
+        if precomputed_graph is not None and precomputed_resources is not None:
+            graph = precomputed_graph
+            equipment_resources = precomputed_resources
+        else:
+            graph, equipment_resources = GraphBuilder.build_equipment_graph(
+                equipments,
+                min_shared_ratio=config.graph_min_shared_ratio,
+                min_shared_count=config.graph_min_shared_count,
+                min_component_size=config.graph_min_component_size,
             )
 
-            if not population:
-                print(f"      [{self.name}] ⚠️ Failed to initialize population.")
-                return []
+        if graph.number_of_nodes() == 0:
+            print(f"      [{self.name}] ⚠️ No connected equipment found.")
+            return []
 
-            # 2. Evolution Loop
-            for gen in range(self.generations):
+        # Map ankama_id -> Equipment for quick lookup
+        eq_by_id = {eq.ankama_id: eq for eq in equipments}
+
+        # Resource sets per equipment (filtered by excluded IDs)
+        excluded = config.excluded_resource_ids or set()
+        resource_sets: Dict[int, Set[int]] = {}
+        for eq_id, neighbors in equipment_resources.items():
+            resource_sets[eq_id] = {r for r in neighbors if r not in excluded}
+
+        # 2. Initialize population using graph-aware seeding
+        print(
+            f"      [{self.name}] Initializing population (size: {self.population_size})..."
+        )
+        population = self._initialize_population(
+            graph, eq_by_id, resource_sets, config
+        )
+
+        if not population:
+            print(f"      [{self.name}] ⚠️ Failed to initialize population.")
+            return []
+
+        best_ever_fitness = float("-inf")
+        best_ever_individual: List[Set[Equipment]] = []
+        stagnation_counter = 0
+
+        # 2. Evolution Loop
+        for gen in range(self.generations):
                 # Evaluate fitness
                 fitness_scores = [
                     self._calculate_individual_fitness(ind, resource_sets, config)
@@ -139,40 +145,42 @@ class GeneticGroupingExpert(GroupingExpert):
                     best_fit = max(fitness_scores)
                     print(f"      [{self.name}] Generation {gen+1}/{self.generations} - Best Fitness: {best_fit:.2f}")
 
-            # 3. Extract best individual
-            final_fitness = [self._calculate_individual_fitness(ind) for ind in population]
-            best_individual = population[final_fitness.index(max(final_fitness))]
+        # 3. Extract best individual
+        best_individual = best_ever_individual
             
-            # 4. Convert best individual to standardized Group format
-            mapper = GroupMapper(equipments, excluded_resource_ids=config.excluded_resource_ids)
+        # 4. Convert best individual to standardized Group format
+        mapper = GroupMapper(equipments, excluded_resource_ids=config.excluded_resource_ids)
             
-            # Our individual is a list of sets of equipments
-            final_groups = []
-            for eq_set in best_individual:
-                if len(eq_set) < config.group_min_size:
-                    continue
+        # Our individual is a list of sets of equipments
+        final_groups = []
+        for eq_set in best_individual:
+            if len(eq_set) < config.group_min_size:
+                continue
                     
-                # Use GroupMapper to get full metadata (efficiency, ingredients, etc.)
-                group_data = mapper.create_group(
-                    list(eq_set),
-                    cache_manager=self.cache_manager,
-                    api_client=self.api_client
-                )
+            # Use GroupMapper to get full metadata (efficiency, ingredients, etc.)
+            group_data = mapper.create_group(
+                list(eq_set),
+                cache_manager=self.cache_manager,
+                api_client=self.api_client
+            )
                 
-                if group_data.get("sharing_efficiency", 0) >= config.group_efficiency_threshold:
-                    group_data["expert_name"] = self.name
-                    group_data["selection_method"] = "genetic"
-                    final_groups.append(group_data)
-                    
-            return final_groups
-        except Exception as e:
-            print(f"      [{self.name}] ❌ Expert failed internally: {e}")
-            import traceback
-            traceback.print_exc()
-            return []
+            if group_data.get("sharing_efficiency", 0) >= config.group_efficiency_threshold:
+                group_data["expert_name"] = self.name
+                group_data["selection_method"] = "genetic"
+                final_groups.append(group_data)
 
-    def _initialize_population(self, equipments: List[Equipment], config: ProcessingConfig) -> List[List[Set[Equipment]]]:
+        return final_groups
+
+    def _initialize_population(
+        self,
+        graph: Any,
+        eq_by_id: Dict[int, Equipment],
+        resource_sets: Dict[int, Set[int]],
+        config: ProcessingConfig,
+    ) -> List[List[Set[Equipment]]]:
         """Create initial diverse individuals."""
+        del graph, resource_sets
+        equipments = list(eq_by_id.values())
         population = []
         for _ in range(self.population_size):
             population.append(self._create_random_individual(equipments, config))
@@ -221,26 +229,14 @@ class GeneticGroupingExpert(GroupingExpert):
             if not eq_set:
                 continue
 
-            if len(eq_set) < min_size:
+            if config is not None and len(eq_set) < config.group_min_size:
                 continue
 
-            # Count how many equipment use each resource
-            resource_usage: Dict[int, int] = {}
-            all_unique: Set[int] = set()
-            for eq in eq_set:
-                rset = resource_sets.get(eq.ankama_id, set())
-                for r in rset:
-                    resource_usage[r] = resource_usage.get(r, 0) + 1
-                all_unique |= rset
-
-            total_unique = len(all_unique)
-            if total_unique == 0:
+            sharing_efficiency = GroupMetrics.sharing_efficiency(
+                list(eq_set), config.excluded_resource_ids
+            )
+            if sharing_efficiency == 0:
                 continue
-
-            # Shared = resources used by >= 2 equipment
-            shared_count = sum(1 for count in resource_usage.values() if count >= 2)
-
-            sharing_efficiency = shared_count / total_unique
             total_score += sharing_efficiency
 
             # Overlap penalty
@@ -379,8 +375,17 @@ class GeneticGroupingExpert(GroupingExpert):
 
         return groups
 
-    def _mutate(self, individual: List[Set[Equipment]], all_equipments: List[Equipment]):
+    def _mutate(
+        self,
+        individual: List[Set[Equipment]],
+        graph: Any,
+        eq_by_id: Dict[int, Equipment],
+        resource_sets: Dict[int, Set[int]],
+        config: ProcessingConfig,
+    ) -> None:
         """Mutate individual: move item, add item, or merge groups."""
+        del graph, resource_sets, config
+        all_equipments = list(eq_by_id.values())
         if random.random() > self.mutation_rate or not individual:
             return
 

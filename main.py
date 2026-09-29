@@ -31,6 +31,22 @@ from processing.tuner import ParameterTuner
 from visualization import HTMLGenerator
 
 
+def positive_int(value: str) -> int:
+    """Parse a strictly positive integer CLI argument."""
+    parsed = int(value)
+    if parsed <= 0:
+        raise argparse.ArgumentTypeError("must be greater than zero")
+    return parsed
+
+
+def nonnegative_float(value: str) -> float:
+    """Parse a non-negative floating-point CLI argument."""
+    parsed = float(value)
+    if parsed < 0:
+        raise argparse.ArgumentTypeError("must be non-negative")
+    return parsed
+
+
 def load_equipment(processing_config: ProcessingConfig) -> tuple:
     """Load equipment from API with caching."""
     print("\n" + "="*60)
@@ -70,8 +86,7 @@ def _cache_equipment_resources(equipments: List[Equipment], cache: CacheManager,
         for req in eq.recipe:
             resource_ids.add(req.resource_id)
     
-    stats_before = cache.get_stats()
-    cached_before = stats_before['cached_resources']
+    cached_before = sum(cache.has_resource(resource_id) for resource_id in resource_ids)
     total_resources = len(resource_ids)
     uncached = total_resources - cached_before
     
@@ -83,24 +98,29 @@ def _cache_equipment_resources(equipments: List[Equipment], cache: CacheManager,
     start_time = time.time()
     
     fetched = 0
-    for i, resource_id in enumerate(resource_ids, 1):
+    failed: List[int] = []
+    for resource_id in resource_ids:
         if cache.has_resource(resource_id):
             continue
         
         try:
             resource_data = api.get_resource(resource_id)
-            if resource_data:
+            if isinstance(resource_data, dict) and resource_data.get("name"):
                 cache.set_resource(resource_id, resource_data)
                 fetched += 1
                 if fetched % 20 == 0:
                     print(f"   ⏳ Cached {fetched}/{uncached} resources...")
+            else:
+                failed.append(resource_id)
         except Exception as e:
+            failed.append(resource_id)
             print(f"   ⚠️  Failed to cache resource {resource_id}: {e}")
-            continue
     
     elapsed = time.time() - start_time
     cache.save()
     print(f"✅ Cached {fetched} new resources in {elapsed:.2f}s")
+    if failed:
+        print(f"⚠️  Failed resources ({len(failed)}): {sorted(failed)}")
 
 
 def process_equipment(
@@ -197,36 +217,37 @@ def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(description="RuneMaster: Equipment Group Discovery")
     parser.add_argument("--grouping-method", choices=["deterministic", "random", "hybrid", "committee", "genetic"])
-    parser.add_argument("--random-groups", type=int, help="Number of random groups to generate")
-    parser.add_argument("--density-ratio", type=float, help="Density/level ratio filter")
+    parser.add_argument(
+        "--random-groups",
+        type=positive_int,
+        help="Number of random groups to generate",
+    )
+    parser.add_argument(
+        "--density-ratio",
+        type=nonnegative_float,
+        help="Density/level ratio filter",
+    )
+    parser.add_argument(
+        "--random-seed",
+        type=int,
+        help="Seed for reproducible random grouping",
+    )
     parser.add_argument("--tune", action="store_true", help="Search for best grouping parameters")
     parser.add_argument("--no-serve", action="store_true", help="Generate reports without starting server")
     args = parser.parse_args()
 
     print("\n 🔥 RUNEMASTER - GROUP DISCOVERY 🔥 \n")
 
-    # Build ProcessingConfig from CLI args + defaults
-    processing_config = ProcessingConfig(
-        graph_min_shared_ratio=Config.MIN_SIMILARITY,
-        graph_min_component_size=Config.MIN_CLUSTER_SIZE,
-        algorithm="louvain",
-        resolution_range=(1, 10, 1),
-        group_min_size=Config.MIN_CLUSTER_SIZE,
-        group_max_size=18,
-        group_min_shared_resources=Config.MIN_COMMON_ITEMS,
-        group_efficiency_threshold=0.15,
-        use_inclusive_mapping=False,
-        use_resource_optimizer=False,
-        excluded_resource_ids=set(Config.EXCLUDED_RESOURCES or []),
-        use_density_filtering=True,
-        equipment_density_level_ratio=args.density_ratio or Config.DENSITY_LEVEL_RATIO,
-        fallback_to_unfiltered=Config.FALLBACK_TO_UNFILTERED,
-        min_filtered_pool_size=Config.MIN_FILTERED_POOL_SIZE,
-        grouping_method=args.grouping_method or Config.GROUPING_METHOD,
-        random_group_count=args.random_groups or Config.RANDOM_GROUP_COUNT,
-        random_seed=None,
-        min_equipment_density=Config.MIN_EQUIPMENT_DENSITY,
-    )
+    # ProcessingConfig owns pipeline defaults; CLI arguments override them.
+    processing_config = ProcessingConfig()
+    if args.grouping_method is not None:
+        processing_config.grouping_method = args.grouping_method
+    if args.random_groups is not None:
+        processing_config.random_group_count = args.random_groups
+    if args.density_ratio is not None:
+        processing_config.equipment_density_level_ratio = args.density_ratio
+    if args.random_seed is not None:
+        processing_config.random_seed = args.random_seed
 
     try:
         equipments, cache_manager, api_client = load_equipment(processing_config)

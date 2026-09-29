@@ -15,11 +15,11 @@ Stat Weight Formula:
 Stat Name Resilience:
 The system handles API inconsistencies in stat naming through multiple strategies:
 
-1. EquipmentStat.stat_name property:
-   - Attempts exact match first
-   - Falls back to case-insensitive matching
-   - Uses fuzzy matching to handle singular/plural variations
-   - Normalizes "Dommage" ↔ "Dommages", "Résistance" ↔ "Résistances", etc.
+1. resolve_stat_name():
+    - Attempts exact match first
+    - Falls back to case-insensitive matching
+    - Uses fuzzy matching to handle singular/plural variations
+    - Normalizes "Dommage" ↔ "Dommages", "Résistance" ↔ "Résistances", etc.
 
 2. STAT_WEIGHTS includes both singular and plural variants:
    - Each stat has entries for common variations
@@ -135,6 +135,37 @@ STAT_WEIGHTS: Dict[str, float] = {
 # CALCULATION FUNCTIONS
 # ============================================================================
 
+def resolve_stat_name(raw_name: str, stat_weights: Dict[str, float]) -> str:
+    """Resolve an API stat name to a key in a stat weight mapping."""
+    if raw_name in stat_weights:
+        return raw_name
+
+    for key in stat_weights:
+        if key.lower() == raw_name.lower():
+            return key
+
+    def normalize_for_matching(name: str) -> list[str]:
+        name_lower = name.lower()
+        variants = [name_lower]
+        if name_lower.endswith('s'):
+            variants.append(name_lower[:-1])
+        if name_lower.endswith('es'):
+            variants.append(name_lower[:-2])
+        return variants
+
+    raw_variants = normalize_for_matching(raw_name)
+    for key in stat_weights:
+        key_variants = normalize_for_matching(key)
+        if set(raw_variants) & set(key_variants):
+            return key
+
+    similar = [key for key in stat_weights if key.lower().startswith(raw_name.lower()[:3])]
+    raise KeyError(
+        f"Unknown stat type: '{raw_name}'. "
+        f"Did you mean: {similar if similar else 'See available stats below'}? "
+        f"Available: {list(stat_weights.keys())}"
+    )
+
 def calculate_stat_line_weight(
     stat_type: str,
     min_value: float,
@@ -163,20 +194,7 @@ def calculate_stat_line_weight(
     """
     weights = stat_weights or STAT_WEIGHTS
     
-    if stat_type not in weights:
-        # Try to find a close match with case-insensitive search
-        for key in weights.keys():
-            if key.lower() == stat_type.lower():
-                stat_type = key
-                break
-        else:
-            # Still not found - provide helpful error message
-            similar = [k for k in weights.keys() if k.lower().startswith(stat_type.lower()[:3])]
-            raise KeyError(
-                f"Unknown stat type: '{stat_type}'. "
-                f"Did you mean: {similar if similar else 'See available stats below'}? "
-                f"Available: {list(weights.keys())}"
-            )
+    stat_type = resolve_stat_name(stat_type, weights)
     
     # Calculate average
     avg = (min_value + max_value) / 2.0

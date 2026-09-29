@@ -1,0 +1,121 @@
+"""Offline contract tests for the grouping pipeline."""
+
+from pathlib import Path
+
+import pytest
+
+from models import Equipment, ResourceRequirement
+from processing import ProcessingConfig, RuneMaster
+from processing.equipment_filter import EquipmentFilteringStrategy
+from processing.random_group_builder import RandomGroupBuilder
+from visualization import HTMLGenerator
+
+
+def make_equipments() -> list[Equipment]:
+    """Create a small connected equipment graph without API access."""
+    return [
+        Equipment(
+            ankama_id=index,
+            type={"id": 1, "name": "sword"},
+            level=20 + index,
+            name=f"Offline Equipment {index}",
+            stat_weight=10 + index,
+            recipe=[
+                ResourceRequirement(resource_id=100, quantity=2),
+                ResourceRequirement(resource_id=200 + index, quantity=1),
+            ],
+        )
+        for index in range(1, 5)
+    ]
+
+
+def test_random_seed_is_reproducible_without_duplicate_seeds() -> None:
+    """A fixed builder seed should produce the same seed sequence."""
+    equipments = make_equipments()
+    builder = RandomGroupBuilder(equipments, seed=7)
+
+    first = builder.build_multiple_random_groups(
+        equipments, count=4, min_shared_resources=1
+    )
+    second = RandomGroupBuilder(equipments, seed=7).build_multiple_random_groups(
+        equipments, count=4, min_shared_resources=1
+    )
+
+    first_seeds = [group["seed_equipment_id"] for group in first]
+    second_seeds = [group["seed_equipment_id"] for group in second]
+    assert first_seeds == second_seeds
+    assert len(first_seeds) == len(set(first_seeds))
+
+
+def test_density_filter_falls_back_when_pool_is_too_small() -> None:
+    """An over-strict filter should use the configured fallback pool."""
+    equipments = make_equipments()
+
+    active_pool, was_filtered = EquipmentFilteringStrategy.get_active_pool(
+        equipments,
+        density_ratio=10.0,
+        fallback_to_unfiltered=True,
+        min_pool_size=2,
+    )
+
+    assert active_pool == equipments
+    assert was_filtered is False
+
+
+def test_deterministic_pipeline_returns_canonical_groups() -> None:
+    """The offline graph path should produce complete group metadata."""
+    config = ProcessingConfig(
+        algorithm="none",
+        graph_min_shared_ratio=0.0,
+        graph_min_shared_count=1,
+        group_min_shared_resources=1,
+        group_efficiency_threshold=0.0,
+    )
+    groups = RuneMaster(make_equipments(), config=config).run_deterministic()
+
+    assert groups
+    assert all(group["selection_method"] == "deterministic" for group in groups)
+    assert all(group["equipments"] for group in groups)
+    assert all("total_ingredients" in group for group in groups)
+
+
+class StubExpert:
+    """Minimal expert double for testing hybrid dispatch decisions."""
+
+    def __init__(self, groups: list[dict]) -> None:
+        self.groups = groups
+
+    def discover_groups(self, *args: object, **kwargs: object) -> list[dict]:
+        return self.groups
+
+
+def test_hybrid_pipeline_supplements_small_deterministic_result() -> None:
+    """Hybrid mode should call the random expert below its threshold."""
+    equipments = make_equipments()
+    group = RandomGroupBuilder(equipments, seed=3).build_random_group(
+        equipments, min_shared_resources=1
+    )
+    assert group is not None
+
+    master = RuneMaster(equipments, ProcessingConfig(random_group_count=10))
+    master.experts["deterministic"] = StubExpert([])
+    master.experts["random"] = StubExpert([group])
+
+    result = master.run_hybrid_grouping()
+
+    assert result == [group]
+
+
+def test_visualization_generates_index_and_group_page(tmp_path: Path) -> None:
+    """A canonical offline group should render a self-contained report."""
+    group = RandomGroupBuilder(make_equipments(), seed=1).build_random_group(
+        make_equipments(), min_shared_resources=1
+    )
+    assert group is not None
+
+    paths = HTMLGenerator(output_dir=str(tmp_path)).generate_all([group])
+
+    generated_names = {path.name for path in map(Path, paths)}
+    assert "index.html" in generated_names
+    assert any(name.startswith("group_") for name in generated_names)
+    assert (tmp_path / "static").is_dir()

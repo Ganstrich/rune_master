@@ -44,9 +44,12 @@ class CacheManager:
         db_dir = os.path.dirname(self.cache_file)
         if db_dir:
             os.makedirs(db_dir, exist_ok=True)
-        self._conn = sqlite3.connect(self._conn_path(), check_same_thread=False)
+        self._conn = sqlite3.connect(
+            self._conn_path(), check_same_thread=False, timeout=30.0
+        )
         self._conn.execute("PRAGMA journal_mode=WAL")
         self._conn.execute("PRAGMA synchronous=NORMAL")
+        self._conn.execute("PRAGMA busy_timeout=30000")
         self._conn.row_factory = sqlite3.Row
 
     def _conn_path(self) -> str:
@@ -56,6 +59,10 @@ class CacheManager:
     def _create_tables(self) -> None:
         """Create cache tables if they don't exist."""
         self._conn.executescript("""
+            CREATE TABLE IF NOT EXISTS cache_metadata (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            );
             CREATE TABLE IF NOT EXISTS resources (
                 id INTEGER PRIMARY KEY,
                 name TEXT NOT NULL,
@@ -73,10 +80,35 @@ class CacheManager:
                 computed_at TEXT DEFAULT (datetime('now'))
             );
         """)
+        self._conn.execute(
+            "INSERT OR IGNORE INTO cache_metadata (key, value) VALUES (?, ?)",
+            ("schema_version", "1"),
+        )
         self._conn.commit()
 
+    def close(self) -> None:
+        """Close the SQLite connection when the cache is no longer needed."""
+        if self._conn is not None:
+            self._conn.close()
+            self._conn = None
+
+    def __enter__(self) -> "CacheManager":
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
+        self.close()
+
+    @staticmethod
+    def _decode_json(value: str, label: str) -> Any | None:
+        """Decode a cache value, treating corruption as a cache miss."""
+        try:
+            return json.loads(value)
+        except (TypeError, json.JSONDecodeError):
+            print(f"⚠️ Ignoring corrupt cached {label} entry")
+            return None
+
     def save(self) -> None:
-        """No-op for backward compatibility. SQLite auto-commits each statement."""
+        """No-op for backward compatibility; setters commit writes immediately."""
         pass
 
     # ========================================================================
@@ -97,7 +129,10 @@ class CacheManager:
         ).fetchone()
         if row is None:
             return None
-        return json.loads(row["data"])
+        value = self._decode_json(row["data"], "resource")
+        if not isinstance(value, dict):
+            return None
+        return value
 
     def set_resource(self, resource_id: int, data: Dict[str, Any]) -> None:
         """Cache resource data.
@@ -163,7 +198,8 @@ class CacheManager:
         ).fetchone()
         if row is None:
             return None
-        return json.loads(row["effects"])
+        value = self._decode_json(row["effects"], "equipment effects")
+        return value if isinstance(value, list) else None
 
     def set_equipment_effects(self, equipment_id: int, effects: list) -> None:
         """Cache equipment effects.

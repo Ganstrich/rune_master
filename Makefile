@@ -1,28 +1,32 @@
-.PHONY: serve compute all tune clean help
+.PHONY: sync serve compute all tune clean help
+
+# Install/update dependencies
+sync:
+	uv sync
 
 # Default target
 all: compute
-	python3 main.py
+	uv run main.py
 
 # Start the visualization server only
 serve:
-	python3 serve.py
+	uv run serve.py
 
 # Run quick for iterative development
 dev:
-	python3 main.py --no-serve
+	uv run main.py --no-serve
 
 # Run the pipeline without starting the server
 compute:
-	python3 main.py --no-serve --grouping-method committee --tune
+	uv run main.py --no-serve --grouping-method committee --tune
 
 # Run with parameter tuning
 tune:
-	python3 main.py --no-serve --tune
+	uv run main.py --no-serve --tune
 
 # Run with a specific grouping method (usage: make method METHOD=hybrid)
 method:
-	python3 main.py --no-serve --grouping-method $(METHOD)
+	uv run main.py --no-serve --grouping-method $(METHOD)
 
 # Clean generated artifacts
 clean:
@@ -34,6 +38,7 @@ clean:
 help:
 	@echo "RuneMaster — available commands:"
 	@echo ""
+	@echo "  make sync         Install/update dependencies with uv"
 	@echo "  make serve        Start the visualization server only"
 	@echo "  make compute      Run the pipeline (no server)"
 	@echo "  make dev          Run quick for iterative development"

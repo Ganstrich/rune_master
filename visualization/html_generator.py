@@ -1,18 +1,14 @@
 """Core HTML generation engine for equipment group reports.
 
-Responsible for:
-- Building complete HTML pages from group data
-- Coordinating all UI components (graph, table, stats)
-- Responsive design and modern UX
-- Safe HTML escaping and XSS prevention
+Responsible for building complete HTML pages from group data, including
+equipment galleries, ingredient tables, and summary statistics.
 """
-import json
 import html
 import shutil
-from typing import Dict, List, Any, Optional
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from models import Equipment, Resource
+from models import Equipment
 
 
 class HTMLGenerator:
@@ -155,78 +151,6 @@ class HTMLGenerator:
         except (AttributeError, TypeError, KeyError):
             pass
         return None
-    
-    def _build_graph_data(self, group: Dict[str, Any]) -> Dict[str, List[Dict]]:
-        """Build graph data from equipment group.
-        
-        Creates nodes for equipment and resources, links for recipe connections.
-        
-        Args:
-            group: Equipment group dict with equipments and total_ingredients
-            
-        Returns:
-            Dict with 'nodes' and 'links' lists for D3.js
-        """
-        nodes = []
-        links = []
-        node_id_map = {}
-        
-        # Add equipment nodes
-        equipments = group.get('equipments', [])
-        for equipment in equipments:
-            eq_id = self._extract_equipment_id(equipment)
-            node_id = f"equip_{eq_id}"
-            node_id_map[eq_id] = node_id
-            
-            nodes.append({
-                'id': node_id,
-                'name': self._extract_equipment_name(equipment),
-                'type': 'equipment',
-                'level': self._extract_equipment_level(equipment),
-                'ankama_id': eq_id,
-                'image_url': self._extract_image_url(equipment)
-            })
-        
-        # Add resource nodes and links
-        # total_ingredients can have string or int keys
-        ingredients = group.get('total_ingredients', {})
-        for res_id_key, ingredient_info in ingredients.items():
-            try:
-                resource_id = int(res_id_key)
-            except (ValueError, TypeError):
-                continue
-
-            node_id = f"res_{resource_id}"
-            
-            nodes.append({
-                'id': node_id,
-                'name': ingredient_info.get('name') or f'Resource {resource_id}',
-                'type': 'resource',
-                'total_quantity': ingredient_info.get('total_quantity', 0),
-                'ankama_id': resource_id,
-                'image_url': ingredient_info.get('image_url')
-            })
-            
-            # Create links from equipment to resources
-            # quantity_per_equipment maps equipment_name -> quantity
-            qty_per_eq = ingredient_info.get('quantity_per_equipment', {})
-            for equip_name, quantity in qty_per_eq.items():
-                # Find matching equipment by name
-                found_eq = None
-                for eq in equipments:
-                    if self._extract_equipment_name(eq) == equip_name:
-                        found_eq = eq
-                        break
-                
-                if found_eq:
-                    eq_id = self._extract_equipment_id(found_eq)
-                    links.append({
-                        'source': node_id_map.get(eq_id),
-                        'target': node_id,
-                        'quantity': quantity
-                    })
-        
-        return {'nodes': nodes, 'links': links}
     
     def _build_equipment_gallery(self, group: Dict[str, Any]) -> str:
         """Build equipment preview gallery HTML.

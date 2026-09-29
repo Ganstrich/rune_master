@@ -20,25 +20,25 @@ class ProcessingConfig:
     # Group mapping
     group_min_size: int = 2
     group_max_size: int = 18
-    group_min_shared_resources: int = 2
+    group_min_shared_resources: int = 3
     group_efficiency_threshold: float = 0.15
     use_inclusive_mapping: bool = False
 
     # Optimization
-    use_resource_optimizer: bool = True
+    use_resource_optimizer: bool = False
 
     # Excluded resources (won't count toward sharing efficiency)
-    excluded_resource_ids: set = field(default_factory=set)
+    excluded_resource_ids: set = field(default_factory=lambda: {15263, 14635})
 
     # Density/Level filtering
     use_density_filtering: bool = True
-    equipment_density_level_ratio: float = 0.15  # DENSITY_LEVEL_RATIO
-    fallback_to_unfiltered: bool = True  # FALLBACK_TO_UNFILTERED
+    equipment_density_level_ratio: float = 3.0  # DENSITY_LEVEL_RATIO
+    fallback_to_unfiltered: bool = False  # FALLBACK_TO_UNFILTERED
     min_filtered_pool_size: int = 10  # MIN_FILTERED_POOL_SIZE
 
     # Grouping method
-    grouping_method: str = "deterministic"  # "deterministic", "random", "hybrid", "committee"
-    random_group_count: int = 10
+    grouping_method: str = "hybrid"  # "deterministic", "random", "hybrid", "committee"
+    random_group_count: int = 50
     random_seed: Optional[int] = None
 
     # Equipment pre-filtering

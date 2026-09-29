@@ -49,6 +49,7 @@ class RuneMaster:
 
         # Results
         self.groups: List[Dict[str, Any]] = []
+        self.expert_failures: Dict[str, str] = {}
 
     @staticmethod
     def _equipment_set_overlap(
@@ -127,6 +128,8 @@ class RuneMaster:
         print("🚀 RuneMaster: Mixture of Experts Committee")
         print("=" * 60)
 
+        self.expert_failures = {}
+
         # Pre-compute graph once for all experts
         shared_graph, shared_resources = GraphBuilder.build_equipment_graph(
             self.equipments,
@@ -140,12 +143,18 @@ class RuneMaster:
         # 1. Dispatch to all experts
         for expert_name, expert in self.experts.items():
             print(f"\n[Expert: {expert_name}] Analyzing equipment pool...")
-            expert_groups = expert.discover_groups(
-                self.equipments,
-                self.config,
-                precomputed_graph=shared_graph,
-                precomputed_resources=shared_resources,
-            )
+            try:
+                expert_groups = expert.discover_groups(
+                    self.equipments,
+                    self.config,
+                    precomputed_graph=shared_graph,
+                    precomputed_resources=shared_resources,
+                )
+            except (IndexError, KeyError, RuntimeError, TypeError, ValueError) as error:
+                message = f"{type(error).__name__}: {error}"
+                self.expert_failures[expert_name] = message
+                print(f"      ❌ {expert_name} failed: {message}")
+                continue
 
             # Evaluate each group using the expert's fitness function
             for group in expert_groups:
@@ -183,9 +192,18 @@ class RuneMaster:
 
         print(f"\n      Committee gathered {len(all_potential_groups)} proposals.")
         print(f"      Final ensemble: {len(self.groups)} unique groups selected.")
+        if self.expert_failures:
+            print(f"      Expert failures: {self.expert_failures}")
 
         self.print_summary()
         return self.groups
+
+    def get_expert_report(self) -> Dict[str, Any]:
+        """Return proposal and failure information from the last committee run."""
+        return {
+            "failed_experts": dict(self.expert_failures),
+            "selected_groups": len(self.groups),
+        }
 
     def get_grouping_method(self) -> str:
         """Get the active grouping method."""

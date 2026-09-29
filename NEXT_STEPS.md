@@ -1,266 +1,123 @@
-# Next Steps - Ready for Testing
+# Next Steps - Evidence-Based Validation
 
-## 🎉 Implementation Complete!
+The implementation is not declared production-ready by documentation alone. Each
+claim below has a command or test that can confirm or reject it.
 
-All components have been successfully implemented. Here's what's ready to test:
+## Current Baseline
 
----
+Completed on 2026-09-29:
 
-## 📋 What Was Implemented
+- `uv run pytest -q` passes: 9 tests.
+- `uv run python main.py --help` exposes deterministic, random, hybrid,
+  committee, and genetic methods.
+- `git diff --check` and `python3 -m compileall -q data processing main.py config.py`
+  pass.
+- Pytest imports are now configured through `pyproject.toml`.
 
-### New Files (455 lines of code)
-- ✅ `processing/equipment_filter.py` - Equipment filtering by density/level ratio
-- ✅ `processing/random_group_builder.py` - Random group building with resource matching
+Important correction: the current `ProcessingConfig` defaults are `hybrid`, 50
+random groups, density ratio `3.0`, and no filtered-pool fallback. The older
+claims that the default is deterministic, the ratio is `0.15`, or the count is
+10 are not current behavior.
 
-### Updated Files
-- ✅ `processing/orchestrator.py` - Added run_random_grouping(), run_hybrid_grouping(), config options
-- ✅ `main.py` - Added CLI arguments, grouping method support
-- ✅ `config.py` - Added new configuration constants
-- ✅ `processing/__init__.py` - Exported new classes
+## Step 1: Keep the Test Gate Green
 
-### Documentation
-- ✅ `RANDOM_GROUPING_PLAN.md` - Original implementation plan
-- ✅ `IMPLEMENTATION_SUMMARY.md` - What was built and why
-- ✅ `RANDOM_GROUPING_QUICK_START.md` - User guide with examples
-- ✅ `CODE_STRUCTURE.md` - Technical documentation and diagrams
+Run:
 
----
-
-## 🚀 Quick Start Testing
-
-### 1. Test Deterministic (Original - Should Still Work)
 ```bash
-cd /home/adamb/rune_master
-python main.py
+uv run pytest -q
+python3 -m compileall -q data processing main.py config.py
+git diff --check
 ```
-**Expected:** Works exactly as before
 
-### 2. Test Random Grouping
+Acceptance: all commands exit successfully. Any failure blocks later testing.
+
+## Step 2: Add Offline Pipeline Coverage
+
+Add fixture-based tests that do not call DofusAPI for:
+
+- deterministic grouping and canonical group fields;
+- random grouping with a fixed seed and no duplicate seed IDs;
+- hybrid supplementation and its threshold behavior;
+- density filtering, including the fallback path;
+- visualization generation from synthetic groups.
+
+Acceptance: tests are deterministic, run without network access, and assert
+behavior rather than log messages.
+
+## Step 3: Resolve the Configuration Contract
+
+Choose and document the intended defaults. Until that decision is made, invoke
+the method and parameters explicitly in validation commands:
+
 ```bash
-python main.py --grouping-method random
+uv run main.py --grouping-method deterministic --no-serve
+uv run main.py --grouping-method random --random-groups 10 \
+  --density-ratio 0.15 --no-serve
+uv run main.py --grouping-method hybrid --random-groups 10 \
+  --density-ratio 0.15 --no-serve
 ```
-**Expected:**
-- Loads equipment
-- Filters by density ratio (default 0.15)
-- Generates 10 random groups
-- Shows group names and companion counts
 
-### 3. Test Hybrid Grouping
+Acceptance: CLI values reach `ProcessingConfig`, invalid values fail clearly,
+and the README, Makefile, and this file describe the same defaults.
+
+## Step 4: Run Live Data Checks
+
+Only after Steps 1-3 pass, run the three explicit modes against the API. Record
+equipment count, active pool size, group count, elapsed time, and failures.
+
 ```bash
-python main.py --grouping-method hybrid
-```
-**Expected:**
-- Runs deterministic grouping first
-- Adds random groups if deterministic produced < 5 groups
-- Combines and returns merged results
-
-### 4. Test Density Ratio Tuning
-```bash
-# Looser filter (more equipment)
-python main.py --grouping-method random --density-ratio 0.10
-
-# Stricter filter (fewer equipment)
-python main.py --grouping-method random --density-ratio 0.20
-```
-**Expected:** Pool size changes based on ratio
-
-### 5. Test Random Groups Count
-```bash
-python main.py --grouping-method random --random-groups 20
-python main.py --grouping-method random --random-groups 5
-```
-**Expected:** Output changes number of groups generated
-
----
-
-## 🧪 Verification Checklist
-
-Before declaring success, verify:
-
-- [ ] Default `python main.py` still works (deterministic unchanged)
-- [ ] `--grouping-method random` generates groups
-- [ ] `--grouping-method hybrid` generates groups
-- [ ] CLI flags parse correctly (try `python main.py --help`)
-- [ ] Groups have all required fields (equipments, efficiency, ingredients, selection_method)
-- [ ] Visualizations render without errors
-- [ ] Pool filtering info appears in logs
-- [ ] Fallback to unfiltered pool works if filter too strict
-- [ ] Random seed selection avoids duplicates across multiple groups
-- [ ] Companion finding returns equipment that share resources
-
----
-
-## 📊 Testing Scenarios
-
-### Scenario 1: Find Ideal Density Ratio
-```bash
-for ratio in 0.10 0.12 0.15 0.18 0.20; do
-    echo "Testing ratio: $ratio"
-    python main.py --grouping-method random --density-ratio $ratio 2>&1 | grep "Active pool"
-done
-```
-**Goal:** Find ratio that gives 50-100 equipment in filtered pool
-
-### Scenario 2: Compare All Three Methods
-```bash
-python main.py --grouping-method deterministic > /tmp/det.txt
-python main.py --grouping-method random > /tmp/rand.txt
-python main.py --grouping-method hybrid > /tmp/hybrid.txt
-```
-**Compare:** Number of groups, efficiency scores, equipment coverage
-
-### Scenario 3: Reproducibility Test
-```bash
-# With seed (same groups every time)
-python main.py --grouping-method random --random-groups 5  # Generates 5 random groups
-
-# Run again
-python main.py --grouping-method random --random-groups 5  # Different groups (no seed)
+uv run main.py --grouping-method deterministic --no-serve
+uv run main.py --grouping-method random --random-groups 10 \
+  --density-ratio 0.15 --no-serve
+uv run main.py --grouping-method hybrid --random-groups 10 \
+  --density-ratio 0.15 --no-serve
 ```
 
----
+Acceptance: the process exits zero, produces a non-empty report, and every
+returned group has the canonical fields tested in Step 2. API failures are
+reported separately from code failures.
 
-## 🎯 Expected Behavior
+Observed on 2026-09-29 with a warm cache:
 
-### Random Grouping Pipeline
-1. Load equipment from API
-2. Filter by density ratio (equipment with stat_weight >= level * ratio)
-3. If filtered pool too small, fallback to all equipment
-4. Randomly select seed equipment (no duplicates)
-5. For each seed, find companions sharing resources
-6. Return groups with metadata
-7. Generate visualizations
-8. Serve on localhost:8000
+- Deterministic: 272 equipment loaded, 34 groups generated.
+- Random (`--random-groups 10`): 253 equipment in the filtered pool, 5 groups
+  generated because only five sampled seeds had qualifying companions.
+- Hybrid: 32 groups generated.
+- Resource cache: 405 resources fetched on the initial run.
 
-### Key Output Elements
-```
-[1/2] 📊 Applying Equipment Filtering...
-      Active pool: 45 equipment (filtered)
-      
-[2/2] 🎲 Generating 10 Random Groups...
-Generated group 1: Adamantine Sword + 5 companions
-Generated group 2: Iron Boots + 3 companions
-...
-✅ Pipeline Complete: 10 random groups generated
-```
+These results reject any assumption that requesting 10 random groups guarantees
+10 results.
 
----
+## Step 5: Verify the Report Surface
 
-## 🔍 Debugging If Issues Arise
+Serve the generated report and check the index plus one group page in a browser.
+Confirm ingredient names and equipment links render without console errors.
+Browser automation was used for the current check.
 
-### Issue: "No module named 'xyz'"
-**Solution:** Install dependencies
-```bash
-cd /home/adamb/rune_master
-pip install -r requirements.txt  # if exists
-# Or install individually:
-pip install networkx beautifulsoup4 pandas
-```
+Acceptance: `index.html` and group pages load, contain non-placeholder data, and
+the report directory is not accidentally committed as source.
 
-### Issue: Syntax error in files
-**Solution:** Already validated - but check:
-```bash
-python3 -m py_compile processing/equipment_filter.py processing/random_group_builder.py
-```
+## Step 6: Measure Before Calling It Ready
 
-### Issue: CLI arguments not recognized
-**Solution:** Check argparse implementation
-```bash
-python main.py --help
-```
-Should show:
-```
---grouping-method {deterministic,random,hybrid}
---random-groups RANDOM_GROUPS
---density-ratio DENSITY_RATIO
-```
+Record cached and uncached timings, filtered versus unfiltered pool sizes, group
+counts, and coverage. Do not retain unsupported claims such as fixed API counts,
+specific speedups, or 95% type coverage without a reproducible measurement.
 
-### Issue: Groups missing fields
-**Solution:** Check group structure in visualizations
-Each group should have:
-- `equipments` - list of Equipment objects
-- `shared_resources_count` - int
-- `sharing_efficiency` - float (0-1)
-- `total_ingredients` - dict
-- `selection_method` - "random" or "deterministic"
-- `seed_equipment_id` - int (random only)
-- `randomness_seed` - int or None
+## Open Decisions
 
----
+- Should the public default remain `hybrid`, or become the deterministic mode
+  described by the original quick start?
+- Should hybrid results be de-duplicated before being returned?
+- Should live API and browser checks become automated CI tests?
 
-## 📈 Performance Expectations
+## Status
 
-**Random grouping is FAST:**
-- Equipment filtering: < 1 second
-- Random group generation: O(n * m) where n=equipment, m=groups
-  - 200 equipment, 10 groups: ~1-2 seconds
-  - 200 equipment, 50 groups: ~5-10 seconds
-
-**Compared to deterministic:**
-- Deterministic: 10-30 seconds (builds full graph)
-- Random: 1-5 seconds (just selection + filtering)
-
----
-
-## 🎓 Learning & Experimentation
-
-After getting it working, try:
-
-1. **Parameter Tuning Journal**
-   - Document what density ratio gives good results
-   - Note which equipment types get filtered
-   - Track group quality by efficiency scores
-
-2. **Feature Ideas for Future**
-   - Save favorite parameter sets to config.py
-   - Add visualization of filtered vs unfiltered pools
-   - Show seed equipment highlighted in group pages
-   - Add reproducibility seed parameter
-
-3. **Data Analysis**
-   - Generate many random groups and analyze patterns
-   - Compare deterministic + random results
-   - Check if random discovers different combinations
-
----
-
-## 📞 Questions to Answer After Testing
-
-1. **Does density filtering make sense?**
-   - Are filtered groups higher quality?
-   - Is the fallback mechanism helpful?
-
-2. **Is random group selection useful?**
-   - Do random groups find interesting combinations?
-   - How many groups do we need for good variety?
-
-3. **Should we change defaults?**
-   - Is 0.15 density ratio good?
-   - Are 10 random groups enough?
-
-4. **Is hybrid mode the sweet spot?**
-   - Does it combine best of both approaches?
-   - What's the right supplementation threshold?
-
----
-
-## 🎉 You're Ready!
-
-All code is:
-- ✅ Syntactically valid
-- ✅ Properly imported and exported
-- ✅ Documented with docstrings
-- ✅ Following project patterns
-- ✅ Backward compatible
-
-**Next:** Run the test scenarios above and report results!
-
----
-
-## 📝 Files to Reference
-
-- Quick start guide: [RANDOM_GROUPING_QUICK_START.md](RANDOM_GROUPING_QUICK_START.md)
-- Implementation details: [IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md)
-- Code structure: [CODE_STRUCTURE.md](CODE_STRUCTURE.md)
-- Original plan: [RANDOM_GROUPING_PLAN.md](RANDOM_GROUPING_PLAN.md)
-
+- Step 1 baseline commands: complete.
+- Step 2 offline coverage: complete with 5 new tests.
+- Step 3 CLI validation and random-seed support: complete.
+- Step 3 default-method decision: documented as `hybrid`; the Makefile's
+  explicit committee target remains a separate tuned workflow.
+- Step 4 live data checks: complete, with the measured limitations above.
+- Step 5 report verification: complete for the index, group pages, ingredient
+  names, and equipment links.
+- Step 6 measurement remains a gate for a production-readiness claim.
