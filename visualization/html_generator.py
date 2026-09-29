@@ -4,9 +4,12 @@ Responsible for building complete HTML pages from group data, including
 equipment galleries, ingredient tables, and summary statistics.
 """
 import html
+import json
 import shutil
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from uuid import uuid4
 
 from models import Equipment
 from processing.valuation.focus import break_density
@@ -24,7 +27,9 @@ class HTMLGenerator:
     - Static CSS/JS files for caching and maintainability
     """
     
-    def __init__(self, output_dir: str = "visualizations"):
+    def __init__(
+        self, output_dir: str = "visualizations", manifest: Dict[str, Any] | None = None
+    ):
         """Initialize generator.
         
         Args:
@@ -33,6 +38,7 @@ class HTMLGenerator:
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True)
         self.static_dir = self.output_dir / "static"
+        self.manifest = manifest or {}
 
     def generate_exploration_shortlist(
         self, candidates: list[ExplorationCandidate]
@@ -453,6 +459,9 @@ class HTMLGenerator:
             cards_html = self._build_group_cards(groups)
         
         summary_stats = self._build_index_summary(groups)
+        report_id = self._escape_html(self.manifest.get("run_id", "unidentified"))
+        scope = self.manifest.get("scope", {})
+        scope_text = self._escape_html(scope.get("summary", "Scope not recorded"))
         
         html_content = f"""<!DOCTYPE html>
 <html lang="en">
@@ -470,6 +479,7 @@ class HTMLGenerator:
         <div class="container-full">
             <h1>⚔️ Equipment Crafting Groups</h1>
             <p>Optimized equipment combinations for efficient crafting</p>
+            <p class="report-meta">Report <code>{report_id}</code> | {scope_text}</p>
             {summary_stats}
         </div>
     </header>
@@ -617,6 +627,8 @@ class HTMLGenerator:
         """
         files = []
         ranked_groups = self._rank_groups_for_crafting(groups)
+        manifest_path = self.write_manifest()
+        files.append(manifest_path)
         
         # Copy static files first
         self._copy_static_files()
@@ -629,8 +641,22 @@ class HTMLGenerator:
         # Generate index page
         index_filepath = self.save_index_page(ranked_groups)
         files.append(index_filepath)
-        
+
         return files
+
+    def write_manifest(self) -> str:
+        """Write the machine-readable metadata beside the generated report."""
+        payload = {
+            **self.manifest,
+            "run_id": self.manifest.get("run_id", uuid4().hex[:12]),
+            "generated_at": self.manifest.get(
+                "generated_at", datetime.now(timezone.utc).isoformat()
+            ),
+        }
+        path = self.output_dir / "manifest.json"
+        path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+        self.manifest = payload
+        return str(path)
 
     @staticmethod
     def _rank_groups_for_crafting(groups: List[Dict[str, Any]]) -> List[Dict[str, Any]]:

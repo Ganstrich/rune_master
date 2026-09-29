@@ -15,10 +15,10 @@ import sys
 import time
 import argparse
 import webbrowser
-from dataclasses import replace
+from dataclasses import asdict, fields, is_dataclass, replace
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
-from typing import List
+from typing import Any, List
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.resolve()
@@ -170,13 +170,53 @@ def process_equipment(
     return groups
 
 
-def generate_visualizations(groups: List[dict], output_dir: str = "visualizations") -> str:
+def _json_safe(value: Any) -> Any:
+    """Convert configuration values into JSON-compatible primitives."""
+    if is_dataclass(value):
+        return {key: _json_safe(item) for key, item in asdict(value).items()}
+    if isinstance(value, dict):
+        return {str(key): _json_safe(item) for key, item in value.items()}
+    if isinstance(value, (set, tuple, list)):
+        return [_json_safe(item) for item in value]
+    return value
+
+
+def build_run_manifest(
+    processing_config: ProcessingConfig,
+    cli_overrides: dict[str, Any],
+    scope: dict[str, Any] | None = None,
+    cache_status: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Build reproducibility metadata without including API payloads or secrets."""
+    effective_scope = scope or {
+        "min_level": Config.MIN_LEVEL,
+        "max_level": Config.MAX_LEVEL,
+        "item_types": list(Config.ITEM_TYPES),
+    }
+    effective_scope["summary"] = (
+        f"Levels {effective_scope['min_level']}-{effective_scope['max_level']}; "
+        f"types: {', '.join(effective_scope['item_types'])}"
+    )
+    return {
+        "grouping_method": processing_config.grouping_method,
+        "processing_config": _json_safe(processing_config),
+        "cli_overrides": _json_safe(cli_overrides),
+        "scope": _json_safe(effective_scope),
+        "source": {"api": "DofusAPI", "cache": _json_safe(cache_status or {"status": "unavailable"})},
+    }
+
+
+def generate_visualizations(
+    groups: List[dict],
+    output_dir: str = "visualizations",
+    manifest: dict[str, Any] | None = None,
+) -> str:
     """Generate HTML visualizations for equipment groups."""
     print("\n" + "="*60)
     print("🎨 GENERATING VISUALIZATIONS")
     print("="*60)
 
-    gen = HTMLGenerator(output_dir=output_dir)
+    gen = HTMLGenerator(output_dir=output_dir, manifest=manifest)
     print(f"\n📝 Generating {len(groups)} group pages...")
     start_time = time.time()
 
@@ -265,7 +305,11 @@ def main():
             print("\n⚠️  No groups generated.")
             sys.exit(1)
 
-        index_path = generate_visualizations(groups)
+        manifest = build_run_manifest(
+            processing_config,
+            {key: value for key, value in vars(args).items() if value not in (None, False)},
+        )
+        index_path = generate_visualizations(groups, manifest=manifest)
 
         if args.no_serve:
             print(f"\n✅ Report ready at: {os.path.abspath(index_path)}")

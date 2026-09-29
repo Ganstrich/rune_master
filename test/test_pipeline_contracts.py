@@ -1,6 +1,7 @@
 """Offline contract tests for the grouping pipeline."""
 
 from pathlib import Path
+import json
 
 import pytest
 
@@ -151,3 +152,21 @@ def test_visualization_ranks_groups_by_crafting_evidence(tmp_path: Path) -> None
     assert "group_001.html" in index_html
     assert "Offline Equipment 3" in (tmp_path / "group_001.html").read_text(encoding="utf-8")
     assert "Offline Equipment 1" in (tmp_path / "group_002.html").read_text(encoding="utf-8")
+
+
+def test_visualization_writes_reproducible_manifest(tmp_path: Path) -> None:
+    """The report records supplied run identity and scope without API payloads."""
+    manifest = {
+        "run_id": "fixed-run",
+        "generated_at": "2026-09-30T00:00:00+00:00",
+        "grouping_method": "deterministic",
+        "scope": {"summary": "Levels 50-100; types: ring"},
+    }
+
+    HTMLGenerator(output_dir=str(tmp_path), manifest=manifest).generate_all([])
+
+    saved = json.loads((tmp_path / "manifest.json").read_text(encoding="utf-8"))
+    assert saved == manifest
+    index_html = (tmp_path / "index.html").read_text(encoding="utf-8")
+    assert "fixed-run" in index_html
+    assert "Levels 50-100; types: ring" in index_html
