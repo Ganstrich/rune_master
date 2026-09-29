@@ -485,9 +485,23 @@ class HTMLGenerator:
     </header>
     
     <main id="main" class="container">
+        <div class="index-controls" aria-label="Filter and sort groups">
+            <label class="sr-only" for="group-search">Filter groups</label>
+            <input id="group-search" class="search-box" type="search" placeholder="Filter groups" />
+            <label class="sr-only" for="group-sort">Sort groups</label>
+            <select id="group-sort" class="sort-select">
+                <option value="default">Default ranking</option>
+                <option value="efficiency">Sharing efficiency</option>
+                <option value="density">Average density</option>
+                <option value="size">Group size</option>
+                <option value="resources">Shared resources</option>
+            </select>
+            <button id="group-reset" class="btn btn-secondary" type="button">Reset</button>
+        </div>
         <div class="groups-container">
             {cards_html}
         </div>
+        <p id="group-empty-state" class="no-results" role="status" hidden>No groups match this filter.</p>
     </main>
     
     <footer style="text-align: center; padding: 2rem; color: var(--color-gray-500); border-top: 1px solid var(--border-color); background: var(--bg-card);">
@@ -525,7 +539,9 @@ class HTMLGenerator:
                 equip_list += f", +{len(equipments) - 5} more"
             
             cards.append(f"""
-            <div class="group-card" data-rank="{idx + 1}" data-group-file="group_{idx + 1:03d}.html">
+            <div class="group-card" data-rank="{idx + 1}" data-group-file="group_{idx + 1:03d}.html"
+                data-efficiency="{efficiency}" data-density="{average_density}"
+                data-size="{len(equipments)}" data-resources="{shared_resources}">
                 <div class="group-card-header">
                     <div class="group-card-rank">Rank {idx + 1}{' - Highest-ranked' if idx == 0 else ''}</div>
                     <h3 class="group-card-title">Group {idx + 1}</h3>

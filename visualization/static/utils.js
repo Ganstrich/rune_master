@@ -122,6 +122,43 @@ function toggleElement(elementId) {
     }
 }
 
+function updateGroupCards() {
+    const container = document.querySelector('.groups-container');
+    if (!container) return;
+
+    const cards = Array.from(container.querySelectorAll('.group-card'));
+    const term = (document.getElementById('group-search')?.value || '').toLowerCase();
+    const sort = document.getElementById('group-sort')?.value || 'default';
+    const metric = {
+        efficiency: 'efficiency',
+        density: 'density',
+        size: 'size',
+        resources: 'resources',
+    }[sort];
+
+    cards.forEach(card => {
+        card.hidden = term !== '' && !card.textContent.toLowerCase().includes(term);
+    });
+    cards.sort((a, b) => {
+        if (!metric) return Number(a.dataset.rank) - Number(b.dataset.rank);
+        const difference = Number(b.dataset[metric]) - Number(a.dataset[metric]);
+        return difference || Number(a.dataset.rank) - Number(b.dataset.rank);
+    });
+    cards.forEach(card => container.appendChild(card));
+
+    const visible = cards.filter(card => !card.hidden).length;
+    const emptyState = document.getElementById('group-empty-state');
+    if (emptyState) emptyState.hidden = visible !== 0;
+}
+
+function resetGroupControls() {
+    const search = document.getElementById('group-search');
+    const sort = document.getElementById('group-sort');
+    if (search) search.value = '';
+    if (sort) sort.value = 'default';
+    updateGroupCards();
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     // Add click listeners to equipment names
@@ -149,4 +186,11 @@ document.addEventListener('DOMContentLoaded', function() {
             filterIngredients(e.target.value);
         });
     }
+
+    const groupSearch = document.getElementById('group-search');
+    const groupSort = document.getElementById('group-sort');
+    const groupReset = document.getElementById('group-reset');
+    if (groupSearch) groupSearch.addEventListener('input', updateGroupCards);
+    if (groupSort) groupSort.addEventListener('change', updateGroupCards);
+    if (groupReset) groupReset.addEventListener('click', resetGroupControls);
 });
