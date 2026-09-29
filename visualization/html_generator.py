@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional
 
 from models import Equipment
 from processing.valuation.focus import break_density
+from processing.exploration import ExplorationCandidate
 
 
 class HTMLGenerator:
@@ -32,6 +33,25 @@ class HTMLGenerator:
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True)
         self.static_dir = self.output_dir / "static"
+
+    def generate_exploration_shortlist(
+        self, candidates: list[ExplorationCandidate]
+    ) -> Path:
+        """Write a compact shortlist page with the manual-record command."""
+        rows = "".join(
+            f"<tr><td>{candidate.item_name}</td><td>{candidate.theoretical_break_density:.2f}</td>"
+            f"<td>{candidate.observation_count}</td><td>{candidate.exploration_score:.2f}</td>"
+            f"<td><code>{candidate.record_command}</code></td></tr>"
+            for candidate in candidates
+        )
+        path = self.output_dir / "exploration-shortlist.html"
+        path.write_text(
+            "<h1>Break exploration shortlist</h1><table>"
+            "<tr><th>Item</th><th>Density</th><th>Observations</th>"
+            f"<th>Score</th><th>Record</th></tr>{rows}</table>",
+            encoding="utf-8",
+        )
+        return path
     
     def _copy_static_files(self):
         """Copy static CSS and JS files to output directory.

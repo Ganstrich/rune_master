@@ -307,6 +307,11 @@ runes received, and observed density so taux can be computed later.
 It reports confidence and an exploration bonus; unseen items use the prior and
 are never treated as zero-value.
 
+`processing.exploration.rank_exploration()` ranks items by theoretical density
+per recipe unit, expected taux, and exploration bonus. The HTML generator and
+`exploration_shortlist.py` expose the same candidates, including a direct
+manual-record command.
+
 ## Genetic Expert
 
 The genetic expert first builds or reuses the same filtered Jaccard similarity

@@ -72,13 +72,13 @@ proceed first.
 | [30-break-log.done.md](30-break-log.done.md) | Ship early. Manual entry, no capture needed |
 | [31-break-outcome-capture.done.md](31-break-outcome-capture.done.md) | Blocked on capture |
 | [32-taux-model.done.md](32-taux-model.done.md) | Needs logged history |
-| [33-exploration-shortlist.md](33-exploration-shortlist.md) | Useful from the first observation |
+| [33-exploration-shortlist.done.md](33-exploration-shortlist.done.md) | Useful from the first observation |
 
 ## The Manual Path
 
 Phase 3 does **not** depend on capture. Observed break density can be entered by
 hand into `break_log` with a timestamp ([30-break-log.done.md](30-break-log.done.md)), and
-[33-exploration-shortlist.md](33-exploration-shortlist.md) turns that into a
+[33-exploration-shortlist.done.md](33-exploration-shortlist.done.md) turns that into a
 ranked list of items worth testing next. Capture
 ([31-break-outcome-capture.done.md](31-break-outcome-capture.done.md)) later removes the
 typing, not the capability.
