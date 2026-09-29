@@ -7,8 +7,8 @@ rather than re-scoring them or rebuilding from scratch.
 
 ## Depends On
 
-[22-profit-objective.md](22-profit-objective.md),
-[04-experts-consume-objective.md](04-experts-consume-objective.md)
+[22-profit-objective.done.md](22-profit-objective.done.md),
+[04-experts-consume-objective.done.md](04-experts-consume-objective.done.md)
 
 ## Scope
 
@@ -18,7 +18,7 @@ rather than re-scoring them or rebuilding from scratch.
   leave the neighbourhood of the theory groups.
 - Run evolution with `ProfitObjective` injected. No expert code changes are
   required; this is the payoff of
-  [04-experts-consume-objective.md](04-experts-consume-objective.md).
+  [04-experts-consume-objective.done.md](04-experts-consume-objective.done.md).
 - Add a re-evaluation entry point that takes a stored portfolio and evolves it
   against current prices.
 - Record provenance on each group: theory-only, evolved, or newly discovered.

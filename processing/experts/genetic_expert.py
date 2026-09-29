@@ -34,6 +34,7 @@ class GeneticGroupingExpert(GroupingExpert):
         stagnation_limit: int = 15,
         objective: Optional[GroupObjective] = None,
         policy: Optional[GroupAcceptancePolicy] = None,
+        initial_groups: Optional[List[Dict[str, Any]]] = None,
     ):
         super().__init__("GeneticExpert", cache_manager, api_client, objective, policy)
         self.population_size = population_size
@@ -41,6 +42,26 @@ class GeneticGroupingExpert(GroupingExpert):
         self.mutation_rate = mutation_rate
         self.elite_count = elite_count
         self.stagnation_limit = stagnation_limit
+        self.initial_groups = initial_groups or []
+        self.provenance = "newly_discovered"
+
+    def evolve_portfolio(
+        self,
+        portfolio: List[Dict[str, Any]],
+        config: ProcessingConfig,
+        objective: Optional[GroupObjective] = None,
+    ) -> List[Dict[str, Any]]:
+        """Re-evaluate and evolve a stored portfolio under current prices."""
+        self.initial_groups = portfolio
+        self.provenance = "evolved"
+        if objective is not None:
+            self.objective = objective
+        equipment_by_id = {
+            equipment.ankama_id: equipment
+            for group in portfolio
+            for equipment in group.get("equipments", [])
+        }
+        return self.discover_groups(list(equipment_by_id.values()), config)
 
     def discover_groups(
         self,
@@ -181,6 +202,7 @@ class GeneticGroupingExpert(GroupingExpert):
             if GroupAcceptancePolicy(config).accepts(group_data):
                 group_data["expert_name"] = self.name
                 group_data["selection_method"] = "genetic"
+                group_data["provenance"] = self.provenance
                 final_groups.append(group_data)
 
         return final_groups
@@ -195,7 +217,13 @@ class GeneticGroupingExpert(GroupingExpert):
         """Create initial individuals from connected graph neighborhoods."""
         del resource_sets
         population = []
+        for group in self.initial_groups[: self.population_size]:
+            group_items = set(group.get("equipments", []))
+            if group_items:
+                population.append([group_items])
         for _ in range(self.population_size):
+            if len(population) >= self.population_size:
+                break
             population.append(self._create_graph_individual(graph, eq_by_id, config))
         return population
 

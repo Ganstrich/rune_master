@@ -184,6 +184,9 @@ quantities by equipment ID. Missing resource metadata falls back to
 
 Expert metadata:
 
+Genetic groups additionally include `provenance`, set to `evolved` for
+warm-started re-evaluation and `newly_discovered` for cold-start search.
+
 | Source | Additional fields |
 | --- | --- |
 | Deterministic | `selection_method="deterministic"`, `expert_name="GraphExpert"` |
