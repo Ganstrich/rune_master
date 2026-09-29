@@ -9,6 +9,8 @@ implemented in this repository.
 - **price_ingestion.py** validates OCR-like rows, resolves known item names,
 	rejects low-confidence prices, and writes capture/manual observations to
 	`price_cache`.
+- **break_ingestion.py** validates known rune types and positive quantities,
+  then appends accepted break outcomes to `break_log` with `source="capture"`.
 - **debug_capture.py** is retained as a historical debug script; it does not
 	imply that screen automation is available.
 
