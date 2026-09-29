@@ -15,7 +15,7 @@ import sys
 import time
 import argparse
 import webbrowser
-from dataclasses import asdict, fields, is_dataclass, replace
+from dataclasses import asdict, is_dataclass, replace
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 from typing import Any, List
@@ -24,7 +24,7 @@ from typing import Any, List
 PROJECT_ROOT = Path(__file__).parent.resolve()
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from config import Config
+from config import ALL_CRAFTABLE_TYPES, Config
 from data import DofusAPIClient, CacheManager, EquipmentLoader
 from models import Equipment
 from processing import RuneMaster, ProcessingConfig
@@ -48,11 +48,73 @@ def nonnegative_float(value: str) -> float:
     return parsed
 
 
-def load_equipment(processing_config: ProcessingConfig) -> tuple:
+def item_types(value: str) -> list[str]:
+    """Parse a comma-separated list of supported craftable item types."""
+    parsed = [item.strip() for item in value.split(",") if item.strip()]
+    unsupported = sorted(set(parsed) - set(ALL_CRAFTABLE_TYPES))
+    if not parsed or unsupported:
+        choices = ", ".join(ALL_CRAFTABLE_TYPES)
+        detail = f" unsupported: {', '.join(unsupported)}." if unsupported else ""
+        raise argparse.ArgumentTypeError(f"item types must be from {choices}.{detail}")
+    if len(parsed) != len(set(parsed)):
+        raise argparse.ArgumentTypeError("item types must not contain duplicates")
+    return parsed
+
+
+def validate_scope(min_level: int, max_level: int, selected_types: list[str]) -> None:
+    """Validate cross-field scope constraints before network work begins."""
+    if min_level > max_level:
+        raise ValueError("--min-level must be less than or equal to --max-level")
+    if not selected_types:
+        raise ValueError("at least one item type is required")
+
+
+def build_parser() -> argparse.ArgumentParser:
+    """Build the CLI parser separately so scope validation stays offline-testable."""
+    parser = argparse.ArgumentParser(description="RuneMaster: Equipment Group Discovery")
+    parser.add_argument(
+        "--grouping-method",
+        choices=["deterministic", "random", "hybrid", "committee", "genetic", "evolutionary_committee"],
+    )
+    parser.add_argument("--random-groups", type=positive_int, help="Number of random groups to generate")
+    parser.add_argument("--density-ratio", type=nonnegative_float, help="Density/level ratio filter")
+    parser.add_argument("--random-seed", type=int, help="Seed for reproducible random grouping")
+    parser.add_argument("--min-level", type=positive_int, default=Config.MIN_LEVEL)
+    parser.add_argument("--max-level", type=positive_int, default=Config.MAX_LEVEL)
+    parser.add_argument("--item-types", type=item_types, default=list(Config.ITEM_TYPES))
+    parser.add_argument("--tune", action="store_true", help="Search for best grouping parameters")
+    parser.add_argument("--no-serve", action="store_true", help="Generate reports without starting server")
+    return parser
+
+
+def parse_args(arguments: list[str] | None = None) -> argparse.Namespace:
+    """Parse and validate CLI arguments without invoking the network."""
+    parser = build_parser()
+    args = parser.parse_args(arguments)
+    try:
+        validate_scope(args.min_level, args.max_level, args.item_types)
+    except ValueError as error:
+        parser.error(str(error))
+    return args
+
+
+def load_equipment(
+    processing_config: ProcessingConfig, scope: dict[str, Any] | None = None
+) -> tuple:
     """Load equipment from API with caching."""
     print("\n" + "="*60)
     print("📦 LOADING EQUIPMENT")
     print("="*60)
+
+    effective_scope = scope or {
+        "min_level": Config.MIN_LEVEL,
+        "max_level": Config.MAX_LEVEL,
+        "item_types": list(Config.ITEM_TYPES),
+    }
+    print(
+        f"\n🔎 Scope: levels {effective_scope['min_level']}-{effective_scope['max_level']}; "
+        f"types: {', '.join(effective_scope['item_types'])}"
+    )
 
     # Initialize cache and API
     cache = CacheManager(cache_file=Config.CACHE_FILE)
@@ -64,7 +126,11 @@ def load_equipment(processing_config: ProcessingConfig) -> tuple:
     start_time = time.time()
 
     try:
-        raw_equipments = api.get_all_equipments()
+        raw_equipments = api.get_all_equipments(
+            item_types=effective_scope["item_types"],
+            min_level=effective_scope["min_level"],
+            max_level=effective_scope["max_level"],
+        )
         equipments = loader.from_raw_batch(raw_equipments, processing_config=processing_config)
     except Exception as e:
         print(f"\n❌ Error loading equipment: {e}")
@@ -258,29 +324,7 @@ def start_server(port: int = 8000) -> tuple:
 
 def main():
     """Main entry point."""
-    parser = argparse.ArgumentParser(description="RuneMaster: Equipment Group Discovery")
-    parser.add_argument(
-        "--grouping-method",
-        choices=["deterministic", "random", "hybrid", "committee", "genetic", "evolutionary_committee"],
-    )
-    parser.add_argument(
-        "--random-groups",
-        type=positive_int,
-        help="Number of random groups to generate",
-    )
-    parser.add_argument(
-        "--density-ratio",
-        type=nonnegative_float,
-        help="Density/level ratio filter",
-    )
-    parser.add_argument(
-        "--random-seed",
-        type=int,
-        help="Seed for reproducible random grouping",
-    )
-    parser.add_argument("--tune", action="store_true", help="Search for best grouping parameters")
-    parser.add_argument("--no-serve", action="store_true", help="Generate reports without starting server")
-    args = parser.parse_args()
+    args = parse_args()
 
     print("\n 🔥 RUNEMASTER - GROUP DISCOVERY 🔥 \n")
 
@@ -295,8 +339,14 @@ def main():
     if args.random_seed is not None:
         processing_config.random_seed = args.random_seed
 
+    scope = {
+        "min_level": args.min_level,
+        "max_level": args.max_level,
+        "item_types": args.item_types,
+    }
+
     try:
-        equipments, cache_manager, api_client = load_equipment(processing_config)
+        equipments, cache_manager, api_client = load_equipment(processing_config, scope)
         groups = process_equipment(
             equipments, processing_config, cache_manager, api_client, args.tune
         )
@@ -308,6 +358,7 @@ def main():
         manifest = build_run_manifest(
             processing_config,
             {key: value for key, value in vars(args).items() if value not in (None, False)},
+            scope=scope,
         )
         index_path = generate_visualizations(groups, manifest=manifest)
 

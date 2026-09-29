@@ -5,6 +5,8 @@ import json
 
 import pytest
 
+from data.api_client import DofusAPIClient
+from main import parse_args
 from models import Equipment, ResourceRequirement
 from processing import ProcessingConfig, RuneMaster
 from processing.equipment_filter import EquipmentFilteringStrategy
@@ -189,3 +191,33 @@ def test_visualization_exposes_id_based_combined_recipe_data(tmp_path: Path) -> 
     assert '"id": "1"' in index_html
     assert '"100": {"name": "Shared Ore"' in index_html
     assert "recipe requirement summary" in index_html.lower()
+
+
+def test_scope_cli_parses_and_rejects_invalid_ranges() -> None:
+    """Scope validation happens before any equipment-loading call."""
+    args = parse_args(["--min-level", "80", "--max-level", "120", "--item-types", "ring,sword"])
+    assert args.min_level == 80
+    assert args.max_level == 120
+    assert args.item_types == ["ring", "sword"]
+
+    with pytest.raises(SystemExit):
+        parse_args(["--min-level", "121", "--max-level", "120"])
+    with pytest.raises(SystemExit):
+        parse_args(["--item-types", "unknown"])
+
+
+def test_api_query_receives_effective_scope(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The API request includes the configured levels and item types."""
+    captured: dict[str, object] = {}
+    client = DofusAPIClient()
+
+    def request(endpoint: str, params: dict[str, object]) -> dict[str, object]:
+        captured.update(params)
+        return {"items": []}
+
+    monkeypatch.setattr(client, "_make_request", request)
+    client.get_all_equipments(item_types=["ring"], min_level=80, max_level=120)
+
+    assert captured["filter[min_level]"] == 80
+    assert captured["filter[max_level]"] == 120
+    assert captured["filter[type.name_id]"] == "ring"
