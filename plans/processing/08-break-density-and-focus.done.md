@@ -8,7 +8,7 @@ and no coefficient.
 
 ## Depends On
 
-[07-rune-density-relocation.md](07-rune-density-relocation.md)
+[07-rune-density-relocation.done.md](07-rune-density-relocation.done.md)
 
 ## Scope
 

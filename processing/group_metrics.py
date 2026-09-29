@@ -6,6 +6,7 @@ from typing import Any, Dict, Iterable, List, Set
 from models import Equipment
 from processing.blocks.recipes import iter_recipe
 from processing.quality_metrics import GroupQualityEvaluator, GroupQualityWeights
+from processing.valuation.focus import break_density
 
 
 class GroupMetrics:
@@ -143,6 +144,10 @@ class GroupMetrics:
                 equipments, excluded_resource_ids
             ),
             "average_density": GroupMetrics.average_density(equipments),
+            "break_density": {
+                int(equipment.ankama_id): break_density(equipment)
+                for equipment in equipments
+            },
             "total_ingredients": total_ingredients,
             "unique_ingredients_count": len(total_ingredients),
             "total_items_needed": sum(

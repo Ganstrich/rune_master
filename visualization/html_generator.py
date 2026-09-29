@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from models import Equipment
+from processing.valuation.focus import break_density
 
 
 class HTMLGenerator:
@@ -181,6 +182,7 @@ class HTMLGenerator:
                 stat_weight = equipment.get('stat_weight', 0)
             else:
                 stat_weight = getattr(equipment, 'stat_weight', 0)
+            item_break_density = break_density(equipment) if isinstance(equipment, Equipment) else 0.0
             
             if image_url:
                 img_html = f'<img class="equipment-item-image" src="{self._escape_html(image_url)}" alt="{name}">'
@@ -193,6 +195,7 @@ class HTMLGenerator:
                 <div class="equipment-item-name" data-copy-text="{self._escape_html(name)}">{name}</div>
                 <div class="text-tiny text-muted">Lvl {level}</div>
                 <div class="equipment-item-weight">⚖️ {stat_weight:.1f}</div>
+                <div class="text-tiny text-muted">Break density {item_break_density:.1f}</div>
             </div>
             """)
         

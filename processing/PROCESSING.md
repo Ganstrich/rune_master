@@ -160,6 +160,7 @@ All experts ultimately produce the following common fields:
     "total_shared_resources": set[int],
     "sharing_efficiency": float,
     "average_density": float,
+   "break_density": dict[int, float],
     "total_ingredients": dict[int, dict],
     "unique_ingredients_count": int,
     "total_items_needed": int,
@@ -170,7 +171,8 @@ All experts ultimately produce the following common fields:
 ```
 
 `average_density` is the mean of `stat_weight / level` for equipment having a
-positive level and a non-`None` weight. `total_items_needed` is the sum of all
+positive level and a non-`None` weight. `break_density` contains the verified
+per-item rune density from the valuation layer. `total_items_needed` is the sum of all
 ingredient quantities. Each ingredient record contains its display name,
 image URL when cached, total quantity, equipment names, quantities by name, and
 quantities by equipment ID. Missing resource metadata falls back to
