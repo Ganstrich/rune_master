@@ -515,7 +515,7 @@ class HTMLGenerator:
                 equip_list += f", +{len(equipments) - 5} more"
             
             cards.append(f"""
-            <div class="group-card">
+            <div class="group-card" data-rank="{idx + 1}" data-group-file="group_{idx + 1:03d}.html">
                 <div class="group-card-header">
                     <div class="group-card-rank">Rank {idx + 1}{' - Highest-ranked' if idx == 0 else ''}</div>
                     <h3 class="group-card-title">Group {idx + 1}</h3>
