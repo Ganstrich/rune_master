@@ -76,6 +76,13 @@ class ProcessingConfig:
         1  # Min absolute shared resources for edge (independent of ratio)
     )
     graph_min_component_size: int = 2  # MIN_CLUSTER_SIZE
+    # Damps edges between items of the same panoplie so Louvain stops
+    # rediscovering sets as communities. 1.0 disables the correction.
+    same_set_edge_discount: float = 1.0
+
+    # Greedy objective-driven expert
+    greedy_candidate_limit: int = 25  # Candidates scored per growth step
+    greedy_seed_limit: int = 0  # Seeds to expand; zero uses the whole pool
 
     # Community detection
     algorithm: str = "louvain"  # "louvain", "bilouvain", or "none"

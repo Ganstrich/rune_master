@@ -161,6 +161,7 @@ class RuneMaster:
             min_shared_ratio=self.config.graph_min_shared_ratio,
             min_shared_count=self.config.graph_min_shared_count,
             min_component_size=self.config.graph_min_component_size,
+            same_set_edge_discount=self.config.same_set_edge_discount,
         )
 
         all_potential_groups = []
@@ -234,6 +235,7 @@ class RuneMaster:
             min_shared_ratio=self.config.graph_min_shared_ratio,
             min_shared_count=self.config.graph_min_shared_count,
             min_component_size=self.config.graph_min_component_size,
+            same_set_edge_discount=self.config.same_set_edge_discount,
         )
 
         if shared_graph.number_of_nodes() == 0:

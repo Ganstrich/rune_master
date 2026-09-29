@@ -93,6 +93,7 @@ class GeneticGroupingExpert(GroupingExpert):
                 min_shared_ratio=config.graph_min_shared_ratio,
                 min_shared_count=config.graph_min_shared_count,
                 min_component_size=config.graph_min_component_size,
+                same_set_edge_discount=config.same_set_edge_discount,
             )
 
         if graph.number_of_nodes() == 0:
