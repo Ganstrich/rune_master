@@ -58,7 +58,7 @@ expected profit rather than by recipe overlap.
 $\tau$ is held constant here, and it is the dominant term with a 1% to 4000%
 range. Ranking by profit with a flat $\tau$ ranks by *theoretical* profit and
 will be confidently wrong about which items are actually worth breaking. Label
-the output accordingly until [32-taux-model.md](32-taux-model.md) lands.
+the output accordingly until [32-taux-model.done.md](32-taux-model.done.md) lands.
 
 The fallback to overlap must be explicit in reports. A user cannot distinguish a
 kama-denominated ranking from an overlap ranking by looking at group membership

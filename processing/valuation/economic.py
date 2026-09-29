@@ -9,6 +9,7 @@ from processing.valuation.focus import best_focus, break_density_focused
 from processing.valuation.objective import GroupCandidate
 from processing.valuation.overlap import OverlapObjective
 from processing.valuation.prices import PriceSource
+from processing.valuation.taux import TauxModel
 
 
 @dataclass(frozen=True)
@@ -21,6 +22,18 @@ class FlatTauxModel:
         del item
         return self.taux
 
+    def expected(self, item_id: int, planned_volume: int) -> float:
+        del item_id, planned_volume
+        return self.taux
+
+    def confidence(self, item_id: int) -> float:
+        del item_id
+        return 0.0
+
+    def exploration_bonus(self, item_id: int) -> float:
+        del item_id
+        return 0.0
+
 
 class ProfitObjective:
     """Rank groups by theoretical kamas profit with an overlap fallback."""
@@ -28,7 +41,7 @@ class ProfitObjective:
     def __init__(
         self,
         price_source: PriceSource,
-        taux_model: FlatTauxModel | None = None,
+        taux_model: TauxModel | FlatTauxModel | None = None,
         acquisition_cost: float = 0.0,
         fallback: OverlapObjective | None = None,
     ) -> None:
@@ -39,7 +52,7 @@ class ProfitObjective:
 
     def _item_value(
         self, item: Equipment
-    ) -> tuple[float, str] | None:
+    ) -> tuple[float, str, float] | None:
         rho: dict[str, float] = {}
         for effect in getattr(item, "effects", []) or []:
             stat = getattr(effect, "stat_name", "")
@@ -55,34 +68,41 @@ class ProfitObjective:
         focus = best_focus(item, rho)
         if focus is None:
             return None
-        revenue = self.taux_model.estimate(item) * break_density_focused(item, focus) * rho[focus]
+        if hasattr(self.taux_model, "expected"):
+            taux = self.taux_model.expected(item.ankama_id, 1)
+        else:
+            taux = self.taux_model.estimate(item)
+        revenue = taux * break_density_focused(item, focus) * rho[focus]
         craft_cost = 0.0
         for resource_id, quantity in iter_recipe(item):
             price = self.price_source.resource_price(resource_id)
             if price is None:
                 return None
             craft_cost += quantity * price
-        return revenue - craft_cost, focus
+        return revenue - craft_cost, focus, self.taux_model.confidence(item.ankama_id)
 
     def score_details(self, group: GroupCandidate) -> dict[str, object]:
         """Return the score plus focus and partial-price diagnostics."""
         values = 0.0
         focus_by_item: dict[int, str] = {}
+        confidence_by_item: dict[int, float] = {}
         unknown_items: list[int] = []
         for item in group.equipments:
             value = self._item_value(item)
             if value is None:
                 unknown_items.append(item.ankama_id)
                 continue
-            item_value, focus = value
+            item_value, focus, confidence = value
             values += item_value
             focus_by_item[item.ankama_id] = focus
+            confidence_by_item[item.ankama_id] = confidence
         if not focus_by_item:
             return {
                 "score": self.fallback.score(group),
                 "unit": "overlap",
                 "fallback": True,
                 "focus_by_item": {},
+                "confidence_by_item": {},
                 "unknown_items": unknown_items,
             }
         distinct_resources = {
@@ -96,6 +116,7 @@ class ProfitObjective:
             "unit": "kamas",
             "fallback": False,
             "focus_by_item": focus_by_item,
+            "confidence_by_item": confidence_by_item,
             "unknown_items": unknown_items,
         }
 

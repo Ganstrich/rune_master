@@ -71,7 +71,7 @@ proceed first.
 | --- | --- |
 | [30-break-log.done.md](30-break-log.done.md) | Ship early. Manual entry, no capture needed |
 | [31-break-outcome-capture.done.md](31-break-outcome-capture.done.md) | Blocked on capture |
-| [32-taux-model.md](32-taux-model.md) | Needs logged history |
+| [32-taux-model.done.md](32-taux-model.done.md) | Needs logged history |
 | [33-exploration-shortlist.md](33-exploration-shortlist.md) | Useful from the first observation |
 
 ## The Manual Path

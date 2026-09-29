@@ -56,5 +56,5 @@ formula but not how density maps to rune quantity, and it states that yield also
 depends on item level while the formula has no explicit level term
 ([../../docs/01-domain-model.md](../../docs/01-domain-model.md)). This plan
 implements only the **verified** density formulas. Do not add a count conversion
-here; that belongs in [32-taux-model.md](32-taux-model.md) where it can be
+here; that belongs in [32-taux-model.done.md](32-taux-model.done.md) where it can be
 calibrated against observation.

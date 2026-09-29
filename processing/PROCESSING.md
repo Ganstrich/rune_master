@@ -303,6 +303,10 @@ explicitly to the compression overlap score when no item can be valued.
 `python break_log.py` for manual observations; each row stores UTC time, source,
 runes received, and observed density so taux can be computed later.
 
+`PosteriorTauxModel` uses explicit half-life and planned-volume decay constants.
+It reports confidence and an exploration bonus; unseen items use the prior and
+are never treated as zero-value.
+
 ## Genetic Expert
 
 The genetic expert first builds or reuses the same filtered Jaccard similarity
