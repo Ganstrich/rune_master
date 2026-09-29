@@ -41,7 +41,9 @@ def _worker_run_config(
     # Run the master
     master = RuneMaster(equipments, config=config, cache_manager=cache_manager)
 
-    if method == "deterministic":
+    if method == "baseline":
+        master.run_baseline()
+    elif method == "deterministic":
         master.run_deterministic()
     elif method == "random":
         master.run_random_grouping()

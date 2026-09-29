@@ -11,6 +11,7 @@ from processing.config_dataclass import ProcessingConfig
 from processing.experts.genetic_expert import GeneticGroupingExpert
 from processing.experts.graph_expert import GraphGroupingExpert
 from processing.experts.random_expert import RandomGroupingExpert
+from processing.experts.baseline_expert import BaselineExpert
 from processing.graph_builder import GraphBuilder
 from processing.policy import GroupAcceptancePolicy
 from processing.selection import PortfolioSelector, ProcessingReporter
@@ -57,6 +58,9 @@ class RuneMaster:
             "genetic": GeneticGroupingExpert(
                 cache_manager, api_client, objective=self.objective, policy=self.policy
             ),
+            "baseline": BaselineExpert(
+                cache_manager, api_client, self.objective, self.policy
+            ),
         }
 
         # Results
@@ -66,6 +70,12 @@ class RuneMaster:
     def run_all(self) -> List[Dict[str, Any]]:
         """Run the default pipeline (backward compatibility)."""
         return self.run_deterministic()
+
+    def run_baseline(self) -> List[Dict[str, Any]]:
+        """Run the objective-driven baseline expert."""
+        self.groups = self.experts["baseline"].discover_groups(self.equipments, self.config)
+        self.print_summary()
+        return self.groups
 
     def run_deterministic(self) -> List[Dict[str, Any]]:
         """Run pure graph-based grouping."""

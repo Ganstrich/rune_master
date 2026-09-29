@@ -282,6 +282,13 @@ thresholds. It does not de-duplicate overlapping equipment across groups.
 `graph_min_shared_ratio`, `graph_min_shared_count`, and
 `graph_min_component_size` do not affect standalone random grouping.
 
+## Baseline And Comparison Harness
+
+`BaselineExpert` ranks items by break density and greedily packs them using the
+injected objective. `processing.harness.run_comparison()` runs the baseline and
+all named production methods offline, returning group-size, line-item, score,
+portfolio, and runtime columns suitable for JSON persistence.
+
 ## Genetic Expert
 
 The genetic expert first builds or reuses the same filtered Jaccard similarity

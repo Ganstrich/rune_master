@@ -54,7 +54,7 @@ proceed first.
 | [09-compression-term.done.md](09-compression-term.done.md) | **Yes** |
 | [10-shopping-list-constraints.md](10-shopping-list-constraints.md) | **Yes** |
 | [11-value-gate-unification.md](11-value-gate-unification.md) | **Yes** |
-| [12-baseline-harness.md](12-baseline-harness.md) | No |
+| [12-baseline-harness.done.md](12-baseline-harness.done.md) | No |
 
 ## Phase 2 — Prices
 
