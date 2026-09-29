@@ -5,6 +5,7 @@ from processing.experts.base import GroupingExpert
 from processing.config_dataclass import ProcessingConfig
 from processing.equipment_filter import EquipmentFilteringStrategy
 from processing.random_group_builder import RandomGroupBuilder
+from processing.policy import GroupAcceptancePolicy
 
 class RandomGroupingExpert(GroupingExpert):
     """Expert that uses random selection and density filtering to find groups.
@@ -57,14 +58,8 @@ class RandomGroupingExpert(GroupingExpert):
             max_group_size=config.group_max_size,
             avoid_seed_duplicates=True,
         )
-        groups = [
-            group
-            for group in groups
-            if config.group_min_size <= group["group_size"] <= config.group_max_size
-            and group["shared_resources_count"] >= config.group_min_shared_resources
-            and group["sharing_efficiency"] >= config.group_efficiency_threshold
-            and group["quality_score"] >= config.group_quality_threshold
-        ]
+        policy = GroupAcceptancePolicy(config)
+        groups = [group for group in groups if policy.accepts(group)]
 
         # Add metadata
         for group in groups:

@@ -10,6 +10,7 @@ from processing.config_dataclass import ProcessingConfig
 from processing.experts.base import GroupingExpert
 from processing.graph_builder import GraphBuilder
 from processing.group_mapper import GroupMapper
+from processing.policy import GroupAcceptancePolicy
 
 
 class GraphGroupingExpert(GroupingExpert):
@@ -86,6 +87,7 @@ class GraphGroupingExpert(GroupingExpert):
             equipments,
             excluded_resource_ids=config.excluded_resource_ids,
             quality_weights=config.group_quality_weights,
+            acceptance_policy=GroupAcceptancePolicy(config),
         )
 
         if config.use_inclusive_mapping:

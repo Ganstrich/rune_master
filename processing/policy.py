@@ -1,0 +1,51 @@
+"""Single acceptance policy for candidate equipment groups."""
+
+from typing import Any, Mapping
+
+from processing.config_dataclass import ProcessingConfig
+
+
+class GroupAcceptancePolicy:
+    """Apply all configured admissibility thresholds exactly once."""
+
+    def __init__(self, config: ProcessingConfig) -> None:
+        self.min_size = config.group_min_size
+        self.max_size = config.group_max_size
+        self.min_shared_resources = config.group_min_shared_resources
+        self.efficiency_threshold = config.group_efficiency_threshold
+        self.quality_threshold = config.group_quality_threshold
+
+    @classmethod
+    def from_values(
+        cls,
+        min_size: int,
+        max_size: int,
+        min_shared_resources: int,
+        efficiency_threshold: float,
+        quality_threshold: float,
+    ) -> "GroupAcceptancePolicy":
+        """Build a policy for legacy mapper entry points with explicit thresholds."""
+        policy = cls.__new__(cls)
+        policy.min_size = min_size
+        policy.max_size = max_size
+        policy.min_shared_resources = min_shared_resources
+        policy.efficiency_threshold = efficiency_threshold
+        policy.quality_threshold = quality_threshold
+        return policy
+
+    def rejection_reason(self, group: Mapping[str, Any]) -> str | None:
+        """Return the first failed threshold, or ``None`` when accepted."""
+        group_size = int(group.get("group_size", len(group.get("equipments", []))))
+        if group_size < self.min_size or group_size > self.max_size:
+            return "group_size"
+        if int(group.get("shared_resources_count", 0)) < self.min_shared_resources:
+            return "shared_resources_count"
+        if float(group.get("sharing_efficiency", 0.0)) < self.efficiency_threshold:
+            return "sharing_efficiency"
+        if float(group.get("quality_score", 0.0)) < self.quality_threshold:
+            return "quality_score"
+        return None
+
+    def accepts(self, group: Mapping[str, Any]) -> bool:
+        """Return whether a candidate group satisfies every threshold."""
+        return self.rejection_reason(group) is None

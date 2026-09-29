@@ -13,6 +13,7 @@ from processing.config_dataclass import ProcessingConfig
 from processing.graph_builder import GraphBuilder
 from processing.group_mapper import GroupMapper
 from processing.quality_metrics import GroupQualityEvaluator
+from processing.policy import GroupAcceptancePolicy
 
 class GeneticGroupingExpert(GroupingExpert):
     """Expert that uses Genetic Algorithms to discover optimal groups.
@@ -156,14 +157,12 @@ class GeneticGroupingExpert(GroupingExpert):
             equipments,
             excluded_resource_ids=config.excluded_resource_ids,
             quality_weights=config.group_quality_weights,
+            acceptance_policy=GroupAcceptancePolicy(config),
         )
             
         # Our individual is a list of sets of equipments
         final_groups = []
         for eq_set in best_individual:
-            if not config.group_min_size <= len(eq_set) <= config.group_max_size:
-                continue
-                    
             # Use GroupMapper to get full metadata (efficiency, ingredients, etc.)
             group_data = mapper.create_group(
                 list(eq_set),
@@ -171,14 +170,7 @@ class GeneticGroupingExpert(GroupingExpert):
                 api_client=self.api_client
             )
                 
-            if (
-                group_data.get("shared_resources_count", 0)
-                >= config.group_min_shared_resources
-                and group_data.get("sharing_efficiency", 0)
-                >= config.group_efficiency_threshold
-                and group_data.get("quality_score", 0)
-                >= config.group_quality_threshold
-            ):
+            if GroupAcceptancePolicy(config).accepts(group_data):
                 group_data["expert_name"] = self.name
                 group_data["selection_method"] = "genetic"
                 final_groups.append(group_data)
@@ -267,6 +259,7 @@ class GeneticGroupingExpert(GroupingExpert):
         total_score = 0.0
         seen_ids = set()
         overlap_penalty = 0.0
+        policy = GroupAcceptancePolicy(config) if config is not None else None
         
         if not individual:
             return -100.0
@@ -275,19 +268,19 @@ class GeneticGroupingExpert(GroupingExpert):
             if not eq_set:
                 continue
 
-            if config is not None and not (
-                config.group_min_size <= len(eq_set) <= config.group_max_size
-            ):
-                continue
-
             quality = GroupQualityEvaluator(config.group_quality_weights).evaluate(
                 eq_set, config.excluded_resource_ids
             )
-            if (
-                quality.shared_resource_count < config.group_min_shared_resources
-                or quality.resource_reuse_ratio < config.group_efficiency_threshold
-                or quality.quality_score < config.group_quality_threshold
-            ):
+            candidate = {
+                "equipments": eq_set,
+                "group_size": len(eq_set),
+                "shared_resources_count": quality.shared_resource_count,
+                "sharing_efficiency": quality.shared_resource_count / quality.unique_resource_count
+                if quality.unique_resource_count
+                else 0.0,
+                "quality_score": quality.quality_score,
+            }
+            if policy is not None and not policy.accepts(candidate):
                 continue
             total_score += quality.quality_score
 

@@ -227,7 +227,8 @@ approach, not a dedicated bipartite-modularity optimizer.
 ### Community Mapping
 
 With `use_inclusive_mapping=False`, each community is one candidate. It is
-accepted only if these checks pass in order:
+accepted only if the shared `GroupAcceptancePolicy` accepts it, with these
+checks evaluated in order:
 
 1. `group_min_size <= size <= group_max_size`;
 2. `shared_resources_count >= group_min_shared_resources`;
@@ -239,9 +240,8 @@ Oversized communities are rejected whole.
 With `use_inclusive_mapping=True`, communities below `group_min_size` are
 rejected. Oversized communities are split into sequential list chunks of
 `group_max_size`; splitting is not graph-aware or re-optimized. Each chunk is
-then checked for shared-resource count, legacy efficiency, and quality. Current
-chunk processing does not repeat the minimum-size check, so a final short chunk
-can survive only when its other configured thresholds permit it.
+then checked by the same policy. The policy applies the minimum-size check to
+each chunk as well as shared-resource count, legacy efficiency, and quality.
 
 Accepted groups are sorted by `quality_score` descending.
 

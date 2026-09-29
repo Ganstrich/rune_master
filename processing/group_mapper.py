@@ -9,6 +9,7 @@ from tqdm.auto import tqdm
 from models import Equipment
 from processing.blocks.recipes import iter_recipe
 from processing.group_metrics import GroupMetrics
+from processing.policy import GroupAcceptancePolicy
 from processing.quality_metrics import GroupQualityWeights
 
 
@@ -20,6 +21,7 @@ class GroupMapper:
         equipments: List[Equipment],
         excluded_resource_ids: set = None,
         quality_weights: GroupQualityWeights | None = None,
+        acceptance_policy: GroupAcceptancePolicy | None = None,
     ):
         """Initialize group mapper.
 
@@ -31,6 +33,7 @@ class GroupMapper:
         self.equipment_dict = {int(e.ankama_id): e for e in equipments}
         self.excluded_resource_ids = excluded_resource_ids or set()
         self.quality_weights = quality_weights
+        self.acceptance_policy = acceptance_policy
 
     def calculate_shared_resources(
         self,
@@ -150,6 +153,13 @@ class GroupMapper:
             List of group dicts with equipment, ingredients, efficiency metrics
         """
         groups = []
+        policy = self.acceptance_policy or GroupAcceptancePolicy.from_values(
+            min_group_size,
+            max_group_size,
+            min_shared_resources,
+            efficiency_threshold,
+            quality_threshold,
+        )
 
         for community_id, equip_ids in tqdm(
             communities.items(),
@@ -160,28 +170,17 @@ class GroupMapper:
         ):
             group_equipments = self._resolve_equipment_objects(equip_ids)
 
-            # Apply size filters
-            if not (min_group_size <= len(group_equipments) <= max_group_size):
-                continue
-
             # Calculate metrics
             shared_count, shared_resources, efficiency = self.calculate_shared_resources(
                 group_equipments
             )
-
-            # Apply quality filters
-            if shared_count < min_shared_resources:
-                continue
-
-            if efficiency < efficiency_threshold:
-                continue
 
             group = self.create_group(
                 group_equipments,
                 cache_manager=cache_manager,
                 api_client=api_client
             )
-            if group["quality_score"] < quality_threshold:
+            if not policy.accepts(group):
                 continue
             groups.append(group)
 
@@ -219,6 +218,13 @@ class GroupMapper:
             List of group dicts (more numerous with inclusive filtering)
         """
         groups = []
+        policy = self.acceptance_policy or GroupAcceptancePolicy.from_values(
+            min_group_size,
+            max_group_size,
+            min_shared_resources,
+            efficiency_threshold,
+            quality_threshold,
+        )
         stats = {
             "total_equipments": len(self.equipments),
             "processed": 0,
@@ -237,8 +243,7 @@ class GroupMapper:
             group_equipments = self._resolve_equipment_objects(equip_ids)
             group_size = len(group_equipments)
 
-            # Check minimum size
-            if group_size < min_group_size:
+            if group_size < policy.min_size:
                 stats["excluded_by_size"] += group_size
                 continue
 
@@ -286,22 +291,18 @@ class GroupMapper:
             group_equipments
         )
 
-        # Check minimum shared resources
-        if shared_count < min_shared:
-            stats["excluded_by_resources"] += len(group_equipments)
-            return
-
-        # Check minimum efficiency
-        if efficiency < efficiency_threshold:
-            stats["excluded_by_efficiency"] += len(group_equipments)
-            return
-
         group = self.create_group(
             group_equipments,
             cache_manager=cache_manager,
             api_client=api_client
         )
-        if group["quality_score"] < quality_threshold:
+        if not (self.acceptance_policy or GroupAcceptancePolicy.from_values(
+            min_group_size=len(group_equipments),
+            max_group_size=len(group_equipments),
+            min_shared_resources=min_shared,
+            efficiency_threshold=efficiency_threshold,
+            quality_threshold=quality_threshold,
+        )).accepts(group):
             return
         groups.append(group)
 
