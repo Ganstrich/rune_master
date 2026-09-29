@@ -26,7 +26,7 @@ and no coefficient.
 - Expose `break_density` per item in group reports and in the canonical group
   dictionary.
 - Leave `best_focus` present but returning `None` until prices exist; it is
-  activated in [22-profit-objective.md](22-profit-objective.md).
+  activated in [22-profit-objective.done.md](22-profit-objective.done.md).
 
 ## Acceptance Criteria
 

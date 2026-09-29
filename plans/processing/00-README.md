@@ -46,14 +46,14 @@ proceed first.
 | [01-pure-blocks.done.md](01-pure-blocks.done.md) | No |
 | [02-objective-protocol.done.md](02-objective-protocol.done.md) | No |
 | [03-acceptance-policy.done.md](03-acceptance-policy.done.md) | No |
-| [04-experts-consume-objective.md](04-experts-consume-objective.md) | No |
-| [05-selection-module.md](05-selection-module.md) | No |
+| [04-experts-consume-objective.done.md](04-experts-consume-objective.done.md) | No |
+| [05-selection-module.done.md](05-selection-module.done.md) | No |
 | [06-hygiene.done.md](06-hygiene.done.md) | No |
 | [07-rune-density-relocation.done.md](07-rune-density-relocation.done.md) | No |
 | [08-break-density-and-focus.done.md](08-break-density-and-focus.done.md) | Additive |
 | [09-compression-term.done.md](09-compression-term.done.md) | **Yes** |
-| [10-shopping-list-constraints.md](10-shopping-list-constraints.md) | **Yes** |
-| [11-value-gate-unification.md](11-value-gate-unification.md) | **Yes** |
+| [10-shopping-list-constraints.done.md](10-shopping-list-constraints.done.md) | **Yes** |
+| [11-value-gate-unification.done.md](11-value-gate-unification.done.md) | **Yes** |
 | [12-baseline-harness.done.md](12-baseline-harness.done.md) | No |
 
 ## Phase 2 — Prices

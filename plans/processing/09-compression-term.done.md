@@ -8,7 +8,7 @@ large, varied groups the project needs rather than converging on item pairs.
 ## Depends On
 
 [02-objective-protocol.done.md](02-objective-protocol.done.md),
-[12-baseline-harness.md](12-baseline-harness.md)
+[12-baseline-harness.done.md](12-baseline-harness.done.md)
 
 ## Scope
 
@@ -87,7 +87,7 @@ reweighting fixes that; the features are structurally wrong for the goal.
 ## Risks
 
 This changes every downstream number, including the tuner's objective and any
-stored report. Land it after [12-baseline-harness.md](12-baseline-harness.md) so
+stored report. Land it after [12-baseline-harness.done.md](12-baseline-harness.done.md) so
 the shift is measured rather than assumed. Expect existing contract tests that
 assert specific scores to need updating; update them with a stated reason rather
 than loosening assertions.

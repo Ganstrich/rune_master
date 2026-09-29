@@ -53,4 +53,4 @@ visible change. Record before/after pool sizes and group counts.
 Note that until prices exist, `stat_weight` ranks by raw density rather than by
 value, so the gate filters for "contains a lot of rune material" and not "is
 worth breaking". Revisit the threshold after
-[22-profit-objective.md](22-profit-objective.md).
+[22-profit-objective.done.md](22-profit-objective.done.md).
