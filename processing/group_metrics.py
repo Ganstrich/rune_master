@@ -1,9 +1,10 @@
 """Shared calculations for equipment group metrics."""
 
 from collections import defaultdict
-from typing import Any, Dict, Iterable, Iterator, List, Set
+from typing import Any, Dict, Iterable, List, Set
 
-from models import Equipment, ResourceRequirement
+from models import Equipment
+from processing.blocks.recipes import iter_recipe
 from processing.quality_metrics import GroupQualityEvaluator, GroupQualityWeights
 
 
@@ -21,7 +22,7 @@ class GroupMetrics:
         for equipment in equipments:
             resource_ids = {
                 resource_id
-                for resource_id, _quantity in GroupMetrics._iter_recipe(equipment)
+                for resource_id, _quantity in iter_recipe(equipment)
             }
             for resource_id in resource_ids:
                 usage[resource_id] += 1
@@ -45,7 +46,7 @@ class GroupMetrics:
         return {
             resource_id
             for equipment in equipments
-            for resource_id, _quantity in GroupMetrics._iter_recipe(equipment)
+            for resource_id, _quantity in iter_recipe(equipment)
         }
 
     @staticmethod
@@ -77,7 +78,7 @@ class GroupMetrics:
         )
 
         for equipment in equipments:
-            for resource_id, quantity in GroupMetrics._iter_recipe(equipment):
+            for resource_id, quantity in iter_recipe(equipment):
                 ingredient = ingredients[resource_id]
                 ingredient["total_quantity"] += quantity
                 equipment_name = getattr(equipment, "name", None) or str(
@@ -153,30 +154,3 @@ class GroupMetrics:
             "quality_metrics": quality_metrics.to_dict(),
             "quality_score": quality_metrics.quality_score,
         }
-
-    @staticmethod
-    def _iter_recipe(equipment: Equipment) -> Iterator[tuple[int, int]]:
-        """Yield normalized resource ID and quantity pairs from an equipment recipe."""
-        recipe: Iterable[Any]
-        if isinstance(equipment, Equipment):
-            recipe = equipment.recipe or []
-        else:
-            recipe = equipment.get("recipe") or []
-
-        for requirement in recipe:
-            if isinstance(requirement, ResourceRequirement):
-                yield requirement.resource_id, requirement.quantity
-                continue
-            if isinstance(requirement, dict):
-                try:
-                    yield int(requirement.get("item_ankama_id")), int(requirement.get("quantity", 1))
-                except (TypeError, ValueError):
-                    continue
-                continue
-
-            resource_id = getattr(requirement, "resource_id", None) or getattr(
-                requirement, "item_ankama_id", None
-            )
-            quantity = getattr(requirement, "quantity", 1)
-            if resource_id is not None:
-                yield int(resource_id), int(quantity)

@@ -9,6 +9,7 @@ import logging
 from typing import List, Dict, Any, Optional, Set
 from models import Equipment
 from data.cache_manager import CacheManager
+from processing.blocks.recipes import recipe_resource_ids
 from processing.group_metrics import GroupMetrics
 from processing.quality_metrics import GroupQualityWeights
 
@@ -119,7 +120,7 @@ class RandomGroupBuilder:
             List of companion Equipment, sorted by similarity (high to low)
         """
         # Get seed resources
-        seed_resources = {req.resource_id for req in seed_equipment.recipe}
+        seed_resources = recipe_resource_ids(seed_equipment)
         seed_resources -= self.excluded_resource_ids
 
         if not seed_resources:
@@ -153,7 +154,7 @@ class RandomGroupBuilder:
                 continue
 
             # Get equipment resources
-            eq_resources = {req.resource_id for req in eq.recipe}
+            eq_resources = recipe_resource_ids(eq)
             eq_resources -= self.excluded_resource_ids
 
             shared_count = len(seed_resources & eq_resources)

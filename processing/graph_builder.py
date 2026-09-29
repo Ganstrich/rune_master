@@ -10,6 +10,7 @@ from typing import Dict, List, Set, Tuple
 import networkx as nx
 
 from models import Equipment
+from processing.blocks.similarity import jaccard
 
 
 class GraphBuilder:
@@ -126,8 +127,7 @@ class GraphBuilder:
 
             if resources1 and resources2:
                 shared = len(resources1 & resources2)
-                total_unique = len(resources1 | resources2)
-                sharing_ratio = shared / total_unique if total_unique > 0 else 0
+                sharing_ratio = jaccard(resources1, resources2)
 
                 # Connect if they meet BOTH the ratio AND the absolute shared count
                 # This prevents weak edges from high-count-low-ratio pairs that would

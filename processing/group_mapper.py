@@ -6,7 +6,8 @@ equipment groups with ingredient analysis and efficiency metrics.
 
 from typing import Any, Dict, List, Tuple
 from tqdm.auto import tqdm
-from models import Equipment, ResourceRequirement
+from models import Equipment
+from processing.blocks.recipes import iter_recipe
 from processing.group_metrics import GroupMetrics
 from processing.quality_metrics import GroupQualityWeights
 
@@ -370,41 +371,3 @@ class GroupMapper:
                 group_equipments.append(self.equipment_dict[equip_id])
 
         return group_equipments
-
-    @staticmethod
-    def _iter_equipment_recipe(equipment: Equipment):
-        """Iterate over (resource_id, quantity) pairs in equipment recipe.
-
-        Handles both dataclass and dict formats.
-
-        Args:
-            equipment: Equipment dataclass object
-
-        Yields:
-            Tuples of (resource_id, quantity)
-        """
-        if isinstance(equipment, Equipment):
-            for req in (equipment.recipe or []):
-                if isinstance(req, ResourceRequirement):
-                    yield req.resource_id, req.quantity
-                elif isinstance(req, dict):
-                    try:
-                        yield int(req.get("item_ankama_id")), int(req.get("quantity", 1))
-                    except (ValueError, TypeError):
-                        continue
-                else:
-                    # Try attribute access
-                    rid = getattr(req, "resource_id", None) or getattr(
-                        req, "item_ankama_id", None
-                    )
-                    qty = getattr(req, "quantity", 1)
-                    if rid is not None:
-                        yield int(rid), int(qty)
-            return
-
-        # Handle dict format
-        for item in (equipment.get("recipe") or []):
-            try:
-                yield int(item.get("item_ankama_id")), int(item.get("quantity", 1))
-            except (ValueError, TypeError):
-                continue

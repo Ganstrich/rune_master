@@ -6,6 +6,7 @@ from itertools import combinations
 from typing import Any, Iterable, Mapping
 
 from models import Equipment
+from processing.blocks.similarity import jaccard
 
 
 @dataclass(frozen=True)
@@ -103,7 +104,7 @@ class GroupQualityEvaluator:
         shared_quantity_ratio = shared_quantity / total_quantity if total_quantity else 0.0
 
         similarities = [
-            self._jaccard(left, right)
+            jaccard(left, right)
             for left, right in combinations(resource_sets, 2)
         ]
         mean_pairwise = sum(similarities) / len(similarities) if similarities else 0.0
@@ -150,12 +151,6 @@ class GroupQualityEvaluator:
             if resource_id not in excluded_resource_ids:
                 quantities[resource_id] += max(int(requirement.quantity), 0)
         return dict(quantities)
-
-    @staticmethod
-    def _jaccard(left: set[int], right: set[int]) -> float:
-        union = left | right
-        return len(left & right) / len(union) if union else 0.0
-
 
 @dataclass(frozen=True)
 class PortfolioQualityWeights:
@@ -242,7 +237,7 @@ class PortfolioQualityEvaluator:
         )
 
         group_overlaps = [
-            self._jaccard(left, right)
+            jaccard(left, right)
             for left, right in combinations(equipment_sets, 2)
         ]
         mean_overlap = (
@@ -271,8 +266,3 @@ class PortfolioQualityEvaluator:
             maximum_group_overlap=maximum_overlap,
             portfolio_quality_score=score,
         )
-
-    @staticmethod
-    def _jaccard(left: set[int], right: set[int]) -> float:
-        union = left | right
-        return len(left & right) / len(union) if union else 0.0

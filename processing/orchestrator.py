@@ -7,6 +7,7 @@ as a Mixture of Experts (MoE) committee.
 from typing import Any, Dict, List, Optional
 
 from models import Equipment
+from processing.blocks.similarity import jaccard
 from processing.config_dataclass import ProcessingConfig
 from processing.experts.genetic_expert import GeneticGroupingExpert
 from processing.experts.graph_expert import GraphGroupingExpert
@@ -59,9 +60,7 @@ class RuneMaster:
         """Compute Jaccard similarity between two groups' equipment sets."""
         ids_a = {e.ankama_id for e in group_a}
         ids_b = {e.ankama_id for e in group_b}
-        intersection = len(ids_a & ids_b)
-        union = len(ids_a | ids_b)
-        return intersection / union if union > 0 else 0.0
+        return jaccard(ids_a, ids_b)
 
     def run_all(self) -> List[Dict[str, Any]]:
         """Run the default pipeline (backward compatibility)."""
