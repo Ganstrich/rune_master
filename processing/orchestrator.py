@@ -7,14 +7,13 @@ as a Mixture of Experts (MoE) committee.
 from typing import Any, Dict, List, Optional
 
 from models import Equipment
-from processing.blocks.similarity import jaccard
 from processing.config_dataclass import ProcessingConfig
 from processing.experts.genetic_expert import GeneticGroupingExpert
 from processing.experts.graph_expert import GraphGroupingExpert
 from processing.experts.random_expert import RandomGroupingExpert
 from processing.graph_builder import GraphBuilder
 from processing.policy import GroupAcceptancePolicy
-from processing.quality_metrics import PortfolioQualityEvaluator
+from processing.selection import PortfolioSelector, ProcessingReporter
 from processing.valuation.objective import GroupCandidate
 from processing.valuation.overlap import OverlapObjective
 
@@ -63,15 +62,6 @@ class RuneMaster:
         # Results
         self.groups: List[Dict[str, Any]] = []
         self.expert_failures: Dict[str, str] = {}
-
-    @staticmethod
-    def _equipment_set_overlap(
-        group_a: List[Equipment], group_b: List[Equipment]
-    ) -> float:
-        """Compute Jaccard similarity between two groups' equipment sets."""
-        ids_a = {e.ankama_id for e in group_a}
-        ids_b = {e.ankama_id for e in group_b}
-        return jaccard(ids_a, ids_b)
 
     def run_all(self) -> List[Dict[str, Any]]:
         """Run the default pipeline (backward compatibility)."""
@@ -186,34 +176,11 @@ class RuneMaster:
                 group["fitness_score"] = self.objective.score(candidate)
                 all_potential_groups.append(group)
 
-        # 2. Gating Network: Evaluate and De-duplicate
+        # 2. Select the final non-duplicated portfolio.
         print("\n[Gating Network] Evaluating ensemble and de-duplicating...")
-
-        # Sort by fitness score (descending)
-        all_potential_groups.sort(key=lambda x: x.get("fitness_score", 0), reverse=True)
-
-        # Overlap-based de-duplication
-        unique_groups = []
-
-        for group in all_potential_groups:
-            # ENFORCE MINIMUM SIZE (Final Committee Sanity Check)
-            if len(group.get("equipments", [])) < 2:
-                continue
-
-            # Overlap-based de-duplication
-            is_duplicate = False
-            for existing_group in unique_groups:
-                overlap = self._equipment_set_overlap(
-                    group["equipments"], existing_group["equipments"]
-                )
-                if overlap >= self.config.dedup_overlap_threshold:
-                    is_duplicate = True
-                    break
-
-            if not is_duplicate:
-                unique_groups.append(group)
-
-        self.groups = unique_groups
+        self.groups = PortfolioSelector.select(
+            all_potential_groups, self.config.dedup_overlap_threshold
+        )
 
         print(f"\n      Committee gathered {len(all_potential_groups)} proposals.")
         print(f"      Final ensemble: {len(self.groups)} unique groups selected.")
@@ -236,72 +203,16 @@ class RuneMaster:
 
     def get_summary(self) -> Dict[str, Any]:
         """Get summary statistics of processing results."""
-        if not self.groups:
-            return {}
-
-        portfolio = PortfolioQualityEvaluator(
-            self.config.portfolio_quality_weights
-        ).evaluate(self.groups, len(self.equipments))
-        total_equipment_in_groups = portfolio.total_assignments
-        total_efficiency = (
-            sum(g["sharing_efficiency"] for g in self.groups) / len(self.groups)
-            if self.groups
-            else 0
-        )
-
-        group_sizes = [len(g["equipments"]) for g in self.groups]
-
-        return {
-            "total_groups": len(self.groups),
-            "total_equipment_in_groups": total_equipment_in_groups,
-            "unique_equipment_in_groups": portfolio.unique_equipment_count,
-            "total_equipment": len(self.equipments),
-            "retention_rate": portfolio.equipment_coverage_rate,
-            "equipment_coverage_rate": portfolio.equipment_coverage_rate,
-            "duplicate_assignment_count": portfolio.duplicate_assignment_count,
-            "assignment_overlap_rate": portfolio.assignment_overlap_rate,
-            "average_efficiency": total_efficiency,
-            "average_quality_score": portfolio.mean_group_quality,
-            "assignment_weighted_quality_score": (
-                portfolio.assignment_weighted_group_quality
-            ),
-            "mean_group_overlap": portfolio.mean_group_overlap,
-            "maximum_group_overlap": portfolio.maximum_group_overlap,
-            "portfolio_quality_score": portfolio.portfolio_quality_score,
-            "max_efficiency": max(
-                (g["sharing_efficiency"] for g in self.groups), default=0
-            ),
-            "min_efficiency": min(
-                (g["sharing_efficiency"] for g in self.groups), default=0
-            ),
-            "average_group_size": total_equipment_in_groups / len(self.groups)
-            if self.groups
-            else 0,
-            "max_group_size": max(group_sizes, default=0),
-        }
+        return ProcessingReporter(
+            self.groups,
+            len(self.equipments),
+            self.config.portfolio_quality_weights,
+        ).summary()
 
     def print_summary(self) -> None:
         """Print processing summary."""
-        summary = self.get_summary()
-
-        if not summary:
-            print("No groups generated")
-            return
-
-        print("\n" + "=" * 60)
-        print("📈 COMMITTEE SUMMARY")
-        print("=" * 60)
-        print(f"Total Groups:           {summary['total_groups']}")
-        print(f"Total Equipment:        {summary['total_equipment']}")
-        print(f"Equipment Assignments:  {summary['total_equipment_in_groups']}")
-        print(f"Unique Equipment:       {summary['unique_equipment_in_groups']}")
-        print(f"Equipment Coverage:     {summary['equipment_coverage_rate']:.1%}")
-        print(f"Assignment Overlap:     {summary['assignment_overlap_rate']:.1%}")
-        print(f"Avg Group Size:         {summary['average_group_size']:.1f}")
-        print(f"Average Group Quality:  {summary['average_quality_score']:.1%}")
-        print(f"Portfolio Quality:      {summary['portfolio_quality_score']:.1%}")
-        print(f"Average Efficiency:     {summary['average_efficiency']:.1%}")
-        print(
-            f"Efficiency Range:       {summary['min_efficiency']:.1%} - {summary['max_efficiency']:.1%}"
-        )
-        print("=" * 60 + "\n")
+        ProcessingReporter(
+            self.groups,
+            len(self.equipments),
+            self.config.portfolio_quality_weights,
+        ).print_summary()
