@@ -16,9 +16,9 @@ serve:
 dev:
 	uv run main.py --no-serve
 
-# Run the pipeline without starting the server
+# Run the pipeline without starting the server (evolutionary committee for best results)
 compute:
-	uv run main.py --no-serve --grouping-method committee --tune
+	uv run main.py --no-serve --grouping-method evolutionary_committee
 
 # Run with parameter tuning
 tune:
@@ -40,11 +40,11 @@ help:
 	@echo ""
 	@echo "  make sync         Install/update dependencies with uv"
 	@echo "  make serve        Start the visualization server only"
-	@echo "  make compute      Run the pipeline (no server)"
+	@echo "  make compute      Run the pipeline with evolutionary committee (best results)"
 	@echo "  make dev          Run quick for iterative development"
 	@echo "  make all          Run the pipeline and start the server"
 	@echo "  make tune         Run with parameter tuning"
 	@echo "  make method M=..  Run with a specific grouping method"
-	@echo "                    M=deterministic|random|hybrid|committee|genetic"
+	@echo "                    M=deterministic|random|hybrid|committee|genetic|evolutionary_committee"
 	@echo "  make clean        Remove generated HTML/CSS and caches"
 	@echo "  make help         Show this help message"

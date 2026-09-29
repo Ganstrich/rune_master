@@ -78,15 +78,55 @@ shortlist metrics, not estimates of profit or material savings.
 
 ## Grouping Methods
 
-| Method | Behavior |
-| --- | --- |
-| `deterministic` | Builds a Jaccard similarity graph and maps Louvain, BiLouvain, or connected-component communities into groups. |
-| `random` | Applies the density filter, samples unique seed equipment, and finds compatible companions. A requested count is a target, not a guarantee. |
-| `hybrid` | Runs deterministic grouping first and supplements it with random groups only when the deterministic result is below `max(5, random_group_count / 2)`. |
-| `committee` | Runs deterministic, random, and genetic experts, scores their proposals, and removes groups whose equipment overlap exceeds the configured threshold. Individual expert failures are reported and skipped. |
-| `genetic` | Evolves populations of candidate group sets using selection, crossover, mutation, elitism, and stagnation-based early stopping. |
+The RuneMaster pipeline supports six grouping strategies, each with distinct trade-offs between speed and result quality:
 
-The default method is `hybrid`.
+| Method | Speed | Quality | Best For |
+| --- | --- | --- | --- |
+| `deterministic` | ⚡⚡⚡ Very Fast | Good | Quick iterations, graph-only analysis |
+| `random` | ⚡⚡ Fast | Fair | Solution space exploration |
+| `hybrid` | ⚡⚡ Fast | Good | Balanced approach with deterministic fallback |
+| `committee` | ⚡⚡ Fast | ⭐ Very Good | Fast multi-expert consensus |
+| `genetic` | ⚡ Slower | ⭐ Very Good | Focused evolutionary search |
+| `evolutionary_committee` | 🐢 Slowest | ⭐⭐⭐ Excellent | **Best overall results (default)** |
+
+### Detailed Descriptions
+
+- **`deterministic`**: Builds a Jaccard similarity graph and maps Louvain, BiLouvain, or connected-component communities into groups. Fast and reproducible. Works well for equipment with clear sharing patterns.
+
+- **`random`**: Applies density filtering, samples unique seed equipment, and finds compatible companions. Explores the solution space stochastically. A requested group count is a target, not a guarantee.
+
+- **`hybrid`**: Runs deterministic grouping first and supplements it with random groups only when the deterministic result is below a threshold. Balances determinism with fallback coverage.
+
+- **`committee`**: Runs deterministic, random, and genetic experts in parallel, scores their proposals using the canonical objective, and removes groups whose equipment overlap exceeds the configured threshold. Individual expert failures are reported but do not block other experts. Single pass, fast.
+
+- **`genetic`**: Evolves populations of candidate group sets using tournament selection, crossover, mutation, elitism, and stagnation-based early stopping. Single expert, focused optimization on group quality.
+
+- **`evolutionary_committee`** (new, default): Combines the committee approach with multi-round portfolio evolution. Starts with expert proposals, then evolves them across 5 rounds (configurable), preserving elite candidates and injecting diversity through cold starts. Each round applies intelligent portfolio operators (add/remove equipment, split/merge groups, etc.). Produces the highest-quality portfolios by optimizing for overall coverage, overlap penalties, and balance—not just summing isolated group scores. **Recommended for best results.**
+
+### When to Use Each Method
+
+- **Need results now?** Use `hybrid` or `committee` (~seconds)
+- **Quick dev iteration?** Use `deterministic` (~milliseconds)
+- **Want the best groups?** Use `evolutionary_committee` (~minutes)
+- **Exploring solutions?** Use `random` to see different possibilities
+- **Single-expert deep dive?** Use `genetic` for focused evolution
+
+### Default Behavior
+
+The default grouping method is `evolutionary_committee`, which delivers the best portfolio quality. You can run it via:
+
+```bash
+make compute                                    # Evolutionary committee (best)
+make method METHOD=committee                    # Fast multi-expert
+make method METHOD=deterministic                # Fastest
+```
+
+The default method is configured in `processing/config_dataclass.py` and can be overridden via CLI:
+
+```bash
+uv run main.py --grouping-method deterministic
+uv run main.py --grouping-method evolutionary_committee
+```
 
 ## Processing Defaults
 

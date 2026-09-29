@@ -160,7 +160,9 @@ def process_equipment(
     elif config.grouping_method == "committee":
         groups = master.run_committee()
     elif config.grouping_method == "genetic":
-        groups = master.run_genetic_grouping()
+        groups = master.run_genetic()
+    elif config.grouping_method == "evolutionary_committee":
+        groups = master.run_evolutionary_committee()
     else:
         groups = master.run_all()
 
@@ -217,7 +219,10 @@ def start_server(port: int = 8000) -> tuple:
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(description="RuneMaster: Equipment Group Discovery")
-    parser.add_argument("--grouping-method", choices=["deterministic", "random", "hybrid", "committee", "genetic"])
+    parser.add_argument(
+        "--grouping-method",
+        choices=["deterministic", "random", "hybrid", "committee", "genetic", "evolutionary_committee"],
+    )
     parser.add_argument(
         "--random-groups",
         type=positive_int,
