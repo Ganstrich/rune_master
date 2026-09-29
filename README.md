@@ -184,7 +184,7 @@ processing/               Graphs, metrics, filters, grouping experts, and tuner
 processing/experts/       Deterministic, random, and genetic expert adapters
 visualization/            Static HTML generator and source assets
 test/                     Offline contract and group-structure tests
-plans/                    Proposed features; not current implementation
+plans/                    Reserved for the next feature plan after target definition
 ```
 
 The SQLite cache contains resource API payloads, equipment effects, and computed

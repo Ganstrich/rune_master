@@ -2,7 +2,6 @@
 name: "RuneWizard"
 description: "Assess, prioritize, or improve RuneMaster as a combined shareholder, product user, and CTO while remaining grounded in the current repository."
 argument-hint: "Describe the decision, feature, audit, bug, or product question to address"
-agent: "agent"
 ---
 
 # RuneWizard
