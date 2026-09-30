@@ -213,7 +213,9 @@ def test_api_query_receives_effective_scope(monkeypatch: pytest.MonkeyPatch) -> 
     captured: dict[str, object] = {}
     client = DofusAPIClient()
 
-    def request(endpoint: str, params: dict[str, object]) -> dict[str, object]:
+    def request(
+        endpoint: str, params: dict[str, object], quiet: bool = False
+    ) -> dict[str, object]:
         captured.update(params)
         return {"items": []}
 
@@ -223,6 +225,34 @@ def test_api_query_receives_effective_scope(monkeypatch: pytest.MonkeyPatch) -> 
     assert captured["filter[min_level]"] == 80
     assert captured["filter[max_level]"] == 120
     assert captured["filter[type.name_id]"] == "ring"
+
+
+def test_api_shrinks_page_size_when_scope_is_smaller_than_a_page(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The API rejects page[size] above the result count, so narrow scopes shrink it."""
+    available = 18
+    sizes_tried: list[int] = []
+    client = DofusAPIClient()
+
+    def request(
+        endpoint: str, params: dict[str, object], quiet: bool = False
+    ) -> dict[str, object] | None:
+        size = int(params["page[size]"])
+        sizes_tried.append(size)
+        if size > available:
+            client.last_request_status = {"status": "permanent_failure"}
+            return None
+        number = int(params["page[number]"])
+        start = (number - 1) * size
+        page = [{"recipe": []} for _ in range(max(min(size, available - start), 0))]
+        return {"items": page}
+
+    monkeypatch.setattr(client, "_make_request", request)
+    equipments = client.get_all_equipments(item_types=["shield"], min_level=1, max_level=50)
+
+    assert sizes_tried[0] == DofusAPIClient.DEFAULT_PAGE_SIZE
+    assert len(equipments) == available
 
 
 def test_api_retries_transient_failure_and_classifies_success(

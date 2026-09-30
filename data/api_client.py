@@ -50,7 +50,8 @@ class DofusAPIClient:
     def _make_request(
         self,
         endpoint: str,
-        params: Optional[Dict[str, Any]] = None
+        params: Optional[Dict[str, Any]] = None,
+        quiet: bool = False,
     ) -> Optional[Dict[str, Any]]:
         """Make HTTP request to API endpoint.
         
@@ -84,7 +85,8 @@ class DofusAPIClient:
                     return None
                 if status_code is None or status_code < 500:
                     self.last_request_status["status"] = "permanent_failure"
-                    print(f"❌ Permanent API failure for {endpoint}: {error}")
+                    if not quiet:
+                        print(f"❌ Permanent API failure for {endpoint}: {error}")
                     return None
                 error_kind = "transient_http_failure"
                 self.last_request_status["status"] = error_kind
@@ -138,13 +140,17 @@ class DofusAPIClient:
             'filter[max_level]': max_level,
             'fields[item]': ','.join(Config.FIELDS),
             'filter[type.name_id]': ','.join(item_types),
-            'page[size]': self.DEFAULT_PAGE_SIZE,
         }
 
         equipments: List[Dict[str, Any]] = []
+        page_size = self._negotiate_page_size(endpoint, params)
+        if page_size is None:
+            print("✅ Fetched 0 equipments with recipes")
+            return equipments
+
         page = 1
         while True:
-            page_params = {**params, "page[number]": page}
+            page_params = {**params, "page[size]": page_size, "page[number]": page}
             data = self._make_request(endpoint, page_params)
             if not data:
                 break
@@ -153,12 +159,33 @@ class DofusAPIClient:
                 print("❌ API equipment response contained an invalid items field")
                 break
             equipments.extend(item for item in items if isinstance(item, dict) and "recipe" in item)
-            if len(items) < self.DEFAULT_PAGE_SIZE:
+            if len(items) < page_size:
                 break
             page += 1
         
         print(f"✅ Fetched {len(equipments)} equipments with recipes")
         return equipments
+
+    def _negotiate_page_size(
+        self, endpoint: str, params: Dict[str, Any]
+    ) -> Optional[int]:
+        """Return the largest usable page size for a scope.
+
+        The API rejects page[size] larger than the total number of matching
+        items, so narrow scopes must shrink the page before the first request.
+        Returns None when the scope genuinely has no results.
+        """
+        page_size = self.DEFAULT_PAGE_SIZE
+        while page_size >= 1:
+            probe = {**params, "page[size]": page_size, "page[number]": 1}
+            if self._make_request(endpoint, probe, quiet=True) is not None:
+                return page_size
+            if self.last_request_status.get("status") != "permanent_failure":
+                return None
+            if page_size == 1:
+                return None
+            page_size = max(1, page_size // 2)
+        return None
     
     def get_equipment(self, equipment_id: int) -> Optional[Dict[str, Any]]:
         """Fetch single equipment by ID.
