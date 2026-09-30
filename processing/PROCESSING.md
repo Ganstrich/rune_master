@@ -60,6 +60,10 @@ Every accepted proposal is a canonical group dictionary built by
 | `group_min_shared_resources` | `3` | All experts | Minimum number of non-excluded resource IDs used by at least two items |
 | `group_efficiency_threshold` | `0.15` | All experts | Minimum legacy `sharing_efficiency` |
 | `group_quality_threshold` | `0.0` | All experts | Minimum item-only `quality_score` |
+| `group_max_set_share` | `0.5` | Acceptance policy | Maximum share of a group coming from one panoplie |
+| `same_set_edge_discount` | `1.0` | Graph building | Weight multiplier for edges inside one panoplie |
+| `greedy_candidate_limit` | `25` | Greedy expert | Candidates scored per growth step |
+| `greedy_seed_limit` | `0` | Greedy expert | Seeds to expand; zero uses the whole pool |
 | `max_line_items` | `12` | Acceptance policy | Maximum distinct resources in the shopping list |
 | `max_total_units` | `500` | Acceptance policy | Maximum total recipe units in the shopping list |
 | `acquisition_cost` | `0.0` | Profit objective | Kama-equivalent fixed cost per distinct resource |

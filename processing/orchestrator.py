@@ -12,6 +12,7 @@ from processing.experts.genetic_expert import GeneticGroupingExpert
 from processing.experts.graph_expert import GraphGroupingExpert
 from processing.experts.random_expert import RandomGroupingExpert
 from processing.experts.baseline_expert import BaselineExpert
+from processing.experts.greedy_expert import GreedyGroupingExpert
 from processing.graph_builder import GraphBuilder
 from processing.policy import GroupAcceptancePolicy
 from processing.selection import PortfolioSelector, ProcessingReporter
@@ -63,6 +64,9 @@ class RuneMaster:
             "baseline": BaselineExpert(
                 cache_manager, api_client, self.objective, self.policy
             ),
+            "greedy": GreedyGroupingExpert(
+                cache_manager, api_client, self.objective, self.policy
+            ),
         }
 
         # Results
@@ -76,6 +80,16 @@ class RuneMaster:
     def run_baseline(self) -> List[Dict[str, Any]]:
         """Run the objective-driven baseline expert."""
         self.groups = self.experts["baseline"].discover_groups(self.equipments, self.config)
+        self.print_summary()
+        return self.groups
+
+    def run_greedy(self) -> List[Dict[str, Any]]:
+        """Run greedy objective-driven grouping."""
+        print("\n" + "=" * 60)
+        print("🚀 RuneMaster: Greedy Pipeline (Greedy Expert)")
+        print("=" * 60)
+
+        self.groups = self.experts["greedy"].discover_groups(self.equipments, self.config)
         self.print_summary()
         return self.groups
 

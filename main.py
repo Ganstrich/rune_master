@@ -248,6 +248,8 @@ def process_equipment(
         groups = master.run_committee()
     elif config.grouping_method == "genetic":
         groups = master.run_genetic()
+    elif config.grouping_method == "greedy":
+        groups = master.run_greedy()
     elif config.grouping_method == "evolutionary_committee":
         groups = master.run_evolutionary_committee()
     else:
