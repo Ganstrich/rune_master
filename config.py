@@ -3,6 +3,8 @@
 Processing pipeline configuration lives in processing.config_dataclass.ProcessingConfig.
 """
 
+# The API also serves craftable trophies, Percepteur gear, Prysmaradite and
+# tools (~505 items); they are excluded here because they cannot be broken.
 ALL_CRAFTABLE_TYPES = [
     "ring",
     "hat",
