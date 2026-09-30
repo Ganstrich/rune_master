@@ -157,6 +157,7 @@ class GroupMetrics:
                 ingredient["total_quantity"] for ingredient in total_ingredients.values()
             ),
             "group_size": len(equipments),
+            "largest_set_share": quality_metrics.largest_set_share,
             "quality_metrics": quality_metrics.to_dict(),
             "quality_score": quality_metrics.quality_score,
         }

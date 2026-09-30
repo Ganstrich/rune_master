@@ -94,6 +94,8 @@ class ProcessingConfig:
     group_min_shared_resources: int = 3
     group_efficiency_threshold: float = 0.15
     group_quality_threshold: float = 0.0
+    # Hard cap on the share of a group that may come from one panoplie.
+    group_max_set_share: float = 0.5
     max_line_items: int = 12  # Above observed compact reports; caps shopping effort.
     max_total_units: int = 500  # Carry headroom for compact recipe baskets.
     acquisition_cost: float = 0.0  # Kama-equivalent effort per distinct resource.
