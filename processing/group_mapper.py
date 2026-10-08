@@ -4,10 +4,13 @@ This module handles the conversion of detected communities into optimized
 equipment groups with ingredient analysis and efficiency metrics.
 """
 
-from collections import defaultdict
-from typing import Dict, List, Tuple, Any, Optional
+from typing import Any, Dict, List, Tuple
 from tqdm.auto import tqdm
-from models import Equipment, ResourceRequirement
+from models import Equipment
+from processing.blocks.recipes import iter_recipe
+from processing.group_metrics import GroupMetrics
+from processing.policy import GroupAcceptancePolicy
+from processing.quality_metrics import GroupQualityWeights
 
 
 class GroupMapper:
@@ -16,7 +19,9 @@ class GroupMapper:
     def __init__(
         self,
         equipments: List[Equipment],
-        excluded_resource_ids: set = None
+        excluded_resource_ids: set = None,
+        quality_weights: GroupQualityWeights | None = None,
+        acceptance_policy: GroupAcceptancePolicy | None = None,
     ):
         """Initialize group mapper.
 
@@ -27,11 +32,13 @@ class GroupMapper:
         self.equipments = equipments
         self.equipment_dict = {int(e.ankama_id): e for e in equipments}
         self.excluded_resource_ids = excluded_resource_ids or set()
+        self.quality_weights = quality_weights
+        self.acceptance_policy = acceptance_policy
 
     def calculate_shared_resources(
         self,
         group_equipments: List[Equipment]
-    ) -> Tuple[int, int, float]:
+    ) -> Tuple[int, set[int], float]:
         """Calculate shared resources for a group.
 
         **CANONICAL DEFINITION** of sharing efficiency used across all experts.
@@ -49,35 +56,17 @@ class GroupMapper:
 
         Returns:
             - shared_count: Resources used by 2+ equipment (excluding excluded_ids)
-            - total_shared_count: Resources used by 2+ equipment (including excluded_ids)
+            - total_shared_resources: Resource IDs used by 2+ equipment (including excluded_ids)
             - efficiency: shared_count / total_unique_resources in group
         """
-        resource_usage = defaultdict(int)
-        all_resources = set()
-
-        for equipment in group_equipments:
-            for resource_id, _qty in self._iter_equipment_recipe(equipment):
-                resource_id = int(resource_id)
-                resource_usage[resource_id] += 1
-                all_resources.add(resource_id)
-
-        # Count shared resources (used by 2+ equipment)
-        shared_resources = {
-            rid: count for rid, count in resource_usage.items()
-            if count > 1 and rid not in self.excluded_resource_ids
-        }
-
-        total_shared_resources = {
-            rid: count for rid, count in resource_usage.items()
-            if count > 1
-        }
-
-        # Calculate efficiency
-        total_unique = len(all_resources)
-        shared_count = len(shared_resources)
-        efficiency = (shared_count / total_unique) if total_unique > 0 else 0
-
-        return shared_count, len(total_shared_resources), efficiency
+        shared_resources = GroupMetrics.shared_resources(
+            group_equipments, self.excluded_resource_ids
+        )
+        all_shared_resources = GroupMetrics.shared_resources(group_equipments)
+        efficiency = GroupMetrics.sharing_efficiency(
+            group_equipments, self.excluded_resource_ids
+        )
+        return len(shared_resources), all_shared_resources, efficiency
 
     def calculate_average_density(
         self,
@@ -94,11 +83,7 @@ class GroupMapper:
         Returns:
             Average stat_weight across all equipment in the group
         """
-        if not group_equipments:
-            return 0.0
-
-        total_weight = sum((eq.stat_weight or 0) for eq in group_equipments)
-        return total_weight / len(group_equipments)
+        return GroupMetrics.average_density(group_equipments)
 
     def calculate_total_ingredients(
         self,
@@ -116,47 +101,7 @@ class GroupMapper:
         Returns:
             Dict mapping resource_id -> {name, total_quantity, quantity_per_equipment}
         """
-        ingredients = defaultdict(
-            lambda: {
-                "name": None,
-                "total_quantity": 0,
-                "used_in_equipments": [],
-                "quantity_per_equipment": {},
-                "image_url": None,
-            }
-        )
-
-        # Process equipment recipes
-        for equipment in group_equipments:
-            for resource_id, quantity in self._iter_equipment_recipe(equipment):
-                resource_id = int(resource_id)
-                ingredients[resource_id]["total_quantity"] += int(quantity)
-
-                eq_name = getattr(equipment, "name", None) or str(
-                    getattr(equipment, "ankama_id", "?")
-                )
-                ingredients[resource_id]["used_in_equipments"].append(eq_name)
-                ingredients[resource_id]["quantity_per_equipment"][eq_name] = int(quantity)
-
-                # Get resource name and image from cache
-                if ingredients[resource_id]["name"] is None:
-                    if cache_manager:
-                        try:
-                            resource_data = cache_manager.get_resource(resource_id)
-                            if resource_data:
-                                ingredients[resource_id]["name"] = resource_data.get('name', f'Resource {resource_id}')
-                                # Extract image URL
-                                img_urls = resource_data.get('image_urls', {})
-                                if img_urls:
-                                    ingredients[resource_id]["image_url"] = img_urls.get('icon') or img_urls.get('sd')
-                        except Exception:
-                            pass
-
-                    # Fallback to generic name if cache lookup failed or no cache manager
-                    if ingredients[resource_id]["name"] is None:
-                        ingredients[resource_id]["name"] = f"Resource {resource_id}"
-
-        return dict(ingredients)
+        return GroupMetrics.aggregate_resources(group_equipments, cache_manager)
 
     def create_group(
         self,
@@ -174,35 +119,12 @@ class GroupMapper:
         Returns:
             Dictionary with all group metadata (efficiency, ingredients, etc.)
         """
-        if not group_equipments:
-            return {}
-
-        # Calculate metrics
-        shared_count, total_shared, efficiency = self.calculate_shared_resources(
-            group_equipments
-        )
-
-        # Calculate ingredients and density
-        total_ingredients = self.calculate_total_ingredients(
+        return GroupMetrics.build_group_dict(
             group_equipments,
             cache_manager=cache_manager,
-            api_client=api_client
+            excluded_resource_ids=self.excluded_resource_ids,
+            quality_weights=self.quality_weights,
         )
-        average_density = self.calculate_average_density(group_equipments)
-
-        return {
-            "equipments": group_equipments,
-            "shared_resources_count": shared_count,
-            "total_shared_resources": total_shared,
-            "sharing_efficiency": efficiency,
-            "average_density": average_density,
-            "total_ingredients": total_ingredients,
-            "unique_ingredients_count": len(total_ingredients),
-            "total_items_needed": sum(
-                ing["total_quantity"] for ing in total_ingredients.values()
-            ),
-            "group_size": len(group_equipments),
-        }
 
     def map_communities(
         self,
@@ -211,6 +133,7 @@ class GroupMapper:
         max_group_size: int = 18,
         min_shared_resources: int = 2,
         efficiency_threshold: float = 0.15,
+        quality_threshold: float = 0.0,
         cache_manager=None,
         api_client=None
     ) -> List[Dict[str, Any]]:
@@ -229,6 +152,13 @@ class GroupMapper:
             List of group dicts with equipment, ingredients, efficiency metrics
         """
         groups = []
+        policy = self.acceptance_policy or GroupAcceptancePolicy.from_values(
+            min_group_size,
+            max_group_size,
+            min_shared_resources,
+            efficiency_threshold,
+            quality_threshold,
+        )
 
         for community_id, equip_ids in tqdm(
             communities.items(),
@@ -239,45 +169,21 @@ class GroupMapper:
         ):
             group_equipments = self._resolve_equipment_objects(equip_ids)
 
-            # Apply size filters
-            if not (min_group_size <= len(group_equipments) <= max_group_size):
-                continue
-
             # Calculate metrics
-            shared_count, total_shared, efficiency = self.calculate_shared_resources(
+            shared_count, shared_resources, efficiency = self.calculate_shared_resources(
                 group_equipments
             )
 
-            # Apply quality filters
-            if shared_count < min_shared_resources:
-                continue
-
-            if efficiency < efficiency_threshold:
-                continue
-
-            # Calculate ingredients and density
-            total_ingredients = self.calculate_total_ingredients(
+            group = self.create_group(
                 group_equipments,
                 cache_manager=cache_manager,
                 api_client=api_client
             )
-            average_density = self.calculate_average_density(group_equipments)
+            if not policy.accepts(group):
+                continue
+            groups.append(group)
 
-            groups.append({
-                "equipments": group_equipments,
-                "shared_resources_count": shared_count,
-                "total_shared_resources": total_shared,
-                "sharing_efficiency": efficiency,
-                "average_density": average_density,
-                "total_ingredients": total_ingredients,
-                "unique_ingredients_count": len(total_ingredients),
-                "total_items_needed": sum(
-                    ing["total_quantity"] for ing in total_ingredients.values()
-                ),
-            })
-
-        # Sort by efficiency descending
-        groups.sort(key=lambda x: x["sharing_efficiency"], reverse=True)
+        groups.sort(key=lambda group: group["quality_score"], reverse=True)
 
         print(f"✓ Mapped {len(groups)} groups from {len(communities)} communities")
 
@@ -290,6 +196,7 @@ class GroupMapper:
         max_group_size: int = 15,
         min_shared_resources: int = 1,
         efficiency_threshold: float = 0.1,
+        quality_threshold: float = 0.0,
         cache_manager=None,
         api_client=None
     ) -> List[Dict[str, Any]]:
@@ -310,6 +217,13 @@ class GroupMapper:
             List of group dicts (more numerous with inclusive filtering)
         """
         groups = []
+        policy = self.acceptance_policy or GroupAcceptancePolicy.from_values(
+            min_group_size,
+            max_group_size,
+            min_shared_resources,
+            efficiency_threshold,
+            quality_threshold,
+        )
         stats = {
             "total_equipments": len(self.equipments),
             "processed": 0,
@@ -328,8 +242,7 @@ class GroupMapper:
             group_equipments = self._resolve_equipment_objects(equip_ids)
             group_size = len(group_equipments)
 
-            # Check minimum size
-            if group_size < min_group_size:
+            if group_size < policy.min_size:
                 stats["excluded_by_size"] += group_size
                 continue
 
@@ -342,7 +255,7 @@ class GroupMapper:
                 for subgroup in subgroups:
                     self._process_subgroup(
                         subgroup, groups, stats,
-                        min_shared_resources, efficiency_threshold,
+                        min_shared_resources, efficiency_threshold, quality_threshold,
                         cache_manager, api_client
                     )
                 continue
@@ -350,12 +263,11 @@ class GroupMapper:
             # Process normal-sized group
             self._process_subgroup(
                 group_equipments, groups, stats,
-                min_shared_resources, efficiency_threshold,
+                min_shared_resources, efficiency_threshold, quality_threshold,
                 cache_manager, api_client
             )
 
-        # Sort by efficiency descending
-        groups.sort(key=lambda x: x["sharing_efficiency"], reverse=True)
+        groups.sort(key=lambda group: group["quality_score"], reverse=True)
 
         # Print statistics
         self._print_retention_stats(stats)
@@ -369,45 +281,29 @@ class GroupMapper:
         stats: Dict,
         min_shared: int,
         efficiency_threshold: float,
+        quality_threshold: float,
         cache_manager,
         api_client=None
     ) -> None:
         """Process a subgroup and add to groups list if it meets criteria."""
-        shared_count, total_shared, efficiency = self.calculate_shared_resources(
+        shared_count, shared_resources, efficiency = self.calculate_shared_resources(
             group_equipments
         )
 
-        # Check minimum shared resources
-        if shared_count < min_shared:
-            stats["excluded_by_resources"] += len(group_equipments)
-            return
-
-        # Check minimum efficiency
-        if efficiency < efficiency_threshold:
-            stats["excluded_by_efficiency"] += len(group_equipments)
-            return
-
-        # Calculate ingredients and density
-        total_ingredients = self.calculate_total_ingredients(
+        group = self.create_group(
             group_equipments,
             cache_manager=cache_manager,
             api_client=api_client
         )
-        average_density = self.calculate_average_density(group_equipments)
-
-        groups.append({
-            "equipments": group_equipments,
-            "shared_resources_count": shared_count,
-            "total_shared_resources": total_shared,
-            "sharing_efficiency": efficiency,
-            "average_density": average_density,
-            "total_ingredients": total_ingredients,
-            "unique_ingredients_count": len(total_ingredients),
-            "total_items_needed": sum(
-                ing["total_quantity"] for ing in total_ingredients.values()
-            ),
-            "group_size": len(group_equipments),
-        })
+        if not (self.acceptance_policy or GroupAcceptancePolicy.from_values(
+            min_group_size=len(group_equipments),
+            max_group_size=len(group_equipments),
+            min_shared_resources=min_shared,
+            efficiency_threshold=efficiency_threshold,
+            quality_threshold=quality_threshold,
+        )).accepts(group):
+            return
+        groups.append(group)
 
         stats["processed"] += len(group_equipments)
 
@@ -475,41 +371,3 @@ class GroupMapper:
                 group_equipments.append(self.equipment_dict[equip_id])
 
         return group_equipments
-
-    @staticmethod
-    def _iter_equipment_recipe(equipment: Equipment):
-        """Iterate over (resource_id, quantity) pairs in equipment recipe.
-
-        Handles both dataclass and dict formats.
-
-        Args:
-            equipment: Equipment dataclass object
-
-        Yields:
-            Tuples of (resource_id, quantity)
-        """
-        if isinstance(equipment, Equipment):
-            for req in (equipment.recipe or []):
-                if isinstance(req, ResourceRequirement):
-                    yield req.resource_id, req.quantity
-                elif isinstance(req, dict):
-                    try:
-                        yield int(req.get("item_ankama_id")), int(req.get("quantity", 1))
-                    except (ValueError, TypeError):
-                        continue
-                else:
-                    # Try attribute access
-                    rid = getattr(req, "resource_id", None) or getattr(
-                        req, "item_ankama_id", None
-                    )
-                    qty = getattr(req, "quantity", 1)
-                    if rid is not None:
-                        yield int(rid), int(qty)
-            return
-
-        # Handle dict format
-        for item in (equipment.get("recipe") or []):
-            try:
-                yield int(item.get("item_ankama_id")), int(item.get("quantity", 1))
-            except (ValueError, TypeError):
-                continue

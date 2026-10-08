@@ -29,59 +29,8 @@ class EquipmentStat:
     
     @property
     def stat_name(self) -> str:
-        """Get the stat name, normalized to match STAT_WEIGHTS keys.
-        
-        Handles:
-        - Case normalization (e.g., "eau" vs "Eau")
-        - Singular/plural variations (e.g., "Dommage" vs "Dommages")
-        - Common API inconsistencies
-        
-        Uses fuzzy matching to find the best STAT_WEIGHTS key.
-        """
-        from processing.stat_calculator import STAT_WEIGHTS
-        
-        raw_name = self.stat_type['name']
-        
-        # First, try exact match (most common case)
-        if raw_name in STAT_WEIGHTS:
-            return raw_name
-        
-        # Try case-insensitive exact match
-        for key in STAT_WEIGHTS.keys():
-            if key.lower() == raw_name.lower():
-                return key
-        
-        # Try fuzzy matching: normalize singular/plural
-        # Convert to a canonical form for comparison
-        def normalize_for_matching(s: str) -> str:
-            """Normalize string for fuzzy matching."""
-            # Remove common plural endings
-            s_lower = s.lower()
-            
-            # Try removing 's' at the end (works for most French plurals)
-            variants = [s_lower]
-            if s_lower.endswith('s'):
-                variants.append(s_lower[:-1])  # Remove trailing 's'
-            if s_lower.endswith('es'):
-                variants.append(s_lower[:-2])  # Remove 'es'
-            
-            return variants
-        
-        raw_variants = normalize_for_matching(raw_name)
-        
-        # Find matching key by checking if any variant matches any key variant
-        for key in STAT_WEIGHTS.keys():
-            key_variants = normalize_for_matching(key)
-            
-            # Check if any variant of raw_name matches any variant of key
-            for raw_var in raw_variants:
-                for key_var in key_variants:
-                    if raw_var == key_var:
-                        return key  # Return the canonical STAT_WEIGHTS key
-        
-        # If no fuzzy match found, return original (will cause KeyError in calculator)
-        # This preserves the current behavior for debugging unknown stats
-        return raw_name
+        """Return the raw stat name from the API."""
+        return self.stat_type.get('name', '')
     
     @property
     def stat_id(self) -> int:
@@ -131,6 +80,7 @@ class Equipment:
     stat_weight: Optional[float] = None
     recipe: List[ResourceRequirement] = field(default_factory=list)
     image_urls: Optional[ImageURLs] = None
+    set_id: Optional[int] = None  # None means the item belongs to no panoplie
     
     def __post_init__(self) -> None:
         """Validate fields after initialization."""

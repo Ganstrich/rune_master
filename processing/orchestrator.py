@@ -11,7 +11,15 @@ from processing.config_dataclass import ProcessingConfig
 from processing.experts.genetic_expert import GeneticGroupingExpert
 from processing.experts.graph_expert import GraphGroupingExpert
 from processing.experts.random_expert import RandomGroupingExpert
+from processing.experts.baseline_expert import BaselineExpert
+from processing.experts.greedy_expert import GreedyGroupingExpert
 from processing.graph_builder import GraphBuilder
+from processing.policy import GroupAcceptancePolicy
+from processing.selection import PortfolioSelector, ProcessingReporter
+from processing.valuation.objective import GroupCandidate
+from processing.valuation.overlap import OverlapObjective
+from processing.evolutionary_search_state import PortfolioCandidate, WarmStartConfig
+from processing.evolutionary_search_engine import PortfolioEvolutionEngine
 
 
 class RuneMaster:
@@ -40,30 +48,50 @@ class RuneMaster:
         self.cache_manager = cache_manager
         self.api_client = api_client
 
+        self.objective = OverlapObjective(self.config.group_quality_weights)
+        self.policy = GroupAcceptancePolicy(self.config)
         # Initialize Experts
         self.experts = {
-            "deterministic": GraphGroupingExpert(cache_manager, api_client),
-            "random": RandomGroupingExpert(cache_manager, api_client),
-            "genetic": GeneticGroupingExpert(cache_manager, api_client),
+            "deterministic": GraphGroupingExpert(
+                cache_manager, api_client, self.objective, self.policy
+            ),
+            "random": RandomGroupingExpert(
+                cache_manager, api_client, self.objective, self.policy
+            ),
+            "genetic": GeneticGroupingExpert(
+                cache_manager, api_client, objective=self.objective, policy=self.policy
+            ),
+            "baseline": BaselineExpert(
+                cache_manager, api_client, self.objective, self.policy
+            ),
+            "greedy": GreedyGroupingExpert(
+                cache_manager, api_client, self.objective, self.policy
+            ),
         }
 
         # Results
         self.groups: List[Dict[str, Any]] = []
-
-    @staticmethod
-    def _equipment_set_overlap(
-        group_a: List[Equipment], group_b: List[Equipment]
-    ) -> float:
-        """Compute Jaccard similarity between two groups' equipment sets."""
-        ids_a = {e.ankama_id for e in group_a}
-        ids_b = {e.ankama_id for e in group_b}
-        intersection = len(ids_a & ids_b)
-        union = len(ids_a | ids_b)
-        return intersection / union if union > 0 else 0.0
+        self.expert_failures: Dict[str, str] = {}
 
     def run_all(self) -> List[Dict[str, Any]]:
         """Run the default pipeline (backward compatibility)."""
         return self.run_deterministic()
+
+    def run_baseline(self) -> List[Dict[str, Any]]:
+        """Run the objective-driven baseline expert."""
+        self.groups = self.experts["baseline"].discover_groups(self.equipments, self.config)
+        self.print_summary()
+        return self.groups
+
+    def run_greedy(self) -> List[Dict[str, Any]]:
+        """Run greedy objective-driven grouping."""
+        print("\n" + "=" * 60)
+        print("🚀 RuneMaster: Greedy Pipeline (Greedy Expert)")
+        print("=" * 60)
+
+        self.groups = self.experts["greedy"].discover_groups(self.equipments, self.config)
+        self.print_summary()
+        return self.groups
 
     def run_deterministic(self) -> List[Dict[str, Any]]:
         """Run pure graph-based grouping."""
@@ -84,6 +112,18 @@ class RuneMaster:
         print("=" * 60)
 
         expert = self.experts["random"]
+        self.groups = expert.discover_groups(self.equipments, self.config)
+
+        self.print_summary()
+        return self.groups
+
+    def run_genetic(self) -> List[Dict[str, Any]]:
+        """Run genetic grouping with the canonical result and summary contract."""
+        print("\n" + "=" * 60)
+        print("🚀 RuneMaster: Genetic Pipeline (Genetic Expert)")
+        print("=" * 60)
+
+        expert = self.experts["genetic"]
         self.groups = expert.discover_groups(self.equipments, self.config)
 
         self.print_summary()
@@ -117,6 +157,70 @@ class RuneMaster:
         self.print_summary()
         return self.groups
 
+    def run_survey(self) -> List[Dict[str, Any]]:
+        """Run every expert and keep the union, tagging each group's origin.
+
+        Unlike the committee this does not select a single portfolio: identical
+        groups found by several experts are merged into one entry that records
+        every origin, so the report shows what each expert contributes.
+        """
+        print("\n" + "=" * 60)
+        print("🚀 RuneMaster: Survey (all experts, union of proposals)")
+        print("=" * 60)
+
+        self.expert_failures = {}
+        shared_graph, shared_resources = GraphBuilder.build_equipment_graph(
+            self.equipments,
+            min_shared_ratio=self.config.graph_min_shared_ratio,
+            min_shared_count=self.config.graph_min_shared_count,
+            min_component_size=self.config.graph_min_component_size,
+            same_set_edge_discount=self.config.same_set_edge_discount,
+        )
+
+        merged: Dict[frozenset, Dict[str, Any]] = {}
+        for expert_name, expert in self.experts.items():
+            print(f"\n[Expert: {expert_name}] Analyzing equipment pool...")
+            try:
+                expert_groups = expert.discover_groups(
+                    self.equipments,
+                    self.config,
+                    precomputed_graph=shared_graph,
+                    precomputed_resources=shared_resources,
+                )
+            except (IndexError, KeyError, RuntimeError, TypeError, ValueError) as error:
+                message = f"{type(error).__name__}: {error}"
+                self.expert_failures[expert_name] = message
+                print(f"      ❌ {expert_name} failed: {message}")
+                continue
+
+            for group in expert_groups:
+                fingerprint = frozenset(
+                    item.ankama_id for item in group.get("equipments", [])
+                )
+                if not fingerprint:
+                    continue
+                existing = merged.get(fingerprint)
+                if existing is None:
+                    group["origins"] = [expert_name]
+                    merged[fingerprint] = group
+                elif expert_name not in existing["origins"]:
+                    existing["origins"].append(expert_name)
+            print(f"      ✓ {expert_name}: {len(expert_groups)} proposals")
+
+        groups = sorted(
+            merged.values(),
+            key=lambda group: group.get("quality_score", 0.0),
+            reverse=True,
+        )
+        for group in groups:
+            group["origin"] = "+".join(group["origins"])
+
+        shared = sum(1 for group in groups if len(group["origins"]) > 1)
+        print(f"\n[Survey] {len(groups)} distinct groups, {shared} found by more than one expert")
+        self.groups = groups
+        self.print_summary()
+        return self.groups
+
     def run_committee(self) -> List[Dict[str, Any]]:
         """Run the Mixture of Experts committee (MoE).
 
@@ -127,12 +231,15 @@ class RuneMaster:
         print("🚀 RuneMaster: Mixture of Experts Committee")
         print("=" * 60)
 
+        self.expert_failures = {}
+
         # Pre-compute graph once for all experts
         shared_graph, shared_resources = GraphBuilder.build_equipment_graph(
             self.equipments,
             min_shared_ratio=self.config.graph_min_shared_ratio,
             min_shared_count=self.config.graph_min_shared_count,
             min_component_size=self.config.graph_min_component_size,
+            same_set_edge_discount=self.config.same_set_edge_discount,
         )
 
         all_potential_groups = []
@@ -140,52 +247,160 @@ class RuneMaster:
         # 1. Dispatch to all experts
         for expert_name, expert in self.experts.items():
             print(f"\n[Expert: {expert_name}] Analyzing equipment pool...")
-            expert_groups = expert.discover_groups(
-                self.equipments,
-                self.config,
-                precomputed_graph=shared_graph,
-                precomputed_resources=shared_resources,
-            )
+            try:
+                expert_groups = expert.discover_groups(
+                    self.equipments,
+                    self.config,
+                    precomputed_graph=shared_graph,
+                    precomputed_resources=shared_resources,
+                )
+            except (IndexError, KeyError, RuntimeError, TypeError, ValueError) as error:
+                message = f"{type(error).__name__}: {error}"
+                self.expert_failures[expert_name] = message
+                print(f"      ❌ {expert_name} failed: {message}")
+                continue
 
             # Evaluate each group using the expert's fitness function
             for group in expert_groups:
-                group["fitness_score"] = expert.evaluate_group(group)
+                candidate = GroupCandidate(
+                    group["equipments"], self.config.excluded_resource_ids
+                )
+                group["fitness_score"] = self.objective.score(candidate)
                 all_potential_groups.append(group)
 
-        # 2. Gating Network: Evaluate and De-duplicate
+        # 2. Select the final non-duplicated portfolio.
         print("\n[Gating Network] Evaluating ensemble and de-duplicating...")
-
-        # Sort by fitness score (descending)
-        all_potential_groups.sort(key=lambda x: x.get("fitness_score", 0), reverse=True)
-
-        # Overlap-based de-duplication
-        unique_groups = []
-
-        for group in all_potential_groups:
-            # ENFORCE MINIMUM SIZE (Final Committee Sanity Check)
-            if len(group.get("equipments", [])) < 2:
-                continue
-
-            # Overlap-based de-duplication
-            is_duplicate = False
-            for existing_group in unique_groups:
-                overlap = self._equipment_set_overlap(
-                    group["equipments"], existing_group["equipments"]
-                )
-                if overlap >= self.config.dedup_overlap_threshold:
-                    is_duplicate = True
-                    break
-
-            if not is_duplicate:
-                unique_groups.append(group)
-
-        self.groups = unique_groups
+        self.groups = PortfolioSelector.select(
+            all_potential_groups, self.config.dedup_overlap_threshold
+        )
 
         print(f"\n      Committee gathered {len(all_potential_groups)} proposals.")
         print(f"      Final ensemble: {len(self.groups)} unique groups selected.")
+        if self.expert_failures:
+            print(f"      Expert failures: {self.expert_failures}")
 
         self.print_summary()
         return self.groups
+
+    def run_evolutionary_committee(
+        self,
+        warm_start_portfolios: Optional[List[List[Dict[str, Any]]]] = None,
+    ) -> List[Dict[str, Any]]:
+        """Run evolutionary portfolio search with iterative committee rounds.
+
+        Combines expert proposals with multi-round evolution to discover
+        non-redundant, well-balanced equipment portfolios.
+
+        Args:
+            warm_start_portfolios: Optional list of prior portfolios to seed evolution
+
+        Returns:
+            List of final groups as group dictionaries
+        """
+        print("\n" + "=" * 60)
+        print("🚀 RuneMaster: Evolutionary Portfolio Committee")
+        print("=" * 60)
+
+        if not self.config.evolutionary_enabled:
+            print("      ⚠️ Evolutionary search disabled in config.")
+            return self.run_committee()
+
+        self.expert_failures = {}
+
+        # Pre-compute graph once for all experts
+        shared_graph, shared_resources = GraphBuilder.build_equipment_graph(
+            self.equipments,
+            min_shared_ratio=self.config.graph_min_shared_ratio,
+            min_shared_count=self.config.graph_min_shared_count,
+            min_component_size=self.config.graph_min_component_size,
+            same_set_edge_discount=self.config.same_set_edge_discount,
+        )
+
+        if shared_graph.number_of_nodes() == 0:
+            print("      ❌ No connected equipment found in graph.")
+            return []
+
+        all_initial_proposals = []
+
+        # 1. Gather initial proposals from all experts
+        print("\n[Experts] Gathering initial proposals...")
+        for expert_name, expert in self.experts.items():
+            print(f"  [{expert_name}] Running...")
+            try:
+                expert_groups = expert.discover_groups(
+                    self.equipments,
+                    self.config,
+                    precomputed_graph=shared_graph,
+                    precomputed_resources=shared_resources,
+                )
+                if expert_groups:
+                    # Convert to portfolio (list of groups)
+                    all_initial_proposals.append(expert_groups)
+                    print(f"      ✓ {expert_name}: {len(expert_groups)} proposals")
+            except (IndexError, KeyError, RuntimeError, TypeError, ValueError) as error:
+                message = f"{type(error).__name__}: {error}"
+                self.expert_failures[expert_name] = message
+                print(f"      ❌ {expert_name} failed: {message}")
+                continue
+
+        if not all_initial_proposals:
+            print("      ❌ No expert proposals generated.")
+            return []
+
+        # 2. Set up warm-start configuration
+        warm_start_config = None
+        if warm_start_portfolios and self.config.evolutionary_warm_start_enabled:
+            warm_start_config = WarmStartConfig(
+                seed_portfolios=warm_start_portfolios,
+                cold_start_fraction=self.config.evolutionary_cold_start_fraction,
+                retain_eligible_seeds=True,
+            )
+            print(f"  [WarmStart] {len(warm_start_portfolios)} seed portfolios loaded")
+
+        # 3. Run evolutionary search
+        print("\n[EvolutionEngine] Starting iterative portfolio optimization...", flush=True)
+        engine = PortfolioEvolutionEngine(
+            self.equipments,
+            self.config,
+            objective=self.objective,
+            policy=self.policy,
+            cache_manager=self.cache_manager,
+            api_client=self.api_client,
+        )
+
+        best_candidate = engine.evolve_portfolio(all_initial_proposals, warm_start_config)
+
+        # 4. Convert best candidate to group dictionaries
+        if best_candidate and best_candidate.groups:
+            self.groups = list(best_candidate.groups)
+            print(
+                f"\n[Selection] Best portfolio: {len(self.groups)} groups, "
+                f"score: {best_candidate.score:.4f}"
+            )
+        else:
+            print("      ⚠️ Evolution produced no valid portfolio. Falling back to committee.")
+            self.groups = self.run_committee()
+            return self.groups
+
+        # 5. Final deduplication pass
+        print(f"\n[Gating Network] Final deduplication...")
+        self.groups = PortfolioSelector.select(
+            self.groups, self.config.dedup_overlap_threshold
+        )
+
+        print(f"      Final portfolio: {len(self.groups)} groups")
+        if self.expert_failures:
+            print(f"      Expert failures: {self.expert_failures}")
+
+        self.print_summary()
+        return self.groups
+
+    def get_expert_report(self) -> Dict[str, Any]:
+        """Return proposal and failure information from the last committee run."""
+        return {
+            "failed_experts": dict(self.expert_failures),
+            "selected_groups": len(self.groups),
+        }
 
     def get_grouping_method(self) -> str:
         """Get the active grouping method."""
@@ -193,56 +408,16 @@ class RuneMaster:
 
     def get_summary(self) -> Dict[str, Any]:
         """Get summary statistics of processing results."""
-        if not self.groups:
-            return {}
-
-        total_equipment_in_groups = sum(len(g["equipments"]) for g in self.groups)
-        total_efficiency = (
-            sum(g["sharing_efficiency"] for g in self.groups) / len(self.groups)
-            if self.groups
-            else 0
-        )
-
-        group_sizes = [len(g["equipments"]) for g in self.groups]
-
-        return {
-            "total_groups": len(self.groups),
-            "total_equipment_in_groups": total_equipment_in_groups,
-            "total_equipment": len(self.equipments),
-            "retention_rate": total_equipment_in_groups / len(self.equipments)
-            if self.equipments
-            else 0,
-            "average_efficiency": total_efficiency,
-            "max_efficiency": max(
-                (g["sharing_efficiency"] for g in self.groups), default=0
-            ),
-            "min_efficiency": min(
-                (g["sharing_efficiency"] for g in self.groups), default=0
-            ),
-            "average_group_size": total_equipment_in_groups / len(self.groups)
-            if self.groups
-            else 0,
-            "max_group_size": max(group_sizes, default=0),
-        }
+        return ProcessingReporter(
+            self.groups,
+            len(self.equipments),
+            self.config.portfolio_quality_weights,
+        ).summary()
 
     def print_summary(self) -> None:
         """Print processing summary."""
-        summary = self.get_summary()
-
-        if not summary:
-            print("No groups generated")
-            return
-
-        print("\n" + "=" * 60)
-        print("📈 COMMITTEE SUMMARY")
-        print("=" * 60)
-        print(f"Total Groups:           {summary['total_groups']}")
-        print(f"Total Equipment:        {summary['total_equipment']}")
-        print(f"Equipment in Groups:    {summary['total_equipment_in_groups']}")
-        print(f"Retention Rate:         {summary['retention_rate']:.1%}")
-        print(f"Avg Group Size:         {summary['average_group_size']:.1f}")
-        print(f"Average Efficiency:     {summary['average_efficiency']:.1%}")
-        print(
-            f"Efficiency Range:       {summary['min_efficiency']:.1%} - {summary['max_efficiency']:.1%}"
-        )
-        print("=" * 60 + "\n")
+        ProcessingReporter(
+            self.groups,
+            len(self.equipments),
+            self.config.portfolio_quality_weights,
+        ).print_summary()

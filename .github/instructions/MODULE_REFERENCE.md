@@ -241,14 +241,12 @@ Process:
 - `_build_group_cards(groups)` → str - Index cards with equipment lists
 - `_build_equipment_gallery(group)` → str - Equipment thumbnails
 - `_build_ingredient_table(group)` → str - Resource list table
-- `_build_graph_data(group)` → Dict - D3.js data
 
 **Page Layout** (IMPORTANT ORDER):
 1. Header with stats
 2. Equipment gallery
-3. **Ingredient table** ← MUST BE BEFORE GRAPH
-4. D3.js graph
-5. Footer
+3. Ingredient table
+4. Footer
 
 **Important CSS Classes** (used by paste feature):
 - `.ingredient-resource-name` - Resource name in table
@@ -262,45 +260,12 @@ Process:
 
 ---
 
-## `visualization/graph_generator.py` - D3.js Graph
-
-**Key Function**: `create_graph_html(graph_data)`
-
-**Input Graph Data**:
-```python
-{
-    "nodes": [
-        {"id": "equip_123", "name": "Equipment Name", "type": "equipment", ...},
-        {"id": "res_456", "name": "Resource Name", "type": "resource", ...},
-    ],
-    "links": [
-        {"source": "equip_123", "target": "res_456", "quantity": 5},
-    ]
-}
-```
-
-**D3.js Features**:
-- Force-directed simulation
-- Drag-to-move nodes
-- Scroll-to-zoom
-- Hover tooltips
-- Legend (blue = equipment, green = resources)
-- Responsive resizing
-
-**Important Notes**:
-- Embeds entire D3.js library (v7.min.js via CDN)
-- Graph data embedded as JSON in HTML
-- JavaScript initializes on `DOMContentLoaded`
-
----
-
 ## `visualization/style_templates.py` - CSS/JS Utilities
 
 **Key Functions**:
 - `get_base_css()` - Common styles (reset, theming, typography)
 - `get_group_css()` - Group page styles
 - `get_index_css()` - Index page styles
-- `get_graph_javascript()` - D3.js initialization code
 - `get_javascript_utils()` - Utility functions (copy, search, sort)
 
 **CSS Variables** (theming):
@@ -379,13 +344,7 @@ EXCLUDED_RESOURCES = [list of resource IDs to exclude]
 
 **Groups not generating?**
 - [ ] Check filters in ProcessingConfig (too strict?)
-- [ ] Verify graph has edges (check graph_builder output)
 - [ ] Check community detection found communities
-
-**D3.js graph not rendering?**
-- [ ] Open browser console for errors
-- [ ] Check graph-data element in HTML: `grep graph-data group_001.html`
-- [ ] Verify D3.js loads: `grep d3.v7 group_001.html`
 
 ---
 

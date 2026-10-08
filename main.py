@@ -15,15 +15,16 @@ import sys
 import time
 import argparse
 import webbrowser
+from dataclasses import asdict, is_dataclass, replace
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
-from typing import List
+from typing import Any, List
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.resolve()
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from config import Config
+from config import ALL_CRAFTABLE_TYPES, Config
 from data import DofusAPIClient, CacheManager, EquipmentLoader
 from models import Equipment
 from processing import RuneMaster, ProcessingConfig
@@ -31,23 +32,114 @@ from processing.tuner import ParameterTuner
 from visualization import HTMLGenerator
 
 
-def load_equipment(processing_config: ProcessingConfig) -> tuple:
+def positive_int(value: str) -> int:
+    """Parse a strictly positive integer CLI argument."""
+    parsed = int(value)
+    if parsed <= 0:
+        raise argparse.ArgumentTypeError("must be greater than zero")
+    return parsed
+
+
+def nonnegative_float(value: str) -> float:
+    """Parse a non-negative floating-point CLI argument."""
+    parsed = float(value)
+    if parsed < 0:
+        raise argparse.ArgumentTypeError("must be non-negative")
+    return parsed
+
+
+def item_types(value: str) -> list[str]:
+    """Parse a comma-separated list of supported craftable item types."""
+    parsed = [item.strip() for item in value.split(",") if item.strip()]
+    unsupported = sorted(set(parsed) - set(ALL_CRAFTABLE_TYPES))
+    if not parsed or unsupported:
+        choices = ", ".join(ALL_CRAFTABLE_TYPES)
+        detail = f" unsupported: {', '.join(unsupported)}." if unsupported else ""
+        raise argparse.ArgumentTypeError(f"item types must be from {choices}.{detail}")
+    if len(parsed) != len(set(parsed)):
+        raise argparse.ArgumentTypeError("item types must not contain duplicates")
+    return parsed
+
+
+def validate_scope(min_level: int, max_level: int, selected_types: list[str]) -> None:
+    """Validate cross-field scope constraints before network work begins."""
+    if min_level > max_level:
+        raise ValueError("--min-level must be less than or equal to --max-level")
+    if not selected_types:
+        raise ValueError("at least one item type is required")
+
+
+def build_parser() -> argparse.ArgumentParser:
+    """Build the CLI parser separately so scope validation stays offline-testable."""
+    parser = argparse.ArgumentParser(description="RuneMaster: Equipment Group Discovery")
+    parser.add_argument(
+        "--grouping-method",
+        choices=[
+            "deterministic",
+            "random",
+            "hybrid",
+            "committee",
+            "genetic",
+            "greedy",
+            "evolutionary_committee",
+            "survey",
+        ],
+    )
+    parser.add_argument("--random-groups", type=positive_int, help="Number of random groups to generate")
+    parser.add_argument("--density-ratio", type=nonnegative_float, help="Density/level ratio filter")
+    parser.add_argument("--random-seed", type=int, help="Seed for reproducible random grouping")
+    parser.add_argument("--min-level", type=positive_int, default=Config.MIN_LEVEL)
+    parser.add_argument("--max-level", type=positive_int, default=Config.MAX_LEVEL)
+    parser.add_argument("--item-types", type=item_types, default=list(Config.ITEM_TYPES))
+    parser.add_argument("--tune", action="store_true", help="Search for best grouping parameters")
+    parser.add_argument("--no-serve", action="store_true", help="Generate reports without starting server")
+    return parser
+
+
+def parse_args(arguments: list[str] | None = None) -> argparse.Namespace:
+    """Parse and validate CLI arguments without invoking the network."""
+    parser = build_parser()
+    args = parser.parse_args(arguments)
+    try:
+        validate_scope(args.min_level, args.max_level, args.item_types)
+    except ValueError as error:
+        parser.error(str(error))
+    return args
+
+
+def load_equipment(
+    processing_config: ProcessingConfig, scope: dict[str, Any] | None = None
+) -> tuple:
     """Load equipment from API with caching."""
     print("\n" + "="*60)
     print("📦 LOADING EQUIPMENT")
     print("="*60)
 
+    effective_scope = scope or {
+        "min_level": Config.MIN_LEVEL,
+        "max_level": Config.MAX_LEVEL,
+        "item_types": list(Config.ITEM_TYPES),
+    }
+    print(
+        f"\n🔎 Scope: levels {effective_scope['min_level']}-{effective_scope['max_level']}; "
+        f"types: {', '.join(effective_scope['item_types'])}"
+    )
+
     # Initialize cache and API
     cache = CacheManager(cache_file=Config.CACHE_FILE)
     api = DofusAPIClient()
-    loader = EquipmentLoader(cache=cache)
+    loader = EquipmentLoader(cache=cache, set_index=_load_set_index(cache, api))
 
     # Load equipments
     print(f"\n📡 Fetching equipment from API...")
     start_time = time.time()
 
     try:
-        raw_equipments = api.get_all_equipments()
+        raw_equipments = api.get_all_equipments(
+            item_types=effective_scope["item_types"],
+            min_level=effective_scope["min_level"],
+            max_level=effective_scope["max_level"],
+        )
         equipments = loader.from_raw_batch(raw_equipments, processing_config=processing_config)
     except Exception as e:
         print(f"\n❌ Error loading equipment: {e}")
@@ -63,6 +155,17 @@ def load_equipment(processing_config: ProcessingConfig) -> tuple:
     return equipments, cache, api
 
 
+def _load_set_index(cache: CacheManager, api: DofusAPIClient) -> dict[int, int]:
+    """Return the equipment → panoplie map, fetching it once per cache lifetime."""
+    index = cache.get_equipment_set_index()
+    if index:
+        return index
+    index = api.get_equipment_set_index()
+    if index:
+        cache.set_equipment_set_index(index)
+    return index
+
+
 def _cache_equipment_resources(equipments: List[Equipment], cache: CacheManager, api: DofusAPIClient) -> None:
     """Extract and cache all resources from equipment recipes."""
     resource_ids = set()
@@ -70,37 +173,51 @@ def _cache_equipment_resources(equipments: List[Equipment], cache: CacheManager,
         for req in eq.recipe:
             resource_ids.add(req.resource_id)
     
-    stats_before = cache.get_stats()
-    cached_before = stats_before['cached_resources']
+    cached_before = sum(cache.has_resource(resource_id) for resource_id in resource_ids)
     total_resources = len(resource_ids)
     uncached = total_resources - cached_before
     
     if uncached <= 0:
         print(f"\n✅ All {total_resources} resources already cached")
+        api.resource_cache_status = {
+            **cache.get_resource_cache_status(resource_ids),
+            "status": "complete",
+            "failed_ids": [],
+        }
         return
     
     print(f"\n📚 Caching {uncached} resources ({cached_before}/{total_resources} already cached)...")
     start_time = time.time()
     
     fetched = 0
-    for i, resource_id in enumerate(resource_ids, 1):
+    failed: List[int] = []
+    for resource_id in resource_ids:
         if cache.has_resource(resource_id):
             continue
         
         try:
             resource_data = api.get_resource(resource_id)
-            if resource_data:
+            if isinstance(resource_data, dict) and resource_data.get("name"):
                 cache.set_resource(resource_id, resource_data)
                 fetched += 1
                 if fetched % 20 == 0:
                     print(f"   ⏳ Cached {fetched}/{uncached} resources...")
+            else:
+                failed.append(resource_id)
         except Exception as e:
+            failed.append(resource_id)
             print(f"   ⚠️  Failed to cache resource {resource_id}: {e}")
-            continue
     
     elapsed = time.time() - start_time
     cache.save()
     print(f"✅ Cached {fetched} new resources in {elapsed:.2f}s")
+    if failed:
+        print(f"⚠️  Failed resources ({len(failed)}): {sorted(failed)}")
+    api.resource_cache_status = {
+        **cache.get_resource_cache_status(resource_ids),
+        "status": "degraded" if failed else "complete",
+        "failed_ids": sorted(failed),
+    }
 
 
 def process_equipment(
@@ -117,11 +234,12 @@ def process_equipment(
 
     if tune_params:
         tuner = ParameterTuner(equipments, cache_manager, api_client)
-        config, _ = tuner.tune(method=processing_config.grouping_method)
-        config.grouping_method = processing_config.grouping_method
-        config.random_group_count = processing_config.random_group_count
-        config.equipment_density_level_ratio = processing_config.equipment_density_level_ratio
-        config.min_equipment_density = processing_config.min_equipment_density
+        tuned_config, _ = tuner.tune(method=processing_config.grouping_method)
+        config = replace(
+            processing_config,
+            graph_min_shared_ratio=tuned_config.graph_min_shared_ratio,
+            group_min_shared_resources=tuned_config.group_min_shared_resources,
+        )
     else:
         config = processing_config
 
@@ -138,8 +256,13 @@ def process_equipment(
     elif config.grouping_method == "committee":
         groups = master.run_committee()
     elif config.grouping_method == "genetic":
-        expert = master.experts["genetic"]
-        groups = expert.discover_groups(equipments, config)
+        groups = master.run_genetic()
+    elif config.grouping_method == "greedy":
+        groups = master.run_greedy()
+    elif config.grouping_method == "survey":
+        groups = master.run_survey()
+    elif config.grouping_method == "evolutionary_committee":
+        groups = master.run_evolutionary_committee()
     else:
         groups = master.run_all()
 
@@ -147,13 +270,53 @@ def process_equipment(
     return groups
 
 
-def generate_visualizations(groups: List[dict], output_dir: str = "visualizations") -> str:
+def _json_safe(value: Any) -> Any:
+    """Convert configuration values into JSON-compatible primitives."""
+    if is_dataclass(value):
+        return {key: _json_safe(item) for key, item in asdict(value).items()}
+    if isinstance(value, dict):
+        return {str(key): _json_safe(item) for key, item in value.items()}
+    if isinstance(value, (set, tuple, list)):
+        return [_json_safe(item) for item in value]
+    return value
+
+
+def build_run_manifest(
+    processing_config: ProcessingConfig,
+    cli_overrides: dict[str, Any],
+    scope: dict[str, Any] | None = None,
+    cache_status: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Build reproducibility metadata without including API payloads or secrets."""
+    effective_scope = scope or {
+        "min_level": Config.MIN_LEVEL,
+        "max_level": Config.MAX_LEVEL,
+        "item_types": list(Config.ITEM_TYPES),
+    }
+    effective_scope["summary"] = (
+        f"Levels {effective_scope['min_level']}-{effective_scope['max_level']}; "
+        f"types: {', '.join(effective_scope['item_types'])}"
+    )
+    return {
+        "grouping_method": processing_config.grouping_method,
+        "processing_config": _json_safe(processing_config),
+        "cli_overrides": _json_safe(cli_overrides),
+        "scope": _json_safe(effective_scope),
+        "source": {"api": "DofusAPI", "cache": _json_safe(cache_status or {"status": "unavailable"})},
+    }
+
+
+def generate_visualizations(
+    groups: List[dict],
+    output_dir: str = "visualizations",
+    manifest: dict[str, Any] | None = None,
+) -> str:
     """Generate HTML visualizations for equipment groups."""
     print("\n" + "="*60)
     print("🎨 GENERATING VISUALIZATIONS")
     print("="*60)
 
-    gen = HTMLGenerator(output_dir=output_dir)
+    gen = HTMLGenerator(output_dir=output_dir, manifest=manifest)
     print(f"\n📝 Generating {len(groups)} group pages...")
     start_time = time.time()
 
@@ -195,41 +358,29 @@ def start_server(port: int = 8000) -> tuple:
 
 def main():
     """Main entry point."""
-    parser = argparse.ArgumentParser(description="RuneMaster: Equipment Group Discovery")
-    parser.add_argument("--grouping-method", choices=["deterministic", "random", "hybrid", "committee", "genetic"])
-    parser.add_argument("--random-groups", type=int, help="Number of random groups to generate")
-    parser.add_argument("--density-ratio", type=float, help="Density/level ratio filter")
-    parser.add_argument("--tune", action="store_true", help="Search for best grouping parameters")
-    parser.add_argument("--no-serve", action="store_true", help="Generate reports without starting server")
-    args = parser.parse_args()
+    args = parse_args()
 
     print("\n 🔥 RUNEMASTER - GROUP DISCOVERY 🔥 \n")
 
-    # Build ProcessingConfig from CLI args + defaults
-    processing_config = ProcessingConfig(
-        graph_min_shared_ratio=Config.MIN_SIMILARITY,
-        graph_min_component_size=Config.MIN_CLUSTER_SIZE,
-        algorithm="louvain",
-        resolution_range=(1, 10, 1),
-        group_min_size=Config.MIN_CLUSTER_SIZE,
-        group_max_size=18,
-        group_min_shared_resources=Config.MIN_COMMON_ITEMS,
-        group_efficiency_threshold=0.15,
-        use_inclusive_mapping=False,
-        use_resource_optimizer=False,
-        excluded_resource_ids=set(Config.EXCLUDED_RESOURCES or []),
-        use_density_filtering=True,
-        equipment_density_level_ratio=args.density_ratio or Config.DENSITY_LEVEL_RATIO,
-        fallback_to_unfiltered=Config.FALLBACK_TO_UNFILTERED,
-        min_filtered_pool_size=Config.MIN_FILTERED_POOL_SIZE,
-        grouping_method=args.grouping_method or Config.GROUPING_METHOD,
-        random_group_count=args.random_groups or Config.RANDOM_GROUP_COUNT,
-        random_seed=None,
-        min_equipment_density=Config.MIN_EQUIPMENT_DENSITY,
-    )
+    # ProcessingConfig owns pipeline defaults; CLI arguments override them.
+    processing_config = ProcessingConfig()
+    if args.grouping_method is not None:
+        processing_config.grouping_method = args.grouping_method
+    if args.random_groups is not None:
+        processing_config.random_group_count = args.random_groups
+    if args.density_ratio is not None:
+        processing_config.equipment_density_level_ratio = args.density_ratio
+    if args.random_seed is not None:
+        processing_config.random_seed = args.random_seed
+
+    scope = {
+        "min_level": args.min_level,
+        "max_level": args.max_level,
+        "item_types": args.item_types,
+    }
 
     try:
-        equipments, cache_manager, api_client = load_equipment(processing_config)
+        equipments, cache_manager, api_client = load_equipment(processing_config, scope)
         groups = process_equipment(
             equipments, processing_config, cache_manager, api_client, args.tune
         )
@@ -238,7 +389,13 @@ def main():
             print("\n⚠️  No groups generated.")
             sys.exit(1)
 
-        index_path = generate_visualizations(groups)
+        manifest = build_run_manifest(
+            processing_config,
+            {key: value for key, value in vars(args).items() if value not in (None, False)},
+            scope=scope,
+            cache_status=getattr(api_client, "resource_cache_status", {"status": "unavailable"}),
+        )
+        index_path = generate_visualizations(groups, manifest=manifest)
 
         if args.no_serve:
             print(f"\n✅ Report ready at: {os.path.abspath(index_path)}")

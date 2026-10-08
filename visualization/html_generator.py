@@ -1,18 +1,20 @@
 """Core HTML generation engine for equipment group reports.
 
-Responsible for:
-- Building complete HTML pages from group data
-- Coordinating all UI components (graph, table, stats)
-- Responsive design and modern UX
-- Safe HTML escaping and XSS prevention
+Responsible for building complete HTML pages from group data, including
+equipment galleries, ingredient tables, and summary statistics.
 """
-import json
 import html
+import json
 import shutil
-from typing import Dict, List, Any, Optional
+from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any, Dict, List, Optional
+from uuid import uuid4
 
-from models import Equipment, Resource
+from models import Equipment
+from processing.blocks.shopping_list import ShoppingList
+from processing.valuation.focus import break_density
+from processing.exploration import ExplorationCandidate
 
 
 class HTMLGenerator:
@@ -26,7 +28,9 @@ class HTMLGenerator:
     - Static CSS/JS files for caching and maintainability
     """
     
-    def __init__(self, output_dir: str = "visualizations"):
+    def __init__(
+        self, output_dir: str = "visualizations", manifest: Dict[str, Any] | None = None
+    ):
         """Initialize generator.
         
         Args:
@@ -35,6 +39,26 @@ class HTMLGenerator:
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True)
         self.static_dir = self.output_dir / "static"
+        self.manifest = manifest or {}
+
+    def generate_exploration_shortlist(
+        self, candidates: list[ExplorationCandidate]
+    ) -> Path:
+        """Write a compact shortlist page with the manual-record command."""
+        rows = "".join(
+            f"<tr><td>{candidate.item_name}</td><td>{candidate.theoretical_break_density:.2f}</td>"
+            f"<td>{candidate.observation_count}</td><td>{candidate.exploration_score:.2f}</td>"
+            f"<td><code>{candidate.record_command}</code></td></tr>"
+            for candidate in candidates
+        )
+        path = self.output_dir / "exploration-shortlist.html"
+        path.write_text(
+            "<h1>Break exploration shortlist</h1><table>"
+            "<tr><th>Item</th><th>Density</th><th>Observations</th>"
+            f"<th>Score</th><th>Record</th></tr>{rows}</table>",
+            encoding="utf-8",
+        )
+        return path
     
     def _copy_static_files(self):
         """Copy static CSS and JS files to output directory.
@@ -156,78 +180,6 @@ class HTMLGenerator:
             pass
         return None
     
-    def _build_graph_data(self, group: Dict[str, Any]) -> Dict[str, List[Dict]]:
-        """Build graph data from equipment group.
-        
-        Creates nodes for equipment and resources, links for recipe connections.
-        
-        Args:
-            group: Equipment group dict with equipments and total_ingredients
-            
-        Returns:
-            Dict with 'nodes' and 'links' lists for D3.js
-        """
-        nodes = []
-        links = []
-        node_id_map = {}
-        
-        # Add equipment nodes
-        equipments = group.get('equipments', [])
-        for equipment in equipments:
-            eq_id = self._extract_equipment_id(equipment)
-            node_id = f"equip_{eq_id}"
-            node_id_map[eq_id] = node_id
-            
-            nodes.append({
-                'id': node_id,
-                'name': self._extract_equipment_name(equipment),
-                'type': 'equipment',
-                'level': self._extract_equipment_level(equipment),
-                'ankama_id': eq_id,
-                'image_url': self._extract_image_url(equipment)
-            })
-        
-        # Add resource nodes and links
-        # total_ingredients can have string or int keys
-        ingredients = group.get('total_ingredients', {})
-        for res_id_key, ingredient_info in ingredients.items():
-            try:
-                resource_id = int(res_id_key)
-            except (ValueError, TypeError):
-                continue
-
-            node_id = f"res_{resource_id}"
-            
-            nodes.append({
-                'id': node_id,
-                'name': ingredient_info.get('name') or f'Resource {resource_id}',
-                'type': 'resource',
-                'total_quantity': ingredient_info.get('total_quantity', 0),
-                'ankama_id': resource_id,
-                'image_url': ingredient_info.get('image_url')
-            })
-            
-            # Create links from equipment to resources
-            # quantity_per_equipment maps equipment_name -> quantity
-            qty_per_eq = ingredient_info.get('quantity_per_equipment', {})
-            for equip_name, quantity in qty_per_eq.items():
-                # Find matching equipment by name
-                found_eq = None
-                for eq in equipments:
-                    if self._extract_equipment_name(eq) == equip_name:
-                        found_eq = eq
-                        break
-                
-                if found_eq:
-                    eq_id = self._extract_equipment_id(found_eq)
-                    links.append({
-                        'source': node_id_map.get(eq_id),
-                        'target': node_id,
-                        'quantity': quantity
-                    })
-        
-        return {'nodes': nodes, 'links': links}
-    
     def _build_equipment_gallery(self, group: Dict[str, Any]) -> str:
         """Build equipment preview gallery HTML.
         
@@ -257,6 +209,7 @@ class HTMLGenerator:
                 stat_weight = equipment.get('stat_weight', 0)
             else:
                 stat_weight = getattr(equipment, 'stat_weight', 0)
+            item_break_density = break_density(equipment) if isinstance(equipment, Equipment) else 0.0
             
             if image_url:
                 img_html = f'<img class="equipment-item-image" src="{self._escape_html(image_url)}" alt="{name}">'
@@ -269,6 +222,7 @@ class HTMLGenerator:
                 <div class="equipment-item-name" data-copy-text="{self._escape_html(name)}">{name}</div>
                 <div class="text-tiny text-muted">Lvl {level}</div>
                 <div class="equipment-item-weight">⚖️ {stat_weight:.1f}</div>
+                <div class="text-tiny text-muted">Break density {item_break_density:.1f}</div>
             </div>
             """)
         
@@ -383,11 +337,12 @@ class HTMLGenerator:
             HTML string with stats
         """
         equipments = group.get('equipments', [])
-        ingredients = group.get('total_ingredients', {})
-        unique_ingredients = len(ingredients)
-        total_items = sum(i.get('total_quantity', 0) for i in ingredients.values())
+        shopping_list = ShoppingList.from_equipments(equipments)
+        unique_ingredients = shopping_list.line_item_count
+        total_items = shopping_list.total_units
         efficiency = group.get('sharing_efficiency', 0)
         average_density = group.get('average_density', 0)
+        origin = group.get('origin') or group.get('selection_method', '—')
         
         return f"""
         <div class="group-stats">
@@ -410,6 +365,10 @@ class HTMLGenerator:
             <div class="group-stat">
                 <div class="group-stat-label">Avg Density</div>
                 <div class="group-stat-value">{average_density:.2f}</div>
+            </div>
+            <div class="group-stat">
+                <div class="group-stat-label">Found By</div>
+                <div class="group-stat-value">{origin}</div>
             </div>
         </div>
         """
@@ -506,6 +465,14 @@ class HTMLGenerator:
             cards_html = self._build_group_cards(groups)
         
         summary_stats = self._build_index_summary(groups)
+        group_data = self._build_group_data(groups)
+        report_id = self._escape_html(self.manifest.get("run_id", "unidentified"))
+        scope = self.manifest.get("scope", {})
+        scope_text = self._escape_html(scope.get("summary", "Scope not recorded"))
+        cache = self.manifest.get("source", {}).get("cache", {})
+        cache_text = self._escape_html(
+            f"Resource metadata: {cache.get('status', 'unavailable')}"
+        )
         
         html_content = f"""<!DOCTYPE html>
 <html lang="en">
@@ -523,14 +490,40 @@ class HTMLGenerator:
         <div class="container-full">
             <h1>⚔️ Equipment Crafting Groups</h1>
             <p>Optimized equipment combinations for efficient crafting</p>
+            <p class="report-meta">Report <code>{report_id}</code> | {scope_text} | {cache_text}</p>
             {summary_stats}
         </div>
     </header>
     
     <main id="main" class="container">
+        <section class="combined-list" aria-labelledby="combined-list-title">
+            <div class="flex-between">
+                <div>
+                    <h2 id="combined-list-title">Recipe requirement summary</h2>
+                    <p>Select groups to total their ingredients. This is not an inventory or cost estimate.</p>
+                </div>
+                <button id="copy-combined-list" class="btn btn-secondary" type="button" disabled>Copy list</button>
+            </div>
+            <p id="combined-list-empty">No groups selected.</p>
+            <div id="combined-list-output" hidden></div>
+        </section>
+        <div class="index-controls" aria-label="Filter and sort groups">
+            <label class="sr-only" for="group-search">Filter groups</label>
+            <input id="group-search" class="search-box" type="search" placeholder="Filter groups" />
+            <label class="sr-only" for="group-sort">Sort groups</label>
+            <select id="group-sort" class="sort-select">
+                <option value="default">Default ranking</option>
+                <option value="efficiency">Sharing efficiency</option>
+                <option value="density">Average density</option>
+                <option value="size">Group size</option>
+                <option value="resources">Shared resources</option>
+            </select>
+            <button id="group-reset" class="btn btn-secondary" type="button">Reset</button>
+        </div>
         <div class="groups-container">
             {cards_html}
         </div>
+        <p id="group-empty-state" class="no-results" role="status" hidden>No groups match this filter.</p>
     </main>
     
     <footer style="text-align: center; padding: 2rem; color: var(--color-gray-500); border-top: 1px solid var(--border-color); background: var(--bg-card);">
@@ -538,6 +531,7 @@ class HTMLGenerator:
     </footer>
     
     <script src="static/utils.js"></script>
+    <script type="application/json" id="group-data">{group_data}</script>
 </body>
 </html>
 """
@@ -555,9 +549,11 @@ class HTMLGenerator:
         cards = []
         for idx, group in enumerate(groups):
             equipments = group.get('equipments', [])
-            ingredients = group.get('total_ingredients', {})
+            shopping_list = ShoppingList.from_equipments(equipments)
             efficiency = group.get('sharing_efficiency', 0)
-            total_items = sum(i.get('total_quantity', 0) for i in ingredients.values())
+            shared_resources = group.get('shared_resources_count', 0)
+            average_density = group.get('average_density', 0)
+            total_items = shopping_list.total_units
             
             # Build equipment list
             equip_names = [self._escape_html(self._extract_equipment_name(eq)) for eq in equipments[:5]]
@@ -566,8 +562,12 @@ class HTMLGenerator:
                 equip_list += f", +{len(equipments) - 5} more"
             
             cards.append(f"""
-            <div class="group-card">
+            <div class="group-card" data-rank="{idx + 1}" data-group-file="group_{idx + 1:03d}.html"
+                data-efficiency="{efficiency}" data-density="{average_density}"
+                data-size="{len(equipments)}" data-resources="{shared_resources}">
                 <div class="group-card-header">
+                    <label><input class="group-selector" type="checkbox" data-group-id="{idx + 1}"> Select group</label>
+                    <div class="group-card-rank">Rank {idx + 1}{' - Highest-ranked' if idx == 0 else ''}</div>
                     <h3 class="group-card-title">Group {idx + 1}</h3>
                 </div>
                 <div class="group-card-body">
@@ -576,20 +576,24 @@ class HTMLGenerator:
                         <span class="group-card-equipment-list">{equip_list}</span>
                     </div>
                     <div class="group-card-stat">
-                        <span class="group-card-stat-label">Count</span>
+                        <span class="group-card-stat-label">Group size</span>
                         <span class="group-card-stat-value">{len(equipments)}</span>
                     </div>
                     <div class="group-card-stat">
-                        <span class="group-card-stat-label">Resources</span>
-                        <span class="group-card-stat-value">{len(ingredients)}</span>
+                        <span class="group-card-stat-label">Shared resources</span>
+                        <span class="group-card-stat-value">{shared_resources}</span>
                     </div>
                     <div class="group-card-stat">
-                        <span class="group-card-stat-label">Total Items</span>
-                        <span class="group-card-stat-value">{total_items}</span>
+                        <span class="group-card-stat-label">Average density</span>
+                        <span class="group-card-stat-value">{average_density:.2f}</span>
                     </div>
                     <div class="group-card-stat">
-                        <span class="group-card-stat-label">Efficiency</span>
+                        <span class="group-card-stat-label">Sharing efficiency</span>
                         <span class="group-card-stat-value">{efficiency:.1%}</span>
+                    </div>
+                    <div class="group-card-stat">
+                        <span class="group-card-stat-label">Total items</span>
+                        <span class="group-card-stat-value">{total_items}</span>
                     </div>
                 </div>
                 <div class="group-card-footer">
@@ -599,6 +603,21 @@ class HTMLGenerator:
             """)
         
         return ''.join(cards)
+
+    def _build_group_data(self, groups: List[Dict[str, Any]]) -> str:
+        """Serialize only the ingredient data needed for combined totals."""
+        data = []
+        for index, group in enumerate(groups, start=1):
+            resources = {}
+            for resource_id, info in group.get("total_ingredients", {}).items():
+                resource_key = str(resource_id)
+                resources[resource_key] = {
+                    "name": info.get("name") or f"Resource {resource_key} (metadata unavailable)",
+                    "image_url": info.get("image_url"),
+                    "quantity": info.get("total_quantity", 0),
+                }
+            data.append({"id": str(index), "label": f"Group {index}", "resources": resources})
+        return json.dumps(data, ensure_ascii=True).replace("<", "\\u003c")
     
     def _build_index_summary(self, groups: List[Dict[str, Any]]) -> str:
         """Build summary statistics for index page.
@@ -662,17 +681,49 @@ class HTMLGenerator:
             List of generated file paths
         """
         files = []
+        ranked_groups = self._rank_groups_for_crafting(groups)
+        manifest_path = self.write_manifest()
+        files.append(manifest_path)
         
         # Copy static files first
         self._copy_static_files()
         
         # Generate individual group pages
-        for idx, group in enumerate(groups):
+        for idx, group in enumerate(ranked_groups):
             filepath = self.save_group_page(group, idx)
             files.append(filepath)
         
         # Generate index page
-        index_filepath = self.save_index_page(groups)
+        index_filepath = self.save_index_page(ranked_groups)
         files.append(index_filepath)
-        
+
         return files
+
+    def write_manifest(self) -> str:
+        """Write the machine-readable metadata beside the generated report."""
+        payload = {
+            **self.manifest,
+            "run_id": self.manifest.get("run_id", uuid4().hex[:12]),
+            "generated_at": self.manifest.get(
+                "generated_at", datetime.now(timezone.utc).isoformat()
+            ),
+        }
+        path = self.output_dir / "manifest.json"
+        path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+        self.manifest = payload
+        return str(path)
+
+    @staticmethod
+    def _rank_groups_for_crafting(groups: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Rank groups by transparent recipe-sharing evidence for the report."""
+        ranked = sorted(
+            enumerate(groups),
+            key=lambda indexed_group: (
+                -indexed_group[1].get("sharing_efficiency", 0.0),
+                -indexed_group[1].get("shared_resources_count", 0),
+                -indexed_group[1].get("average_density", 0.0),
+                -len(indexed_group[1].get("equipments", [])),
+                indexed_group[0],
+            ),
+        )
+        return [group for _index, group in ranked]

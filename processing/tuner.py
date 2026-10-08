@@ -33,23 +33,24 @@ def _worker_run_config(
         graph_min_shared_ratio=ratio,
         group_min_shared_resources=count,
         grouping_method=method,
-        use_resource_optimizer=False,
         use_density_filtering=True,
         equipment_density_level_ratio=1.5,  # Relaxed for tuning
+        random_seed=0,
     )
 
     # Run the master
     master = RuneMaster(equipments, config=config, cache_manager=cache_manager)
 
-    if method == "deterministic":
+    if method == "baseline":
+        master.run_baseline()
+    elif method == "deterministic":
         master.run_deterministic()
     elif method == "random":
         master.run_random_grouping()
     elif method == "committee":
         master.run_committee()
     elif method == "genetic":
-        expert = master.experts["genetic"]
-        expert.discover_groups(equipments, config)
+        master.run_genetic_grouping()
     else:
         master.run_all()
 
@@ -73,41 +74,10 @@ class ParameterTuner:
 
     @staticmethod
     def evaluate_quality(stats: Dict[str, Any]) -> float:
-        """Multi-objective quality function for grouping validation.
-
-        Prioritizes:
-        1. Retention Rate (30%) - How many items found a home.
-        2. Average Efficiency (40%) - How much crafting effort is saved.
-        3. Human Management (30%) - Prefers groups of 2-15 items.
-        """
+        """Return the canonical overlap-aware portfolio quality score."""
         if not stats or stats.get("total_groups", 0) == 0:
             return 0.0
-
-        retention = stats.get("retention_rate", 0.0)
-        efficiency = stats.get("average_efficiency", 0.0)
-        avg_size = stats.get("average_group_size", 0.0)
-        max_size = stats.get("max_group_size", 0.0)
-
-        # 🟢 Size Quality (The "Human Sweet Spot" 2-15)
-        # We want avg_size between 2 and 15
-        size_score = 0.0
-        if 2.0 <= avg_size <= 15.0:
-            size_score = 1.0
-        elif 15.0 < avg_size <= 18.0:
-            size_score = 0.5
-        else:
-            size_score = 0.0
-
-        # 🔴 Mega-Group Penalty
-        # Trigger penalty if any group is unmanageably large (> 18 items)
-        mega_penalty = 0.0
-        if max_size > 18:
-            mega_penalty = (max_size - 18) * 0.1  # Aggressive penalty
-
-        score = (
-            (retention * 0.3) + (efficiency * 0.4) + (size_score * 0.3) - mega_penalty
-        )
-        return max(0.0, score)
+        return float(stats.get("portfolio_quality_score", 0.0))
 
     def tune(
         self, method: str = "deterministic"

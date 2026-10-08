@@ -103,15 +103,6 @@ function sortIngredientsBy(columnIndex, order = 'asc') {
 }
 
 /**
- * D3.js graph initialization (called by graph-specific pages)
- * This is a placeholder - actual D3 setup is in graph_generator.py
- */
-function initializeGraph(graphData) {
-    console.log('Graph data loaded:', graphData);
-    // D3 setup code will go here
-}
-
-/**
  * Smooth scroll to element
  */
 function scrollToElement(elementId) {
@@ -129,6 +120,94 @@ function toggleElement(elementId) {
     if (element) {
         element.style.display = element.style.display === 'none' ? '' : 'none';
     }
+}
+
+function updateGroupCards() {
+    const container = document.querySelector('.groups-container');
+    if (!container) return;
+
+    const cards = Array.from(container.querySelectorAll('.group-card'));
+    const term = (document.getElementById('group-search')?.value || '').toLowerCase();
+    const sort = document.getElementById('group-sort')?.value || 'default';
+    const metric = {
+        efficiency: 'efficiency',
+        density: 'density',
+        size: 'size',
+        resources: 'resources',
+    }[sort];
+
+    cards.forEach(card => {
+        card.hidden = term !== '' && !card.textContent.toLowerCase().includes(term);
+    });
+    cards.sort((a, b) => {
+        if (!metric) return Number(a.dataset.rank) - Number(b.dataset.rank);
+        const difference = Number(b.dataset[metric]) - Number(a.dataset[metric]);
+        return difference || Number(a.dataset.rank) - Number(b.dataset.rank);
+    });
+    cards.forEach(card => container.appendChild(card));
+
+    const visible = cards.filter(card => !card.hidden).length;
+    const emptyState = document.getElementById('group-empty-state');
+    if (emptyState) emptyState.hidden = visible !== 0;
+}
+
+function resetGroupControls() {
+    const search = document.getElementById('group-search');
+    const sort = document.getElementById('group-sort');
+    if (search) search.value = '';
+    if (sort) sort.value = 'default';
+    updateGroupCards();
+}
+
+function updateCombinedList() {
+    const dataElement = document.getElementById('group-data');
+    if (!dataElement) return;
+    const groups = JSON.parse(dataElement.textContent || '[]');
+    const selected = new Set(Array.from(document.querySelectorAll('.group-selector:checked'))
+        .map(input => input.dataset.groupId));
+    const totals = new Map();
+    selected.forEach(groupId => {
+        const group = groups.find(item => item.id === groupId);
+        if (!group) return;
+        Object.entries(group.resources).forEach(([resourceId, resource]) => {
+            const entry = totals.get(resourceId) || { ...resource, quantity: 0, groups: [] };
+            entry.quantity += Number(resource.quantity) || 0;
+            entry.groups.push(`${group.label}: ${resource.quantity}`);
+            totals.set(resourceId, entry);
+        });
+    });
+
+    const output = document.getElementById('combined-list-output');
+    const empty = document.getElementById('combined-list-empty');
+    const copy = document.getElementById('copy-combined-list');
+    const rows = Array.from(totals.entries()).sort(([a], [b]) => Number(a) - Number(b));
+    const escapeHtml = value => String(value).replace(/[&<>"']/g, character => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[character]));
+    if (output) {
+        output.innerHTML = rows.length
+            ? `<ul>${rows.map(([, resource]) => `<li><strong>${escapeHtml(resource.name)}</strong>: ${resource.quantity}
+                <span>(${resource.groups.join(', ')})</span></li>`).join('')}</ul>`
+            : '';
+        output.hidden = rows.length === 0;
+    }
+    if (empty) empty.hidden = rows.length !== 0;
+    if (copy) copy.disabled = rows.length === 0;
+    window.combinedListText = rows.map(([, resource]) => `${resource.name}: ${resource.quantity}`).join('\n');
+}
+
+function copyCombinedList() {
+    if (!window.combinedListText) return;
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(window.combinedListText);
+        return;
+    }
+    const textarea = document.createElement('textarea');
+    textarea.value = window.combinedListText;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    textarea.remove();
 }
 
 // Initialize on page load
@@ -158,4 +237,18 @@ document.addEventListener('DOMContentLoaded', function() {
             filterIngredients(e.target.value);
         });
     }
+
+    const groupSearch = document.getElementById('group-search');
+    const groupSort = document.getElementById('group-sort');
+    const groupReset = document.getElementById('group-reset');
+    if (groupSearch) groupSearch.addEventListener('input', updateGroupCards);
+    if (groupSort) groupSort.addEventListener('change', updateGroupCards);
+    if (groupReset) groupReset.addEventListener('click', resetGroupControls);
+
+    document.querySelectorAll('.group-selector').forEach(input => {
+        input.addEventListener('change', updateCombinedList);
+    });
+    const copyCombined = document.getElementById('copy-combined-list');
+    if (copyCombined) copyCombined.addEventListener('click', copyCombinedList);
+    updateCombinedList();
 });

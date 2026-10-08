@@ -21,10 +21,10 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 ENV UV_CACHE_DIR=/tmp/uv-cache
 
 # Copy requirements first for better layer caching
-COPY requirements.txt /tmp/requirements.txt
+COPY pyproject.toml uv.lock /tmp/
 
-# Install Python dependencies
-RUN uv pip install --no-cache-dir --prefix /install -r /tmp/requirements.txt
+# Install Python dependencies (core + capture extras)
+RUN cd /tmp && uv pip install --no-cache-dir --prefix /install -r pyproject.toml --extra capture
 
 # Install aider-chat globally (pinned version for reproducibility)
 RUN uv pip install --no-cache-dir --prefix /install aider-chat==0.74.2

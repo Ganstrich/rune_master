@@ -10,6 +10,8 @@ from processing.config_dataclass import ProcessingConfig
 from processing.experts.base import GroupingExpert
 from processing.graph_builder import GraphBuilder
 from processing.group_mapper import GroupMapper
+from processing.policy import GroupAcceptancePolicy
+from processing.valuation.objective import GroupObjective
 
 
 class GraphGroupingExpert(GroupingExpert):
@@ -19,9 +21,13 @@ class GraphGroupingExpert(GroupingExpert):
     """
 
     def __init__(
-        self, cache_manager: Optional[Any] = None, api_client: Optional[Any] = None
+        self,
+        cache_manager: Optional[Any] = None,
+        api_client: Optional[Any] = None,
+        objective: Optional[GroupObjective] = None,
+        policy: Optional[GroupAcceptancePolicy] = None,
     ):
-        super().__init__("GraphExpert", cache_manager, api_client)
+        super().__init__("GraphExpert", cache_manager, api_client, objective, policy)
 
     def discover_groups(
         self,
@@ -33,8 +39,11 @@ class GraphGroupingExpert(GroupingExpert):
         """Run the graph-based discovery pipeline."""
         print(f"      [{self.name}] Building graph and detecting communities...")
 
-        # 1. Build graph
-        if precomputed_graph is not None and precomputed_resources is not None:
+        # 1. Build the graph required by the configured algorithm.
+        if config.algorithm == "bilouvain":
+            graph = GraphBuilder.create_bipartite_graph(equipments)
+            resources: Dict[int, Set[int]] = {}
+        elif precomputed_graph is not None and precomputed_resources is not None:
             graph = precomputed_graph
             resources = precomputed_resources
         else:
@@ -43,6 +52,7 @@ class GraphGroupingExpert(GroupingExpert):
                 min_shared_ratio=config.graph_min_shared_ratio,
                 min_shared_count=config.graph_min_shared_count,
                 min_component_size=config.graph_min_component_size,
+                same_set_edge_discount=config.same_set_edge_discount,
             )
 
         if graph.number_of_nodes() == 0:
@@ -54,12 +64,20 @@ class GraphGroupingExpert(GroupingExpert):
                 graph,
                 resources,
                 resolution_range=config.resolution_range,
+                random_seed=config.random_seed,
             )
         elif config.algorithm == "bilouvain":
             partition = CommunityDetector.find_best_bilouvain_partition(
                 graph,
                 resolution_range=config.resolution_range,
+                random_seed=config.random_seed,
             )
+            equipment_ids = {equipment.ankama_id for equipment in equipments}
+            partition = {
+                node: community_id
+                for node, community_id in partition.items()
+                if node in equipment_ids
+            }
         else:
             # Fallback to connected components
             components = nx.connected_components(graph)
@@ -72,7 +90,10 @@ class GraphGroupingExpert(GroupingExpert):
 
         # 3. Map to groups
         mapper = GroupMapper(
-            equipments, excluded_resource_ids=config.excluded_resource_ids
+            equipments,
+            excluded_resource_ids=config.excluded_resource_ids,
+            quality_weights=config.group_quality_weights,
+            acceptance_policy=self.policy or GroupAcceptancePolicy(config),
         )
 
         if config.use_inclusive_mapping:
@@ -82,6 +103,7 @@ class GraphGroupingExpert(GroupingExpert):
                 max_group_size=config.group_max_size,
                 min_shared_resources=config.group_min_shared_resources,
                 efficiency_threshold=config.group_efficiency_threshold,
+                quality_threshold=config.group_quality_threshold,
                 cache_manager=self.cache_manager,
                 api_client=self.api_client,
             )
@@ -92,6 +114,7 @@ class GraphGroupingExpert(GroupingExpert):
                 max_group_size=config.group_max_size,
                 min_shared_resources=config.group_min_shared_resources,
                 efficiency_threshold=config.group_efficiency_threshold,
+                quality_threshold=config.group_quality_threshold,
                 cache_manager=self.cache_manager,
                 api_client=self.api_client,
             )

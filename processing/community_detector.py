@@ -10,9 +10,8 @@ from typing import Dict, List, Optional, Set, Tuple
 import community
 import networkx as nx
 import numpy as np
-import networkx as nx
-import community
-from itertools import combinations
+
+from processing.blocks.similarity import jaccard
 
 
 class CommunityDetector:
@@ -71,11 +70,8 @@ class CommunityDetector:
                         set1 = equipment_resources[eq1]
                         set2 = equipment_resources[eq2]
 
-                        intersection = len(set1 & set2)
-                        union = len(set1 | set2)
+                        similarity = jaccard(set1, set2)
 
-                        similarity = intersection / union if union > 0 else 0.0
-                        
                         if _cache is not None:
                             _cache[key] = similarity
 
@@ -92,57 +88,11 @@ class CommunityDetector:
         return total_similarity / total_communities
 
     @staticmethod
-    def calculate_bulk_efficiency(
-        partition: Dict[int, int],
-        equipment_resources: Dict[int, Set[int]]
-    ) -> float:
-        """Calculate average bulk acquisition efficiency across communities.
-
-        Efficiency = (shared_resources / total_unique_resources) for each community.
-        Returns average across all multi-equipment communities.
-
-        Args:
-            partition: Dict mapping equipment_id -> community_id
-            equipment_resources: Dict from GraphBuilder.get_equipment_resources()
-
-        Returns:
-            Average efficiency (0.0 to 1.0)
-        """
-        communities_dict = {}
-        for equipment, comm_id in partition.items():
-            communities_dict.setdefault(comm_id, []).append(equipment)
-
-        total_efficiency = 0.0
-        community_count = 0
-
-        for comm_id, equipment_list in communities_dict.items():
-            if len(equipment_list) < 2:
-                continue
-
-            # Calculate resource overlap
-            try:
-                all_resources = [
-                    equipment_resources[eq] for eq in equipment_list
-                ]
-            except KeyError:
-                # Some equipment may not have resources
-                continue
-
-            shared_resources = set.intersection(*all_resources)
-            total_unique_resources = set.union(*all_resources)
-
-            if len(total_unique_resources) > 0:
-                efficiency = len(shared_resources) / len(total_unique_resources)
-                total_efficiency += efficiency
-                community_count += 1
-
-        return (total_efficiency / community_count) if community_count > 0 else 0.0
-
-    @staticmethod
     def find_best_louvain_partition(
         equipment_graph: nx.Graph,
         equipment_resources: Dict[int, Set[int]],
-        resolution_range: tuple = (1, 10, 1)
+        resolution_range: tuple = (1, 10, 1),
+        random_seed: int | None = None,
     ) -> Dict[int, int]:
         """Find best Louvain partition using modularity optimization.
 
@@ -169,7 +119,7 @@ class CommunityDetector:
             partition = community.best_partition(
                 equipment_graph,
                 resolution=resolution,
-                randomize=True
+                random_state=random_seed,
             )
 
             # Score based on average pairwise similarity
@@ -192,7 +142,8 @@ class CommunityDetector:
     @staticmethod
     def find_best_bilouvain_partition(
         equipment_graph: nx.Graph,
-        resolution_range: tuple = (1, 10, 1)
+        resolution_range: tuple = (1, 10, 1),
+        random_seed: int | None = None,
     ) -> Dict[int, int]:
         """Find best partition using BiLouvain for bipartite graphs.
 
@@ -231,7 +182,8 @@ class CommunityDetector:
             partition = CommunityDetector.find_best_louvain_partition(
                 equipment_projection,
                 equipment_resources,
-                resolution_range
+                resolution_range,
+                random_seed=random_seed,
             )
         else:
             partition = {}

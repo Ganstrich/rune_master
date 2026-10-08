@@ -5,12 +5,23 @@
 **Rune Master** is an equipment crafting optimizer for Dofus 3 that:
 1. Fetches equipment data from the DofusAPI
 2. Groups equipment by shared resource requirements
-3. Generates interactive HTML visualizations with D3.js graphs
+3. Generates static HTML reports with equipment and ingredient details
 4. Runs a local web server to browse groups and visualizations
 
 **Repository**: `/home/adamb/rune_master`
 **Python Version**: 3.12+
 **Entry Point**: `main.py`
+
+### Read This First
+
+`docs/` holds the domain model, the objective the project is actually
+optimizing, an audit of known failings, and the target architecture. Start at
+[docs/README.md](../../docs/README.md). Grouping exists because an item's rune
+yield coefficient (`taux`) is unknowable before breaking and decays with use, so
+cheap variety is the goal — not recipe overlap for its own sake.
+
+`processing/PROCESSING.md` stays authoritative for what the code does **today**;
+`docs/` describes the domain and the destination.
 
 ---
 
@@ -20,7 +31,7 @@
 main.py (orchestration)
 ├── data/
 │   ├── api_client.py (HTTP API calls)
-│   ├── cache_manager.py (persistent JSON cache)
+│   ├── cache_manager.py (persistent SQLite cache)
 │   └── loaders.py (raw dicts → dataclasses)
 ├── models/
 │   ├── equipment.py (Equipment, EquipmentStat)
@@ -33,7 +44,6 @@ main.py (orchestration)
 │   └── group_mapper.py (communities → groups with ingredients)
 └── visualization/
     ├── html_generator.py (HTML page generation)
-    ├── graph_generator.py (D3.js force-directed graphs)
     └── style_templates.py (CSS/JS utilities)
 ```
 
@@ -84,7 +94,6 @@ The **RuneMaster** orchestrator runs 4 steps:
 - Each group page includes:
   - Equipment gallery (with images)
   - Ingredient table (with per-equipment breakdown)
-  - D3.js interactive graph (equipment ↔ resources)
 
 ### 3. **Resource Caching (CRITICAL)**
 
@@ -112,9 +121,8 @@ Located in `main.py::_cache_equipment_resources()`:
 **Each group page layout:**
 1. Header with group stats
 2. Equipment gallery (thumbnail images)
-3. **Ingredient table** (BEFORE graph - user requirement)
-4. D3.js relationship graph
-5. Footer
+3. Ingredient table (with per-equipment quantities)
+4. Footer
 
 **Important CSS classes:**
 - `.ingredient-resource-name`: Resource name (used by paste feature)
@@ -132,17 +140,7 @@ Located in `main.py::_cache_equipment_resources()`:
    - CSS class: `.group-card-equipment-list`
    - File: `visualization/style_templates.py` (added styling)
 
-2. **Ingredient Table Before Graph**
-   - Reordered HTML sections in `generate_group_page()`
-   - Order: Equipment Gallery → Ingredient Table → Graph
-   - File: `visualization/html_generator.py` (line ~390)
-
-3. **D3.js Graph Visualization**
-   - Interactive force-directed layout
-   - Blue nodes = Equipment, Green nodes = Resources
-   - Fully functional with hover tooltips
-
-4. **Resource Name Caching**
+2. **Resource Name Caching**
    - Pre-fetches all ~279 resources during load phase
    - First run: 37.53s to fetch + cache all resources
    - Subsequent runs: instant cache lookup
@@ -183,14 +181,8 @@ Edit `main.py::_cache_equipment_resources()`:
 
 ### Customize HTML Layout
 Edit `visualization/html_generator.py::generate_group_page()`:
-- Line ~390: reorder `equipment_gallery`, `ingredient_table`, `graph_html`
+- Adjust the equipment gallery and ingredient table sections
 - Modify `.group-card` styling in `style_templates.py`
-
-### Adjust Graph Visualization
-Edit `visualization/graph_generator.py::get_graph_javascript()`:
-- Force simulation parameters (lines ~45-60)
-- Node sizing logic (lines ~150-180)
-- Color scheme (look for `#4f46e5` and `#10b981`)
 
 ---
 
@@ -206,7 +198,7 @@ Output sequence:
 1. Load equipment (0.15s)
 2. Cache resources (~37s on first run)
 3. Run processing (0.5s)
-4. Generate visualizations (0.03s)
+4. Generate reports (0.03s)
 5. Start server on http://127.0.0.1:8000/
 
 ### Clear Cache (Force Fresh Resource Fetch)
@@ -245,11 +237,10 @@ grep "ingredient-resource-name" visualizations/group_001.html | head -5
 ## Important Notes for Future Assistants
 
 1. **Resource caching is essential** - Don't remove `_cache_equipment_resources()` function
-2. **Order matters** - Ingredient table MUST come before graph (user requirement)
-3. **Equipment names on index** - Must show actual equipment names in group cards
-4. **Paste feature needs resource names** - Without proper caching, paste won't work
-5. **First run is slow** - Expected behavior (resource fetching). Document this to users.
-6. **Cache location** - `resource_cache.db` (NOT in repo, gitignored)
+2. **Equipment names on index** - Must show actual equipment names in group cards
+3. **Paste feature needs resource names** - Without proper caching, paste won't work
+4. **First run is slow** - Expected behavior (resource fetching). Document this to users.
+5. **Cache location** - `resource_cache.db` (NOT in repo, gitignored)
 
 ---
 
