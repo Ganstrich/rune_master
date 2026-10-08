@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
 from models import Equipment
+from processing.blocks.shopping_list import ShoppingList
 from processing.valuation.focus import break_density
 from processing.exploration import ExplorationCandidate
 
@@ -336,9 +337,9 @@ class HTMLGenerator:
             HTML string with stats
         """
         equipments = group.get('equipments', [])
-        ingredients = group.get('total_ingredients', {})
-        unique_ingredients = len(ingredients)
-        total_items = sum(i.get('total_quantity', 0) for i in ingredients.values())
+        shopping_list = ShoppingList.from_equipments(equipments)
+        unique_ingredients = shopping_list.line_item_count
+        total_items = shopping_list.total_units
         efficiency = group.get('sharing_efficiency', 0)
         average_density = group.get('average_density', 0)
         origin = group.get('origin') or group.get('selection_method', '—')
@@ -548,11 +549,11 @@ class HTMLGenerator:
         cards = []
         for idx, group in enumerate(groups):
             equipments = group.get('equipments', [])
-            ingredients = group.get('total_ingredients', {})
+            shopping_list = ShoppingList.from_equipments(equipments)
             efficiency = group.get('sharing_efficiency', 0)
             shared_resources = group.get('shared_resources_count', 0)
             average_density = group.get('average_density', 0)
-            total_items = sum(i.get('total_quantity', 0) for i in ingredients.values())
+            total_items = shopping_list.total_units
             
             # Build equipment list
             equip_names = [self._escape_html(self._extract_equipment_name(eq)) for eq in equipments[:5]]

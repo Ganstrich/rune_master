@@ -11,6 +11,8 @@ import community
 import networkx as nx
 import numpy as np
 
+from processing.blocks.similarity import jaccard
+
 
 class CommunityDetector:
     """Detect communities in equipment graphs using various algorithms."""
@@ -68,11 +70,8 @@ class CommunityDetector:
                         set1 = equipment_resources[eq1]
                         set2 = equipment_resources[eq2]
 
-                        intersection = len(set1 & set2)
-                        union = len(set1 | set2)
+                        similarity = jaccard(set1, set2)
 
-                        similarity = intersection / union if union > 0 else 0.0
-                        
                         if _cache is not None:
                             _cache[key] = similarity
 

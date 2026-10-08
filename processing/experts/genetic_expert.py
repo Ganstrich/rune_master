@@ -187,7 +187,7 @@ class GeneticGroupingExpert(GroupingExpert):
             equipments,
             excluded_resource_ids=config.excluded_resource_ids,
             quality_weights=config.group_quality_weights,
-            acceptance_policy=GroupAcceptancePolicy(config),
+            acceptance_policy=self.policy or GroupAcceptancePolicy(config),
         )
             
         # Our individual is a list of sets of equipments
@@ -200,7 +200,7 @@ class GeneticGroupingExpert(GroupingExpert):
                 api_client=self.api_client
             )
                 
-            if GroupAcceptancePolicy(config).accepts(group_data):
+            if (self.policy or GroupAcceptancePolicy(config)).accepts(group_data):
                 group_data["expert_name"] = self.name
                 group_data["selection_method"] = "genetic"
                 group_data["provenance"] = self.provenance
