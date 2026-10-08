@@ -341,6 +341,7 @@ class HTMLGenerator:
         total_items = sum(i.get('total_quantity', 0) for i in ingredients.values())
         efficiency = group.get('sharing_efficiency', 0)
         average_density = group.get('average_density', 0)
+        origin = group.get('origin') or group.get('selection_method', '—')
         
         return f"""
         <div class="group-stats">
@@ -363,6 +364,10 @@ class HTMLGenerator:
             <div class="group-stat">
                 <div class="group-stat-label">Avg Density</div>
                 <div class="group-stat-value">{average_density:.2f}</div>
+            </div>
+            <div class="group-stat">
+                <div class="group-stat-label">Found By</div>
+                <div class="group-stat-value">{origin}</div>
             </div>
         </div>
         """

@@ -1,4 +1,4 @@
-.PHONY: sync serve compute all tune clean help
+.PHONY: sync serve compute evolve all tune clean help
 
 # Install/update dependencies
 sync:
@@ -16,8 +16,12 @@ serve:
 dev:
 	uv run main.py --no-serve
 
-# Run the pipeline without starting the server (evolutionary committee for best results)
+# Run the pipeline without starting the server (every expert, groups tagged with origin)
 compute:
+	uv run main.py --no-serve --grouping-method survey
+
+# Run the single-portfolio evolutionary committee instead of the full survey
+evolve:
 	uv run main.py --no-serve --grouping-method evolutionary_committee
 
 # Run with parameter tuning

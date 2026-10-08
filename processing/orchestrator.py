@@ -157,6 +157,70 @@ class RuneMaster:
         self.print_summary()
         return self.groups
 
+    def run_survey(self) -> List[Dict[str, Any]]:
+        """Run every expert and keep the union, tagging each group's origin.
+
+        Unlike the committee this does not select a single portfolio: identical
+        groups found by several experts are merged into one entry that records
+        every origin, so the report shows what each expert contributes.
+        """
+        print("\n" + "=" * 60)
+        print("🚀 RuneMaster: Survey (all experts, union of proposals)")
+        print("=" * 60)
+
+        self.expert_failures = {}
+        shared_graph, shared_resources = GraphBuilder.build_equipment_graph(
+            self.equipments,
+            min_shared_ratio=self.config.graph_min_shared_ratio,
+            min_shared_count=self.config.graph_min_shared_count,
+            min_component_size=self.config.graph_min_component_size,
+            same_set_edge_discount=self.config.same_set_edge_discount,
+        )
+
+        merged: Dict[frozenset, Dict[str, Any]] = {}
+        for expert_name, expert in self.experts.items():
+            print(f"\n[Expert: {expert_name}] Analyzing equipment pool...")
+            try:
+                expert_groups = expert.discover_groups(
+                    self.equipments,
+                    self.config,
+                    precomputed_graph=shared_graph,
+                    precomputed_resources=shared_resources,
+                )
+            except (IndexError, KeyError, RuntimeError, TypeError, ValueError) as error:
+                message = f"{type(error).__name__}: {error}"
+                self.expert_failures[expert_name] = message
+                print(f"      ❌ {expert_name} failed: {message}")
+                continue
+
+            for group in expert_groups:
+                fingerprint = frozenset(
+                    item.ankama_id for item in group.get("equipments", [])
+                )
+                if not fingerprint:
+                    continue
+                existing = merged.get(fingerprint)
+                if existing is None:
+                    group["origins"] = [expert_name]
+                    merged[fingerprint] = group
+                elif expert_name not in existing["origins"]:
+                    existing["origins"].append(expert_name)
+            print(f"      ✓ {expert_name}: {len(expert_groups)} proposals")
+
+        groups = sorted(
+            merged.values(),
+            key=lambda group: group.get("quality_score", 0.0),
+            reverse=True,
+        )
+        for group in groups:
+            group["origin"] = "+".join(group["origins"])
+
+        shared = sum(1 for group in groups if len(group["origins"]) > 1)
+        print(f"\n[Survey] {len(groups)} distinct groups, {shared} found by more than one expert")
+        self.groups = groups
+        self.print_summary()
+        return self.groups
+
     def run_committee(self) -> List[Dict[str, Any]]:
         """Run the Mixture of Experts committee (MoE).
 

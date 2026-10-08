@@ -74,7 +74,16 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="RuneMaster: Equipment Group Discovery")
     parser.add_argument(
         "--grouping-method",
-        choices=["deterministic", "random", "hybrid", "committee", "genetic", "evolutionary_committee"],
+        choices=[
+            "deterministic",
+            "random",
+            "hybrid",
+            "committee",
+            "genetic",
+            "greedy",
+            "evolutionary_committee",
+            "survey",
+        ],
     )
     parser.add_argument("--random-groups", type=positive_int, help="Number of random groups to generate")
     parser.add_argument("--density-ratio", type=nonnegative_float, help="Density/level ratio filter")
@@ -250,6 +259,8 @@ def process_equipment(
         groups = master.run_genetic()
     elif config.grouping_method == "greedy":
         groups = master.run_greedy()
+    elif config.grouping_method == "survey":
+        groups = master.run_survey()
     elif config.grouping_method == "evolutionary_committee":
         groups = master.run_evolutionary_committee()
     else:

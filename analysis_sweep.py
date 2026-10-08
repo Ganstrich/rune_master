@@ -80,6 +80,7 @@ _METHOD_DISPATCH = {
     "hybrid": "run_hybrid_grouping",
     "committee": "run_committee",
     "evolutionary_committee": "run_evolutionary_committee",
+    "survey": "run_survey",
     "baseline": "run_baseline",
 }
 
