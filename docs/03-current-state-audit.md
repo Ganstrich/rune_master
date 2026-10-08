@@ -22,6 +22,11 @@ craftsmanship:
   the code under-uses (see [01-domain-model.md](01-domain-model.md)).
 - `PROCESSING.md` is unusually honest about its own limitations, including
   "Recipe overlap is not economic value."
+- **Set membership tracking** (`equipment_sets`, `same_set_edge_discount`,
+  `group_max_set_share`, `set_free_ratio`, `set_concentration_penalty`) is a
+  valuable feature that is currently under-used. Set items are heavily broken
+  by other players and have low taux — this is a prior on exploration value
+  that the objective does not yet incorporate.
 
 ## The Structural Blocker: Experts Own The Definition Of Good
 

@@ -35,15 +35,17 @@ additions.
 - Implement `valuation/focus.py`: `break_density`, `break_density_focused`.
 - Surface break density per item in reports.
 - Add the compression term to `OverlapObjective` and reweight (Failing 1).
+  **Weight compression by set concentration** — set items have low taux.
 - Move constraints onto line items and unit budget (Failing 4).
 - Retire `sharing_efficiency` as a gate; keep it as a reported field
   (Failing 7).
 - Move the value gate into the loader so all five methods share it, and switch
   from a linear-in-level threshold to a within-level-band percentile
-  (Failing 6).
+  (Failing 6). **Add set concentration as a gate or objective term.**
 
 **Unblocks:** correct item valuation structure; fixes the size bias that makes
-every current search converge on pairs.
+every current search converge on pairs; incorporates set membership as a
+taux proxy.
 
 **Changes output.** Group composition will shift noticeably. Capture a
 before/after on group-size and line-item distributions.

@@ -28,7 +28,7 @@ The loop:
 
 The profit of a production run is:
 
-$$\text{Profit} = \sum_{i \in G} n_i \cdot \mathbb{E}[\tau_i(n_i)] \cdot D_i(f_i) \cdot \rho_{f_i} \;-\; \sum_{i \in G} n_i \cdot c_i \;-\; \lambda \cdot \left|\bigcup_i R_i\right| \;-\; \text{impact}$$
+$$\text{Profit} = \sum_{i \in G} n_i \cdot \mathbb{E}[\tau_i(n_i)] \cdot D_i(f_i) \cdot \rho_{f_i} \;-\; \sum_{i \in G} n_i \cdot c_i \;-\; \lambda \cdot \left|\bigcup_i R_i\right| \;-\; \text{impact} \;-\; \gamma \cdot \text{set\_concentration}(G)$$
 
 Where:
 - $G$ = the group of items to craft
@@ -40,6 +40,15 @@ Where:
 - $\lambda$ = fixed acquisition cost per distinct resource
 - $\bigcup_i R_i$ = the union of all resources needed
 - impact = order-book walk penalty for large orders
+- $\gamma \cdot \text{set\_concentration}(G)$ = penalty for crafting items from the same panoplie (see below)
+
+**Set membership is a proxy for taux.** Items from the same panoplie (set) share
+many recipe components, but they are also the "safe" crafting choices that every
+player crafts. This means they are systematically broken by many players and
+therefore have a **low taux**. Set membership is an observable signal of "already
+heavily broken" — it is a prior on taux, not just recipe structure. A group with
+high set concentration is a poor exploration vehicle, even if its items have
+high-density stats.
 
 **The grouping problem** is the sub-problem of choosing $G$: a set of items whose
 recipes share resources, so that the shopping list is short and cheap, while the
@@ -387,9 +396,18 @@ with the highest `D_focus(f) * rho_f`.
 Remove `mean_pairwise_jaccard` and `overlapping_pair_ratio` from scoring
 (retain as reported diagnostics).
 
+**Weight compression by set concentration.** A group of 20 items sharing
+9 resources but all from the same panoplie has far less exploration value
+than 20 items from different sets sharing 9 resources. The compression
+score must be penalized by set concentration — the more a group is a
+clone of a single set, the lower its score.
+
 **Why:** The current features are scale-invariant ratios that decay with
 group size, biasing the system toward pairs. Compression is extensive —
-it rewards adding items that don't lengthen the shopping list.
+it rewards adding items that don't lengthen the shopping list. But without
+set-concentration weighting, it treats set clones and diverse groups
+equally, which is wrong: set items are heavily broken by other players
+and have low taux.
 
 **Files:**
 - Modify: `processing/quality_metrics.py`
@@ -398,7 +416,9 @@ it rewards adding items that don't lengthen the shopping list.
 
 **Acceptance:** A unit test asserts monotonicity: appending an item whose
 recipe is a subset of the group's existing resource union must not lower
-the score. Group-size distribution shifts upward in integration tests.
+the score. A unit test asserts that a set-concentrated group scores lower
+than a diverse group with identical resource overlap. Group-size
+distribution shifts upward in integration tests.
 
 #### Step 1.4: Move constraints onto line items and units
 
@@ -441,18 +461,25 @@ passing the quality gate are now accepted. No test references
 
 **What:** Move density filtering from the random expert into
 `data/loaders.py`. Switch from a linear-in-level threshold to a
-within-level-band percentile.
+within-level-band percentile. **Add set concentration as a gate or
+objective term** — groups dominated by a single panoplie should be
+penalized or rejected, because set items are heavily broken by other
+players and have low taux.
 
 **Why:** The gate currently covers one of five execution paths. All
 methods should share the same pool. A percentile filter is level-unbiased.
+Set concentration is a proxy for taux: the more items from the same
+panoplie in a group, the lower the expected exploration value.
 
 **Files:**
 - Modify: `data/loaders.py`
 - Modify: `processing/equipment_filter.py`
 - Modify: `processing/experts/random_expert.py` — remove inline filter
+- Modify: `processing/policy.py` — add set concentration check
 
 **Acceptance:** All five grouping methods receive the same equipment
 pool. No emitted group contains an item below the configured percentile.
+No emitted group has set concentration above the configured threshold.
 
 ### Phase 2: Data Collection (no immediate output change)
 
@@ -581,9 +608,14 @@ per item type, fitted from `break_log`. The model should:
 - Update the posterior with each observation
 - Decay the posterior in planned production volume
 - Provide an exploration bonus for item types with few observations
+- **Use set membership as a prior on taux** — items from the same
+  panoplie are heavily broken by other players and should have a lower
+  expected taux a priori, even before any break observations exist
 
 **Why:** This is the actual edge of the system. It converts break
 observations into actionable intelligence about which items to craft.
+Set membership is a free, observable proxy for "already heavily broken"
+and should inform the prior.
 
 **Files:**
 - Modify: `processing/valuation/taux.py`
@@ -592,7 +624,8 @@ observations into actionable intelligence about which items to craft.
 **Acceptance:** Given a set of break observations, the model produces
 a posterior mean and variance for $\tau$. The posterior mean is higher
 for items with more observations. The exploration bonus is higher for
-items with fewer observations.
+items with fewer observations. Items from the same panoplie have a
+lower prior mean than set-free items with identical stats.
 
 #### Step 4.2: Wire `PosteriorTauxModel` into `ProfitObjective`
 

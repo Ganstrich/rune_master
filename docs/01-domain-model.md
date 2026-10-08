@@ -157,6 +157,29 @@ additional level coefficient. **This is a primary calibration target.**
 **[UNKNOWN]** Whether yield is deterministic given the taux or is itself
 stochastic around an expectation.
 
+## Set Membership As A Taux Proxy
+
+**[INFERRED]** Items from the same panoplie (set) share many recipe
+components, but they are also the "safe" crafting choices that every
+player crafts. This means they are systematically broken by many
+players and therefore have a **low taux**.
+
+Set membership is an observable signal of "already heavily broken" —
+it is a prior on taux, not just recipe structure. A group with high
+set concentration is a poor exploration vehicle, even if its items
+have high-density stats.
+
+**Consequence for the objective:** The profit equation must include a
+set-concentration penalty term. The compression metric must be weighted
+by set concentration. The `PosteriorTauxModel` must use set membership
+as a prior on taux.
+
+**[INFERRED]** The `same_set_edge_discount` config (currently 1.0,
+meaning disabled) reduces edge weights inside sets so Louvain does
+not discover sets as communities. This is not just "avoiding
+rediscovering sets" — it is using graph search to push set items out
+of groups, because they are poor exploration candidates.
+
 ## What Must Be Measured
 
 These cannot be derived and must come from logged observation:
@@ -166,6 +189,8 @@ These cannot be derived and must come from logged observation:
 2. Whether the taux is per-type or per-instance.
 3. The decay curve of the taux against cumulative breaks.
 4. Whether the taux recovers over time.
+5. Whether set membership correlates with lower taux (validating the
+   proxy hypothesis).
 
 Design for this: see the `break_log` proposal in
 [04-target-architecture.md](04-target-architecture.md). RuneMaster is, among

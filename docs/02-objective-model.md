@@ -100,7 +100,8 @@ convenient."
 
 $$\text{Value}(G) = \sum_{i \in G} n_i\Bigl[\mathbb{E}[\tau_i(n_i)] \cdot D_i(f_i) \cdot \rho_{f_i} - c_i\Bigr]
 \;-\; \lambda\Bigl|\bigcup_i R_i\Bigr|
-\;-\; \text{impact}\Bigl(\textstyle\sum_i n_i q_{ir}\Bigr)$$
+\;-\; \text{impact}\Bigl(\textstyle\sum_i n_i q_{ir}\Bigr)
+\;-\; \gamma \cdot \text{set\_concentration}(G)$$
 
 | Term | Meaning | Status |
 | --- | --- | --- |
@@ -110,6 +111,15 @@ $$\text{Value}(G) = \sum_{i \in G} n_i\Bigl[\mathbb{E}[\tau_i(n_i)] \cdot D_i(f_
 | $c_i$ | Craft cost at spot | Needs a price feed |
 | $\lambda \lvert\bigcup R_i\rvert$ | Fixed acquisition cost, per distinct resource | $\lambda$ is user-set |
 | impact | Order-book walk, convex in quantity | Needs market depth |
+| $\gamma \cdot \text{set\_concentration}(G)$ | Penalty for crafting items from the same panoplie | $\gamma$ is user-set; set items have low taux |
+
+**Set concentration** measures how much the group is a clone of a single
+panoplie. Items from the same set share many recipe components, but they
+are also the "safe" crafting choices that every player crafts — meaning
+they are systematically broken by many players and have a **low taux**.
+Set membership is an observable proxy for "already heavily broken."
+A group with high set concentration is a poor exploration vehicle, even
+if its items have high-density stats.
 
 **Note the objective is not additive over items.** Because $\tau_i$ depends on
 $n_i$ and $\lambda$ applies to the *union* of resources, the value of adding an

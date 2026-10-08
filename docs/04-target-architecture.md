@@ -101,11 +101,17 @@ instance:
 - group size bounds,
 - **maximum distinct line items** (new — see Failing 4),
 - **unit budget** for carry capacity (new),
+- **maximum set concentration** (new — set items have low taux),
 - minimum shared resources.
 
 Everything else — reuse, compactness, revenue, cost — is objective, not policy.
 `sharing_efficiency` should be retired as a *gate* and retained only as a
 reported field (Failing 7).
+
+**Set concentration is both a policy and objective concern.** As a policy,
+groups with excessive set share are inadmissible (they are poor exploration
+vehicles). As an objective, the profit equation includes a
+$\gamma \cdot \text{set\_concentration}(G)$ penalty term.
 
 ## Valuation Layer Detail
 
