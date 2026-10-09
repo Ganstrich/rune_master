@@ -46,6 +46,31 @@ rate-limit headers in responses.
 - `language: str` - Language code (default: `'fr'`)
 - `timeout: int` - Request timeout in seconds (default: 30)
 
+## Data Sources
+
+Two independent data paths exist; they are not interchangeable.
+
+| Consumer | Source |
+|---|---|
+| `main.py` pipeline | frozen snapshot, gated on the live API version |
+| `scripts/profile_snapshot.py`, `challenge_*.py` | frozen snapshot directly |
+| `scripts/snapshot_data.py` | live API → writes a snapshot |
+
+`data/snapshot_source.py` decides between them. A snapshot is used only when
+its `manifest.json` records the same `game_version` that the live API
+advertises at `/{game}/v1/meta/version`; recipes, levels, and set membership
+all shift between patches, so a stale snapshot is never used silently. The
+version check is the only network call on the snapshot path.
+
+When no snapshot matches, the pipeline falls back to the live API with the
+SQLite `resource_cache.db` for resource names and icons.
+
+A snapshot carries recipes, effects, stat weights, the set index, and every
+resource, so the snapshot path needs no resource or set network access. Two
+small adapters in `data/snapshot_source.py` (`_ResourceCacheBridge`,
+`_NoOpAPI`) keep the rest of the pipeline unchanged by honouring exactly the
+surface it touches.
+
 ## Cache Manager (`cache_manager.py`)
 
 ### `CacheManager`

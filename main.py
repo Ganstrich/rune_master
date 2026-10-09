@@ -19,7 +19,7 @@ import webbrowser
 from dataclasses import asdict, is_dataclass, replace
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
-from typing import Any, List
+from typing import Any, List, Optional
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.resolve()
@@ -27,7 +27,13 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from config import ALL_CRAFTABLE_TYPES, Config
 from data import DofusAPIClient, CacheManager, EquipmentLoader
-from models import Equipment
+from data.snapshot import load_snapshot
+from data.snapshot_source import (
+    _NoOpAPI,
+    _ResourceCacheBridge,
+    find_matching_snapshot,
+)
+from models import Equipment, Resource
 from processing import RuneMaster, ProcessingConfig
 from processing.job_filter import JobLevelFilter
 from processing.tuner import ParameterTuner
@@ -161,10 +167,76 @@ def parse_args(arguments: list[str] | None = None) -> argparse.Namespace:
     return args
 
 
+def resolve_equipment_source() -> tuple[str, Optional[Path]]:
+    """Pick the equipment source: a matching snapshot, or the live API.
+
+    A snapshot is only trustworthy when it records the same game version the
+    API currently serves, because item recipes, levels, and set membership
+    all shift between patches. That check is one ``/meta/version`` request.
+
+    Returns:
+        Tuple of (label, snapshot path or None). The path is None when no
+        snapshot matches and the caller must fall back to the live API.
+    """
+    api = DofusAPIClient()
+    match = find_matching_snapshot(api)
+
+    if match is not None:
+        print(f"\n🗂️  Using snapshot {match.path.name} (game {match.version})")
+        return "snapshot", match.path
+
+    live_version = "unknown"
+    payload = api._make_request(f"/{api.game}/v1/meta/version")
+    if payload and payload.get("version"):
+        live_version = str(payload["version"])
+
+    print(
+        f"\n⚠️  No snapshot matches the live API (live: {live_version}).\n"
+        f"   Falling back to the live API. Run scripts/snapshot_data.py\n"
+        f"   to freeze a snapshot for {live_version}."
+    )
+    return "live", None
+
+
+def _filter_equipments(
+    equipments: List[Equipment], scope: dict[str, Any]
+) -> List[Equipment]:
+    """Apply the item-type and level scope to a loaded pool.
+
+    The snapshot stores the full population, so the CLI scope still has to be
+    applied here. The scope uses the API's English name_ids (``ring``) while
+    the payload carries French display names (``Anneau``), so the type check
+    goes through the numeric type id, which is language-independent.
+    """
+    wanted_ids = {
+        JobLevelFilter.ITEM_TYPE_IDS[name_id]
+        for name_id in scope.get("item_types", [])
+        if name_id in JobLevelFilter.ITEM_TYPE_IDS
+    }
+    min_level = int(scope.get("min_level", Config.MIN_LEVEL))
+    max_level = int(scope.get("max_level", Config.MAX_LEVEL))
+
+    def in_scope(eq: Equipment) -> bool:
+        if wanted_ids and int(eq.type.get("id", -1)) not in wanted_ids:
+            return False
+        return min_level <= eq.level <= max_level
+
+    return [eq for eq in equipments if in_scope(eq)]
+
+
 def load_equipment(
     processing_config: ProcessingConfig, scope: dict[str, Any] | None = None
 ) -> tuple:
-    """Load equipment from API with caching."""
+    """Load equipment from the version-matched snapshot, or the live API.
+
+    Args:
+        processing_config: Pipeline configuration.
+        scope: Item-type and level window. A None scope uses the Config
+            defaults and keeps the full snapshot population.
+
+    Returns:
+        Tuple of (equipments, cache_manager, api_client)
+    """
     print("\n" + "="*60)
     print("📦 LOADING EQUIPMENT")
     print("="*60)
@@ -179,33 +251,38 @@ def load_equipment(
         f"types: {', '.join(effective_scope['item_types'])}"
     )
 
-    # Initialize cache and API
-    cache = CacheManager(cache_file=Config.CACHE_FILE)
-    api = DofusAPIClient()
-    loader = EquipmentLoader(cache=cache, set_index=_load_set_index(cache, api))
-
-    # Load equipments
-    print(f"\n📡 Fetching equipment from API...")
+    source_label, snapshot_path = resolve_equipment_source()
     start_time = time.time()
 
-    try:
-        raw_equipments = api.get_all_equipments(
-            item_types=effective_scope["item_types"],
-            min_level=effective_scope["min_level"],
-            max_level=effective_scope["max_level"],
-        )
-        equipments = loader.from_raw_batch(raw_equipments, processing_config=processing_config)
-    except Exception as e:
-        print(f"\n❌ Error loading equipment: {e}")
-        print("Make sure DofusAPI is accessible: https://api.dofusdu.de")
-        raise
+    if snapshot_path is not None:
+        # The snapshot already carries recipes, effects, stat weights, and the
+        # set index, so no resource or set network access is needed.
+        equipments, resources, _set_index = load_snapshot(snapshot_path)
+        cache = _ResourceCacheBridge(resources)
+        api = _NoOpAPI()
+        equipments = _filter_equipments(equipments, effective_scope)
+    else:
+        cache = CacheManager(cache_file=Config.CACHE_FILE)
+        api = DofusAPIClient()
+        loader = EquipmentLoader(cache=cache, set_index=_load_set_index(cache, api))
+
+        print(f"\n📡 Fetching equipment from API...")
+        try:
+            raw_equipments = api.get_all_equipments(
+                item_types=effective_scope["item_types"],
+                min_level=effective_scope["min_level"],
+                max_level=effective_scope["max_level"],
+            )
+            equipments = loader.from_raw_batch(raw_equipments, processing_config=processing_config)
+        except Exception as e:
+            print(f"\n❌ Error loading equipment: {e}")
+            print("Make sure DofusAPI is accessible: https://api.dofusdu.de")
+            raise
+
+        _cache_equipment_resources(equipments, cache, api)
 
     elapsed = time.time() - start_time
-    print(f"\n✅ Loaded {len(equipments)} equipments in {elapsed:.2f}s")
-
-    # Pre-fetch and cache all resources from equipment recipes
-    _cache_equipment_resources(equipments, cache, api)
-
+    print(f"\n✅ Loaded {len(equipments)} equipments in {elapsed:.2f}s ({source_label})")
     return equipments, cache, api
 
 
