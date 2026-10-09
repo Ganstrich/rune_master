@@ -5,16 +5,24 @@ optimal equipment groups by maximizing a global fitness function.
 """
 
 import random
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set
 
 from models import Equipment
-from processing.experts.base import GroupingExpert
 from processing.config_dataclass import ProcessingConfig
+from processing.experts.base import GroupingExpert
+from processing.experts.genetic_operators import (
+    create_graph_individual,
+    crossover,
+    initialize_population,
+    mutate,
+    tournament_select,
+)
 from processing.graph_builder import GraphBuilder
 from processing.group_mapper import GroupMapper
 from processing.group_metrics import GroupMetrics
 from processing.policy import GroupAcceptancePolicy
 from processing.valuation.objective import GroupCandidate, GroupObjective
+
 
 class GeneticGroupingExpert(GroupingExpert):
     """Expert that uses Genetic Algorithms to discover optimal groups.
@@ -97,7 +105,7 @@ class GeneticGroupingExpert(GroupingExpert):
             )
 
         if graph.number_of_nodes() == 0:
-            print(f"      [{self.name}] ⚠️ No connected equipment found.")
+            print(f"      [{self.name}] No connected equipment found.")
             return []
 
         # Map ankama_id -> Equipment for quick lookup
@@ -113,76 +121,77 @@ class GeneticGroupingExpert(GroupingExpert):
         print(
             f"      [{self.name}] Initializing population (size: {self.population_size})..."
         )
-        population = self._initialize_population(
-            graph, eq_by_id, resource_sets, config
+        population = initialize_population(
+            graph, eq_by_id, config, self.rng, self.objective, excluded,
+            self.initial_groups, self.population_size,
         )
 
         if not population:
-            print(f"      [{self.name}] ⚠️ Failed to initialize population.")
+            print(f"      [{self.name}] Failed to initialize population.")
             return []
 
         best_ever_fitness = float("-inf")
         best_ever_individual: List[Set[Equipment]] = []
         stagnation_counter = 0
 
-        # 2. Evolution Loop
+        # 3. Evolution Loop
         for gen in range(self.generations):
-                # Evaluate fitness
-                fitness_scores = [
-                    self._calculate_individual_fitness(ind, config)
-                    for ind in population
-                ]
+            # Evaluate fitness
+            fitness_scores = [
+                self._calculate_individual_fitness(ind, config)
+                for ind in population
+            ]
 
-                # Track best
-                gen_best_idx = max(
-                    range(len(fitness_scores)), key=lambda i: fitness_scores[i]
+            # Track best
+            gen_best_idx = max(
+                range(len(fitness_scores)), key=lambda i: fitness_scores[i]
+            )
+            gen_best_fitness = fitness_scores[gen_best_idx]
+            if gen_best_fitness > best_ever_fitness:
+                best_ever_fitness = gen_best_fitness
+                best_ever_individual = [s.copy() for s in population[gen_best_idx]]
+                stagnation_counter = 0
+            else:
+                stagnation_counter += 1
+
+            if stagnation_counter >= self.stagnation_limit:
+                print(
+                    f"      [{self.name}] Early stopping at generation {gen + 1} "
+                    f"(stagnation: {stagnation_counter} generations)"
                 )
-                gen_best_fitness = fitness_scores[gen_best_idx]
-                if gen_best_fitness > best_ever_fitness:
-                    best_ever_fitness = gen_best_fitness
-                    best_ever_individual = [s.copy() for s in population[gen_best_idx]]
-                    stagnation_counter = 0
-                else:
-                    stagnation_counter += 1
+                break
 
-                if stagnation_counter >= self.stagnation_limit:
-                    print(
-                        f"      [{self.name}] Early stopping at generation {gen + 1} "
-                        f"(stagnation: {stagnation_counter} generations)"
-                    )
-                    break
+            # Elitism: carry forward top individuals
+            ranked = sorted(
+                zip(population, fitness_scores), key=lambda x: x[1], reverse=True
+            )
+            new_population = [ind.copy() for ind, _ in ranked[: self.elite_count]]
 
-                # Elitism: carry forward top individuals
-                ranked = sorted(
-                    zip(population, fitness_scores), key=lambda x: x[1], reverse=True
-                )
-                new_population = [ind.copy() for ind, _ in ranked[: self.elite_count]]
+            # Fill rest with crossover + mutation
+            while len(new_population) < self.population_size:
+                parent1 = tournament_select(population, fitness_scores, self.rng)
+                parent2 = tournament_select(population, fitness_scores, self.rng)
 
-                # Fill rest with crossover + mutation
-                while len(new_population) < self.population_size:
-                    parent1 = self._tournament_select(population, fitness_scores)
-                    parent2 = self._tournament_select(population, fitness_scores)
+                child1, child2 = crossover(parent1, parent2, resource_sets, self.rng)
 
-                    child1, child2 = self._crossover(parent1, parent2, resource_sets)
+                mutate(child1, graph, eq_by_id, resource_sets, config, self.rng, self.objective, self.mutation_rate)
+                mutate(child2, graph, eq_by_id, resource_sets, config, self.rng, self.objective, self.mutation_rate)
 
-                    self._mutate(child1, graph, eq_by_id, resource_sets, config)
-                    self._mutate(child2, graph, eq_by_id, resource_sets, config)
+                if child1:
+                    new_population.append(child1)
+                if child2 and len(new_population) < self.population_size:
+                    new_population.append(child2)
 
-                    if child1:
-                        new_population.append(child1)
-                    if child2 and len(new_population) < self.population_size:
-                        new_population.append(child2)
+            population = new_population[: self.population_size]
 
-                population = new_population[: self.population_size]
+            if (gen + 1) % 10 == 0:
+                best_fit = max(fitness_scores)
+                print(f"      [{self.name}] Generation {gen+1}/{self.generations} - Best Fitness: {best_fit:.2f}")
 
-                if (gen + 1) % 10 == 0:
-                    best_fit = max(fitness_scores)
-                    print(f"      [{self.name}] Generation {gen+1}/{self.generations} - Best Fitness: {best_fit:.2f}")
-
-        # 3. Extract best individual
+        # 4. Extract best individual
         best_individual = best_ever_individual
             
-        # 4. Convert best individual to standardized Group format
+        # 5. Convert best individual to standardized Group format
         mapper = GroupMapper(
             equipments,
             excluded_resource_ids=config.excluded_resource_ids,
@@ -207,76 +216,6 @@ class GeneticGroupingExpert(GroupingExpert):
                 final_groups.append(group_data)
 
         return final_groups
-
-    def _initialize_population(
-        self,
-        graph: Any,
-        eq_by_id: Dict[int, Equipment],
-        resource_sets: Dict[int, Set[int]],
-        config: ProcessingConfig,
-    ) -> List[List[Set[Equipment]]]:
-        """Create initial individuals from connected graph neighborhoods."""
-        del resource_sets
-        population = []
-        for group in self.initial_groups[: self.population_size]:
-            group_items = set(group.get("equipments", []))
-            if group_items:
-                population.append([group_items])
-        for _ in range(self.population_size):
-            if len(population) >= self.population_size:
-                break
-            population.append(self._create_graph_individual(graph, eq_by_id, config))
-        return population
-
-    def _create_graph_individual(
-        self,
-        graph: Any,
-        eq_by_id: Dict[int, Equipment],
-        config: ProcessingConfig,
-    ) -> List[Set[Equipment]]:
-        """Create one candidate from high-affinity graph neighborhoods."""
-        individual: List[Set[Equipment]] = []
-        available = set(graph.nodes()) & set(eq_by_id)
-        target_group_count = self.rng.randint(3, 8)
-
-        while available and len(individual) < target_group_count:
-            seed_id = self.rng.choice(tuple(available))
-            target_size = self.rng.randint(config.group_min_size, config.group_max_size)
-            group_ids = {seed_id}
-
-            while len(group_ids) < target_size:
-                candidates = {
-                    neighbor
-                    for equipment_id in group_ids
-                    for neighbor in graph.neighbors(equipment_id)
-                    if neighbor in available and neighbor not in group_ids
-                }
-                if not candidates:
-                    break
-                if self.objective is None:
-                    best_candidates = list(candidates)
-                else:
-                    current = GroupCandidate(
-                        [eq_by_id[equipment_id] for equipment_id in group_ids],
-                        config.excluded_resource_ids,
-                    )
-                    best_value = max(
-                        self.objective.marginal(current, eq_by_id[candidate])
-                        for candidate in candidates
-                    )
-                    best_candidates = [
-                        candidate
-                        for candidate in candidates
-                        if self.objective.marginal(current, eq_by_id[candidate])
-                        == best_value
-                    ]
-                group_ids.add(self.rng.choice(best_candidates))
-
-            available -= group_ids
-            if len(group_ids) >= config.group_min_size:
-                individual.append({eq_by_id[equipment_id] for equipment_id in group_ids})
-
-        return individual
 
     def _calculate_individual_fitness(
         self,
@@ -333,183 +272,3 @@ class GeneticGroupingExpert(GroupingExpert):
                 seen_ids.add(eq.ankama_id)
                 
         return total_score - overlap_penalty
-
-    @staticmethod
-    def _equipment_group_affinity(
-        eq_id: int, group_ids: Set[int], resource_sets: Dict[int, Set[int]]
-    ) -> float:
-        """Measure how well an equipment fits in a group by resource overlap."""
-        eq_resources = resource_sets.get(eq_id, set())
-        if not eq_resources or not group_ids:
-            return 0.0
-        group_resources: Set[int] = set()
-        for gid in group_ids:
-            group_resources |= resource_sets.get(gid, set())
-        if not group_resources:
-            return 0.0
-        return len(eq_resources & group_resources) / len(eq_resources | group_resources)
-
-    def _tournament_select(
-        self, population: List[Any], scores: List[float], k: int = 3
-    ) -> Any:
-        """Tournament selection with configurable tournament size."""
-        if not population:
-            return []
-        candidates = self.rng.sample(range(len(population)), min(k, len(population)))
-        best = max(candidates, key=lambda i: scores[i])
-        return population[best]
-
-    def _crossover(
-        self,
-        p1: List[Set[Equipment]],
-        p2: List[Set[Equipment]],
-        resource_sets: Dict[int, Set[int]],
-    ) -> Tuple[List[Set[Equipment]], List[Set[Equipment]]]:
-        """Group-based crossover: assign parent groups to children, resolve conflicts.
-
-        Algorithm:
-        1. Collect all groups from both parents into a pool
-        2. For each group, randomly assign to child1, child2, or both
-        3. Resolve conflicts (equipment in multiple groups within same child)
-           by keeping it in the group where it has higher affinity
-        4. Remove groups that fall below config.group_min_size after resolution
-        """
-        # Build group pool with parent labels for tracking
-        all_groups: List[Tuple[Set[Equipment], int]] = []
-        for g in p1:
-            all_groups.append((g.copy(), 0))
-        for g in p2:
-            all_groups.append((g.copy(), 1))
-
-        # Assign groups to children
-        child1_groups: List[Set[Equipment]] = []
-        child2_groups: List[Set[Equipment]] = []
-
-        for group, _ in all_groups:
-            assignment = self.rng.choice(["c1", "c2", "both"])
-            if assignment in ("c1", "both"):
-                child1_groups.append(group.copy())
-            if assignment in ("c2", "both"):
-                child2_groups.append(group.copy())
-
-        # Resolve conflicts in each child
-        child1_groups = self._resolve_conflicts(child1_groups, resource_sets)
-        child2_groups = self._resolve_conflicts(child2_groups, resource_sets)
-
-        return child1_groups, child2_groups
-
-    def _resolve_conflicts(
-        self,
-        groups: List[Set[Equipment]],
-        resource_sets: Dict[int, Set[int]],
-    ) -> List[Set[Equipment]]:
-        """Resolve equipment appearing in multiple groups within a child.
-
-        For each conflicting equipment, keep it in the group where it has
-        the highest affinity (resource overlap), and remove it from others.
-        """
-        if not groups:
-            return groups
-
-        # Build equipment -> list of group indices map
-        eq_to_groups: Dict[int, List[int]] = {}
-        for i, group in enumerate(groups):
-            for eq in group:
-                eq_to_groups.setdefault(eq.ankama_id, []).append(i)
-
-        # Find conflicts (equipment in > 1 group)
-        conflicts = {
-            eq_id: g_indices
-            for eq_id, g_indices in eq_to_groups.items()
-            if len(g_indices) > 1
-        }
-
-        if not conflicts:
-            return groups
-
-        # Resolve each conflict
-        for eq_id, g_indices in conflicts.items():
-            # Find the equipment object
-            eq_obj = None
-            for i in g_indices:
-                for eq in groups[i]:
-                    if eq.ankama_id == eq_id:
-                        eq_obj = eq
-                        break
-                if eq_obj:
-                    break
-
-            if not eq_obj:
-                continue
-
-            # Calculate affinity for each group
-            best_group_idx = g_indices[0]
-            best_affinity = -1.0
-
-            for i in g_indices:
-                group_ids = {e.ankama_id for e in groups[i]}
-                affinity = self._equipment_group_affinity(
-                    eq_id, group_ids, resource_sets
-                )
-                if affinity > best_affinity:
-                    best_affinity = affinity
-                    best_group_idx = i
-
-            # Remove from all groups except the best one
-            for i in g_indices:
-                if i != best_group_idx:
-                    groups[i] = {eq for eq in groups[i] if eq.ankama_id != eq_id}
-
-        return groups
-
-    def _mutate(
-        self,
-        individual: List[Set[Equipment]],
-        graph: Any,
-        eq_by_id: Dict[int, Equipment],
-        resource_sets: Dict[int, Set[int]],
-        config: ProcessingConfig,
-    ) -> None:
-        """Mutate individual: move item, add item, or merge groups."""
-        if self.rng.random() > self.mutation_rate or not individual:
-            return
-
-        mutation_type = self.rng.choice(["add", "remove", "merge"])
-        
-        if mutation_type == "add":
-            idx = self.rng.randint(0, len(individual) - 1)
-            if len(individual[idx]) >= config.group_max_size:
-                return
-            assigned_ids = {
-                equipment.ankama_id for group in individual for equipment in group
-            }
-            candidate_ids = {
-                neighbor
-                for equipment in individual[idx]
-                for neighbor in graph.neighbors(equipment.ankama_id)
-                if neighbor not in assigned_ids and neighbor in eq_by_id
-            }
-            if candidate_ids:
-                candidates = [eq_by_id[candidate_id] for candidate_id in candidate_ids]
-                if self.objective is None:
-                    selected = self.rng.choice(candidates)
-                else:
-                    current = GroupCandidate(
-                        list(individual[idx]), config.excluded_resource_ids
-                    )
-                    selected = max(
-                        candidates,
-                        key=lambda candidate: self.objective.marginal(current, candidate),
-                    )
-                individual[idx].add(selected)
-        
-        elif mutation_type == "remove":
-            idx = self.rng.randint(0, len(individual) - 1)
-            if len(individual[idx]) > config.group_min_size:
-                individual[idx].pop()
-        
-        elif mutation_type == "merge" and len(individual) >= 2:
-            i1, i2 = self.rng.sample(range(len(individual)), 2)
-            if len(individual[i1] | individual[i2]) <= config.group_max_size:
-                individual[i1].update(individual[i2])
-                individual.pop(i2)
