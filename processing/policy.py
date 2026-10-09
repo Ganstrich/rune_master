@@ -17,6 +17,11 @@ class GroupAcceptancePolicy:
         self.max_set_share = config.group_max_set_share
         self.max_line_items = config.max_line_items
         self.max_total_units = config.max_total_units
+        # sharing_efficiency only discriminates on small groups: at group_size 2
+        # it is exactly pairwise Jaccard, while only 8.5% of 4-item groups fall
+        # below the floor. Gating the floor on group size keeps the check
+        # meaningful without rejecting large cohesive groups (metrics-revision §3.6).
+        self.efficiency_threshold_max_size = 3
 
     @classmethod
     def from_values(
@@ -37,6 +42,7 @@ class GroupAcceptancePolicy:
         policy.max_set_share = 1.0
         policy.max_line_items = float("inf")
         policy.max_total_units = float("inf")
+        policy.efficiency_threshold_max_size = 3
         return policy
 
     def rejection_reason(self, group: Mapping[str, Any]) -> str | None:
@@ -46,7 +52,9 @@ class GroupAcceptancePolicy:
             return "group_size"
         if int(group.get("shared_resources_count", 0)) < self.min_shared_resources:
             return "shared_resources_count"
-        if float(group.get("sharing_efficiency", 0.0)) < self.efficiency_threshold:
+        if group_size <= self.efficiency_threshold_max_size and (
+            float(group.get("sharing_efficiency", 0.0)) < self.efficiency_threshold
+        ):
             return "sharing_efficiency"
         if float(group.get("quality_score", 0.0)) < self.quality_threshold:
             return "quality_score"

@@ -197,10 +197,10 @@ class ResourceRequirement:
 ### API-Level (config.py)
 - `GAME = "dofus3"`
 - `LANGUAGE = "fr"`
-- `MIN_LEVEL = 1`, `MAX_LEVEL = 100`
+- `MIN_LEVEL = 1`, `MAX_LEVEL = 200`
 - `ITEM_TYPES = ALL_CRAFTABLE_TYPES` (18 craftable types: ring, hat, boots, belt, amulet, cloak, shield, sword, staff, hammer, wand, dagger, bow, axe, shovel, lance, scythe)
 - `CACHE_FILE = "resource_cache.db"`
-- `FIELDS = ["recipe", "effects"]`
+- `OUTPUT_PREFIX = "crafting_groups"`
 
 ### Processing-Level (processing/config_dataclass.py — ProcessingConfig)
 Key defaults:

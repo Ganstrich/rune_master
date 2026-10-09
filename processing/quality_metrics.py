@@ -79,10 +79,19 @@ def _set_membership_features(equipment_list):
 
 @dataclass(frozen=True)
 class GroupQualityWeights:
-    """Weights for the compression-oriented overlap objective."""
+    """Weights for the compression-oriented overlap objective.
+
+    Term set follows metrics-revision §6 step 5: ``resource_reuse_ratio`` is
+    dropped from the score. It saturates (median 0.500 at ratio 0.4, probe Q9)
+    and carries no gradient beyond ``compression``, which is extensive and so
+    tracks group size directly. The field is still computed and reported.
+
+    Weight values are unchanged in shape so re-weighting stays a separate
+    decision; only the *set* of terms entering the score changed.
+    """
 
     compression: float = 0.45
-    resource_reuse_ratio: float = 0.25
+    resource_reuse_ratio: float = 0.0  # Dropped from the score; retained for reporting.
     shared_quantity_ratio: float = 0.15
     set_free_ratio: float = 0.15
     set_concentration_penalty: float = 0.45

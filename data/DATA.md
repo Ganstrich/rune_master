@@ -25,10 +25,21 @@ Low-level HTTP client for the Dofus API (`api.dofusdu.de`).
 
 | Method | Description |
 |--------|-------------|
-| `get_all_equipments()` | Fetch all craftable equipment with recipes |
+| `get_all_equipments()` | Fetch all craftable equipment with recipes (single request) |
+| `get_all_resources()` | Fetch every resource in one request |
+| `get_all_sets()` | Fetch every panoplie with its member equipment ids |
 | `get_equipment(id)` | Fetch single equipment by ID |
 | `get_resource(id)` | Fetch single resource by ID |
 | `get_resources_batch(ids)` | Fetch multiple resources (individual calls) |
+
+**Endpoint strategy:** the client uses the `/all` variants
+(`items/equipment/all`, `items/resources/all`, `sets/all`). They accept the
+same `filter[...]` parameters as the paginated endpoints but ignore
+`page[...]`, returning every match in one response with the complete payload
+(recipe, effects, pods, weapon stats, conditions). That removes the
+`fields[item]` projection and the page-size negotiation the paginated path
+needed. The API is public: no auth, no documented rate limit, and no
+rate-limit headers in responses.
 
 **Configuration:**
 - `game: str` - Game identifier (default: `'dofus3'`)

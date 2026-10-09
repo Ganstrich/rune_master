@@ -14,9 +14,19 @@ def group(size: int, line_items: int, total_units: int) -> dict[str, object]:
 
 
 def test_compact_large_group_is_admissible() -> None:
+    """A large group inside the shopping budget is admissible."""
     policy = GroupAcceptancePolicy(ProcessingConfig())
 
-    assert policy.accepts(group(20, 9, 180))
+    # 12 is the group_max_size ceiling: max_line_items=32 admits compact
+    # 12-item unions, where the former 12-line cap rejected 95% of them.
+    assert policy.accepts(group(12, 9, 180))
+
+
+def test_group_above_max_size_is_rejected() -> None:
+    policy = GroupAcceptancePolicy(ProcessingConfig())
+
+    assert not policy.accepts(group(13, 9, 180))
+    assert policy.rejection_reason(group(13, 9, 180)) == "group_size"
 
 
 def test_large_shopping_list_is_rejected() -> None:

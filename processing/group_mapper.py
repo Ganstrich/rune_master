@@ -137,7 +137,7 @@ class GroupMapper:
         min_group_size: int = 1,
         max_group_size: int = 15,
         min_shared_resources: int = 1,
-        efficiency_threshold: float = 0.1,
+        efficiency_threshold: float = 0.15,
         quality_threshold: float = 0.0,
         cache_manager=None,
         api_client=None
@@ -146,6 +146,12 @@ class GroupMapper:
 
         Maximizes retention of equipment by using permissive thresholds and
         splitting large groups.
+
+        This path is currently unreachable: ``config.use_inclusive_mapping``
+        defaults to False and nothing sets it True. The threshold previously
+        defaulted to 0.10 here while ``map_communities`` used 0.15, which made
+        the two entry points disagree on policy; they now share one value
+        (metrics-revision §3.6).
 
         Args:
             communities: Dict from CommunityDetector.partition_to_communities()
@@ -208,23 +214,58 @@ class GroupMapper:
         large_group: List[Equipment],
         max_size: int = 8
     ) -> List[List[Equipment]]:
-        """Split a large community into smaller subgroups.
+        """Split a large community into resource-cohesive subgroups.
+
+        The previous implementation sliced the community into contiguous blocks
+        of ``max_size``. Because Louvain returns communities in arbitrary order,
+        consecutive items frequently shared no resources at all, and every chunk
+        then failed the acceptance policy — probe R1 measured a 100% loss on an
+        869-item community split at max_size=8.
+
+        This version greedily packs items that share resources, seeding each
+        subgroup from the member with the highest remaining resource degree so
+        each chunk starts from the best-connected item.
 
         Args:
             large_group: Large group of Equipment objects
             max_size: Maximum size for each subgroup
 
         Returns:
-            List of subgroups
+            List of subgroups, each at most ``max_size`` items
         """
         if len(large_group) <= max_size:
             return [large_group]
 
-        subgroups = []
-        for i in range(0, len(large_group), max_size):
-            subgroup = large_group[i : i + max_size]
-            if len(subgroup) >= 1:
-                subgroups.append(subgroup)
+        remaining = {id(equipment): equipment for equipment in large_group}
+        resource_sets = {
+            key: set(int(request.resource_id) for request in (equipment.recipe or []))
+            for key, equipment in remaining.items()
+        }
+        # Seed order: most resources first, so each chunk starts cohesive.
+        ordered_keys = sorted(remaining, key=lambda key: -len(resource_sets[key]))
+
+        subgroups: List[List[Equipment]] = []
+        for seed_key in ordered_keys:
+            if seed_key not in remaining:
+                continue
+
+            seed = remaining.pop(seed_key)
+            members = [seed]
+            pooled = set(resource_sets[seed_key])
+
+            while len(members) < max_size:
+                # Prefer candidates sharing the most resources with the chunk.
+                best_key, best_overlap = None, 0
+                for key, equipment in remaining.items():
+                    overlap = len(resource_sets[key] & pooled)
+                    if overlap > best_overlap:
+                        best_key, best_overlap = key, overlap
+                if best_key is None:
+                    break
+                pooled |= resource_sets.pop(best_key)
+                members.append(remaining.pop(best_key))
+
+            subgroups.append(members)
 
         return subgroups
 

@@ -65,17 +65,17 @@ def test_deterministic_grouping_output(equipments):
     assert groups[0]["group_size"] == 4
     assert groups[0]["shared_resources_count"] == 2
     assert groups[0]["sharing_efficiency"] == pytest.approx(0.333333, abs=1e-6)
-    assert groups[0]["quality_score"] == pytest.approx(0.570833, abs=1e-6)
+    assert groups[0]["quality_score"] == pytest.approx(0.65, abs=1e-6)
 
     assert groups[1]["group_size"] == 4
     assert groups[1]["shared_resources_count"] == 2
     assert groups[1]["sharing_efficiency"] == pytest.approx(0.333333, abs=1e-6)
-    assert groups[1]["quality_score"] == pytest.approx(0.570833, abs=1e-6)
+    assert groups[1]["quality_score"] == pytest.approx(0.65, abs=1e-6)
 
     assert groups[2]["group_size"] == 2
     assert groups[2]["shared_resources_count"] == 1
     assert groups[2]["sharing_efficiency"] == pytest.approx(0.333333, abs=1e-6)
-    assert groups[2]["quality_score"] == pytest.approx(0.420833, abs=1e-6)
+    assert groups[2]["quality_score"] == pytest.approx(0.45, abs=1e-6)
 
 
 # --- Random grouping with fixed seed ---
@@ -208,11 +208,11 @@ def test_get_summary_keys_and_types(equipments):
     assert summary["duplicate_assignment_count"] == 0
     assert summary["assignment_overlap_rate"] == pytest.approx(0.0)
     assert summary["average_efficiency"] == pytest.approx(0.333333, abs=1e-6)
-    assert summary["average_quality_score"] == pytest.approx(0.520833, abs=1e-6)
-    assert summary["assignment_weighted_quality_score"] == pytest.approx(0.540833, abs=1e-6)
+    assert summary["average_quality_score"] == pytest.approx(0.583333, abs=1e-6)
+    assert summary["assignment_weighted_quality_score"] == pytest.approx(0.61, abs=1e-6)
     assert summary["mean_group_overlap"] == pytest.approx(0.0)
     assert summary["maximum_group_overlap"] == pytest.approx(0.0)
-    assert summary["portfolio_quality_score"] == pytest.approx(0.701542, abs=1e-6)
+    assert summary["portfolio_quality_score"] == pytest.approx(0.7465, abs=1e-6)
     assert summary["max_efficiency"] == pytest.approx(0.333333, abs=1e-6)
     assert summary["min_efficiency"] == pytest.approx(0.333333, abs=1e-6)
     assert summary["average_group_size"] == pytest.approx(3.333333, abs=1e-6)

@@ -119,6 +119,45 @@ def crossover(
     return child1_groups, child2_groups
 
 
+def _ungrouped_candidates(
+    individual: List[Set[Equipment]],
+    eq_by_id: Dict[int, Equipment],
+    resource_sets: Dict[int, Set[int]],
+    limit: int = 25,
+) -> List[Equipment]:
+    """Return unassigned equipment outside the graph, for mutation fallback.
+
+    The genetic search is otherwise confined to ``graph.neighbors()``. At the
+    default graph ratio that leaves 408 items (14.28%) unreachable by any
+    amount of evolution, spanning all 17 slots and all 11 bands — yet 405 of
+    them still share >=1 resource with the pool and are groupable
+    (metrics-revision §3.7 rec 2).
+
+    Ordered by shared-resource affinity to the mutated group so the fallback
+    stays relevant rather than random.
+    """
+    if not individual:
+        return []
+    assigned_ids = {
+        equipment.ankama_id for group in individual for equipment in group
+    }
+    target_pool: Set[int] = set()
+    for equipment in individual[-1]:
+        target_pool |= resource_sets.get(equipment.ankama_id, set())
+    if not target_pool:
+        return []
+
+    scored = []
+    for equipment_id, equipment in eq_by_id.items():
+        if equipment_id in assigned_ids:
+            continue
+        affinity = len(resource_sets.get(equipment_id, set()) & target_pool)
+        if affinity:
+            scored.append((affinity, equipment))
+    scored.sort(key=lambda pair: -pair[0])
+    return [equipment for _, equipment in scored[:limit]]
+
+
 def mutate(
     individual: List[Set[Equipment]],
     graph: Any,
@@ -150,6 +189,11 @@ def mutate(
         }
         if candidate_ids:
             candidates = [eq_by_id[candidate_id] for candidate_id in candidate_ids]
+        else:
+            # Fallback: the graph offers nothing here, but ungrouped items that
+            # share resources with this group are still worth adding.
+            candidates = _ungrouped_candidates(individual, eq_by_id, resource_sets)
+        if candidates:
             if objective is None:
                 selected = rng.choice(candidates)
             else:

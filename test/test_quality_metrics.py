@@ -48,7 +48,7 @@ def test_group_quality_has_interpretable_boundary_values() -> None:
     identical_metrics = evaluator.evaluate(identical)
     disjoint_metrics = evaluator.evaluate(disjoint)
 
-    assert identical_metrics.quality_score == pytest.approx(0.175)
+    assert identical_metrics.quality_score == pytest.approx(0.05)
     assert identical_metrics.resource_reuse_depth == pytest.approx(1.0)
     assert disjoint_metrics.quality_score == pytest.approx(0.0)
 

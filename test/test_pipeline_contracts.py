@@ -227,32 +227,86 @@ def test_api_query_receives_effective_scope(monkeypatch: pytest.MonkeyPatch) -> 
     assert captured["filter[type.name_id]"] == "ring"
 
 
-def test_api_shrinks_page_size_when_scope_is_smaller_than_a_page(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """The API rejects page[size] above the result count, so narrow scopes shrink it."""
-    available = 18
-    sizes_tried: list[int] = []
+def test_api_uses_the_all_endpoint_in_a_single_request(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The /all endpoint returns every match at once, so no paging is needed."""
+    endpoints: list[str] = []
+    pages: list[int] = []
     client = DofusAPIClient()
 
     def request(
         endpoint: str, params: dict[str, object], quiet: bool = False
-    ) -> dict[str, object] | None:
-        size = int(params["page[size]"])
-        sizes_tried.append(size)
-        if size > available:
-            client.last_request_status = {"status": "permanent_failure"}
-            return None
-        number = int(params["page[number]"])
-        start = (number - 1) * size
-        page = [{"recipe": []} for _ in range(max(min(size, available - start), 0))]
-        return {"items": page}
+    ) -> dict[str, object]:
+        endpoints.append(endpoint)
+        pages.append(int(params.get("page[number]", 0)))
+        return {"items": [{"ankama_id": 1, "recipe": [{"item_ankama_id": 10}]}]}
 
     monkeypatch.setattr(client, "_make_request", request)
     equipments = client.get_all_equipments(item_types=["shield"], min_level=1, max_level=50)
 
-    assert sizes_tried[0] == DofusAPIClient.DEFAULT_PAGE_SIZE
-    assert len(equipments) == available
+    assert endpoints == ["/dofus3/v1/fr/items/equipment/all"]
+    assert pages == [0]  # no page[...] parameter was ever sent
+    assert len(equipments) == 1
+
+
+def test_api_drops_equipment_without_a_recipe(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Items that cannot be crafted from resources are not equipment for us."""
+    client = DofusAPIClient()
+
+    def request(
+        endpoint: str, params: dict[str, object], quiet: bool = False
+    ) -> dict[str, object]:
+        return {
+            "items": [
+                {"ankama_id": 1, "recipe": [{"item_ankama_id": 10}]},
+                {"ankama_id": 2, "recipe": None},
+                {"ankama_id": 3},  # key absent entirely
+            ]
+        }
+
+    monkeypatch.setattr(client, "_make_request", request)
+
+    assert [eq["ankama_id"] for eq in client.get_all_equipments()] == [1]
+
+
+def test_api_tolerates_malformed_all_payloads(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A failed or oddly shaped /all response yields an empty list, never a crash."""
+    client = DofusAPIClient()
+
+    monkeypatch.setattr(client, "_make_request", lambda *a, **k: None)
+    assert client.get_all_equipments() == []
+    assert client.get_all_resources() == []
+    assert client.get_all_sets() == []
+
+    def malformed(endpoint: str, params: object = None, quiet: bool = False):
+        return {"items": None, "sets": "nope"}
+
+    monkeypatch.setattr(client, "_make_request", malformed)
+    assert client.get_all_equipments() == []
+    assert client.get_all_resources() == []
+    assert client.get_all_sets() == []
+
+
+def test_api_set_index_reads_equipment_ids_from_sets(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Set membership comes from each panoplie's equipment_ids in one request."""
+    calls: list[str] = []
+    client = DofusAPIClient()
+
+    def request(endpoint: str, params: object = None, quiet: bool = False):
+        calls.append(endpoint)
+        return {
+            "sets": [
+                {"ankama_id": 1, "equipment_ids": [10, 11, 12]},
+                {"ankama_id": 2, "equipment_ids": [13]},
+                {"ankama_id": 3, "equipment_ids": None},
+            ]
+        }
+
+    monkeypatch.setattr(client, "_make_request", request)
+
+    index = client.get_equipment_set_index()
+
+    assert calls == ["/dofus3/v1/fr/sets/all"]
+    assert index == {10: 1, 11: 1, 12: 1, 13: 2}
 
 
 def test_api_retries_transient_failure_and_classifies_success(

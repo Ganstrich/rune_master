@@ -37,10 +37,6 @@ class Config:
     OUTPUT_PREFIX = "crafting_groups"
     LANGUAGE = "fr"
     GAME = "dofus3"
-    SORT_BY = "level"
-    SORT_ORDER = "desc"
     MIN_LEVEL = 1
-    MAX_LEVEL = 100
+    MAX_LEVEL = 200  # Planning default: 1-100 covered only 52.41% of items (metrics-revision §3.3).
     ITEM_TYPES = ALL_CRAFTABLE_TYPES
-
-    FIELDS = ["recipe", "effects"]

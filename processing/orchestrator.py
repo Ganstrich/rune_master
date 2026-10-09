@@ -13,6 +13,7 @@ from processing.experts.graph_expert import GraphGroupingExpert
 from processing.experts.random_expert import RandomGroupingExpert
 from processing.experts.baseline_expert import BaselineExpert
 from processing.experts.greedy_expert import GreedyGroupingExpert
+from processing.equipment_filter import SetExclusionFilter
 from processing.graph_builder import GraphBuilder
 from processing.policy import GroupAcceptancePolicy
 from processing.selection import PortfolioSelector, ProcessingReporter
@@ -88,6 +89,19 @@ class RuneMaster:
         self.config = config or ProcessingConfig()
         self.cache_manager = cache_manager
         self.api_client = api_client
+
+        # Constraint C2 (metrics-revision §3.8): groups must not be built from
+        # panoplie items. Applied once here so every run_* path sees the same
+        # pool. The exclusion is reported (metric N10) so it cannot later read
+        # as a coverage regression.
+        self.equipments, self.set_excluded = SetExclusionFilter.exclude_panoplie_items(
+            equipments, self.config.set_exclusion_min_size
+        )
+        self.set_exclusion_report = (
+            SetExclusionFilter.summarize_excluded(self.set_excluded)
+            if self.set_excluded
+            else {}
+        )
 
         self.objective = OverlapObjective(self.config.group_quality_weights)
         self.policy = GroupAcceptancePolicy(self.config)

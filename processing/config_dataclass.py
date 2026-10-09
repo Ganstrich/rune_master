@@ -71,7 +71,11 @@ class ProcessingConfig:
     """Configuration for RuneMaster processing pipeline."""
 
     # Graph building
-    graph_min_shared_ratio: float = 0.3
+    # 0.3 left 408 of 2858 items (14.28%) with no edge at all, spanning all 17
+    # slots and all 11 bands; 405 of those still share >=1 resource with the
+    # pool and are therefore groupable. 0.15 lifts reachability to 99.37%.
+    # The policy's efficiency floor absorbs the precision cost (metrics-revision §3.1).
+    graph_min_shared_ratio: float = 0.15
     graph_min_shared_count: int = (
         1  # Min absolute shared resources for edge (independent of ratio)
     )
@@ -90,26 +94,35 @@ class ProcessingConfig:
 
     # Group mapping
     group_min_size: int = 2
-    group_max_size: int = 32  # Generous headroom above the former 18-item ceiling.
+    group_max_size: int = 12  # Reachable at max_line_items=32; 32 admitted groups that could never pass.
     group_min_shared_resources: int = 3
     group_efficiency_threshold: float = 0.15
     group_quality_threshold: float = 0.0
     # Hard cap on the share of a group that may come from one panoplie.
     group_max_set_share: float = 0.5
-    max_line_items: int = 12  # Above observed compact reports; caps shopping effort.
-    max_total_units: int = 500  # Carry headroom for compact recipe baskets.
+    # C2: groups must not be built from panoplie items. Items belonging to a set
+    # of at least this many members are dropped from the candidate pool before
+    # any expert runs, because set items are the over-crafted low-taux choices.
+    # Set to 99 to disable. 5 is the data-backed default: it removes 494 items
+    # (17.28%) whose median stat_weight is 82.5 vs 298.1 retained, while the
+    # retained pool still reaches 99.24% coverage (metrics-revision §3.8).
+    set_exclusion_min_size: int = 5
+    max_line_items: int = 32  # Union cap; binds shopping effort. 12 discarded 95% of buildable groups (data-profile §3.2).
+    max_total_units: int = 2000  # Secondary to line items; 500 rejected 43% of buildable groups.
     acquisition_cost: float = 0.0  # Kama-equivalent effort per distinct resource.
     flat_taux: float = 1.0  # Theoretical placeholder until break outcomes are logged.
     price_max_age_seconds: float = 3600.0
     group_quality_weights: GroupQualityWeights = field(default_factory=GroupQualityWeights)
     use_inclusive_mapping: bool = False
 
-    # Excluded resources (won't count toward sharing efficiency)
-    excluded_resource_ids: set = field(default_factory=lambda: {15263, 14635})
+    # Excluded resources (won't count toward sharing efficiency).
+    # 15263 was removed: absent from the resources table and referenced by zero
+    # recipe entries of any subtype in snapshot 3.7.7.6 (metrics-revision §3.5).
+    excluded_resource_ids: set = field(default_factory=lambda: {14635})
 
     # Density/Level filtering
     use_density_filtering: bool = True
-    equipment_density_level_ratio: float = 3.0  # DENSITY_LEVEL_RATIO
+    equipment_density_level_ratio: float = 2.0  # 3.0 kept only 40.90% of items; 2.0 keeps 72.15% (metrics-revision §3.4)
     fallback_to_unfiltered: bool = False  # FALLBACK_TO_UNFILTERED
     min_filtered_pool_size: int = 10  # MIN_FILTERED_POOL_SIZE
 
