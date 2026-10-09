@@ -74,11 +74,8 @@ class GraphBuilder:
         equipment_resources: Dict[int, Set[int]],
     ) -> Dict[int, Set[int]]:
         """Build inverted index: resource_id -> set of equipment_ids."""
-        index: Dict[int, Set[int]] = {}
-        for eq_id, resources in equipment_resources.items():
-            for rid in resources:
-                index.setdefault(rid, set()).add(eq_id)
-        return index
+        from processing.blocks.recipes import _build_inverted_index as shared_index
+        return shared_index(equipment_resources)
 
     @staticmethod
     def _candidate_pairs_from_index(

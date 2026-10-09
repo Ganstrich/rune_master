@@ -5,7 +5,6 @@ equipment groups with ingredient analysis and efficiency metrics.
 """
 
 from typing import Any, Dict, List, Tuple
-from tqdm.auto import tqdm
 from models import Equipment
 from processing.blocks.recipes import iter_recipe
 from processing.group_metrics import GroupMetrics
@@ -123,74 +122,14 @@ class GroupMapper:
 
         Communities larger than max_group_size are split into subgroups
         rather than rejected outright.
-
-        Args:
-            communities: Dict from CommunityDetector.partition_to_communities()
-            min_group_size: Minimum equipment per group
-            max_group_size: Maximum equipment per group
-            min_shared_resources: Minimum shared resources required
-            efficiency_threshold: Minimum efficiency ratio required
-            cache_manager: Optional CacheManager for resource names
-            api_client: Optional APIClient to fetch resource names
-
-        Returns:
-            List of group dicts with equipment, ingredients, efficiency metrics
         """
-        groups = []
         policy = self.acceptance_policy or GroupAcceptancePolicy.from_values(
-            min_group_size,
-            max_group_size,
-            min_shared_resources,
-            efficiency_threshold,
-            quality_threshold,
+            min_group_size, max_group_size, min_shared_resources,
+            efficiency_threshold, quality_threshold,
         )
-
-        for community_id, equip_ids in tqdm(
-            communities.items(),
-            desc="Processing communities",
-            total=len(communities),
-            unit="community",
-            leave=True,
-        ):
-            group_equipments = self._resolve_equipment_objects(equip_ids)
-
-            # Split large communities into subgroups
-            if len(group_equipments) > max_group_size:
-                subgroups = self._split_large_community(
-                    group_equipments, max_size=max_group_size
-                )
-                for subgroup in subgroups:
-                    if len(subgroup) < min_group_size:
-                        continue
-                    group = self.create_group(
-                        subgroup,
-                        cache_manager=cache_manager,
-                        api_client=api_client,
-                    )
-                    if not policy.accepts(group):
-                        continue
-                    groups.append(group)
-                continue
-
-            # Calculate metrics
-            shared_count, shared_resources, efficiency = self.calculate_shared_resources(
-                group_equipments
-            )
-
-            group = self.create_group(
-                group_equipments,
-                cache_manager=cache_manager,
-                api_client=api_client
-            )
-            if not policy.accepts(group):
-                continue
-            groups.append(group)
-
-        groups.sort(key=lambda group: group["quality_score"], reverse=True)
-
-        print(f"✓ Mapped {len(groups)} groups from {len(communities)} communities")
-
-        return groups
+        return self._process_communities(
+            communities, policy, min_group_size, cache_manager, api_client
+        )
 
     def map_communities_inclusive(
         self,
@@ -219,96 +158,50 @@ class GroupMapper:
         Returns:
             List of group dicts (more numerous with inclusive filtering)
         """
-        groups = []
         policy = self.acceptance_policy or GroupAcceptancePolicy.from_values(
-            min_group_size,
-            max_group_size,
-            min_shared_resources,
-            efficiency_threshold,
-            quality_threshold,
+            min_group_size, max_group_size, min_shared_resources,
+            efficiency_threshold, quality_threshold,
         )
-        stats = {
-            "total_equipments": len(self.equipments),
-            "processed": 0,
-            "excluded_by_size": 0,
-            "excluded_by_resources": 0,
-            "excluded_by_efficiency": 0,
-        }
+        return self._process_communities(
+            communities, policy, min_group_size, cache_manager, api_client
+        )
 
-        for community_id, equip_ids in tqdm(
-            communities.items(),
-            desc="Processing communities (inclusive)",
-            total=len(communities),
-            unit="community",
-            leave=True,
-        ):
+    def _process_communities(
+        self,
+        communities: Dict[int, List[int]],
+        policy,
+        min_group_size: int,
+        cache_manager,
+        api_client,
+    ) -> List[Dict[str, Any]]:
+        """Shared community processing for both mapping paths."""
+        groups = []
+
+        for _community_id, equip_ids in communities.items():
             group_equipments = self._resolve_equipment_objects(equip_ids)
-            group_size = len(group_equipments)
 
-            if group_size < policy.min_size:
-                stats["excluded_by_size"] += group_size
-                continue
-
-            # Split large groups
-            if group_size > max_group_size:
+            if len(group_equipments) > policy.max_size:
                 subgroups = self._split_large_community(
-                    group_equipments,
-                    max_size=max_group_size
+                    group_equipments, max_size=policy.max_size
                 )
                 for subgroup in subgroups:
-                    self._process_subgroup(
-                        subgroup, groups, stats,
-                        min_shared_resources, efficiency_threshold, quality_threshold,
-                        cache_manager, api_client
+                    if len(subgroup) < min_group_size:
+                        continue
+                    group = self.create_group(
+                        subgroup, cache_manager=cache_manager, api_client=api_client,
                     )
+                    if policy.accepts(group):
+                        groups.append(group)
                 continue
 
-            # Process normal-sized group
-            self._process_subgroup(
-                group_equipments, groups, stats,
-                min_shared_resources, efficiency_threshold, quality_threshold,
-                cache_manager, api_client
+            group = self.create_group(
+                group_equipments, cache_manager=cache_manager, api_client=api_client,
             )
+            if policy.accepts(group):
+                groups.append(group)
 
         groups.sort(key=lambda group: group["quality_score"], reverse=True)
-
-        # Print statistics
-        self._print_retention_stats(stats)
-
         return groups
-
-    def _process_subgroup(
-        self,
-        group_equipments: List[Equipment],
-        groups: List[Dict],
-        stats: Dict,
-        min_shared: int,
-        efficiency_threshold: float,
-        quality_threshold: float,
-        cache_manager,
-        api_client=None
-    ) -> None:
-        """Process a subgroup and add to groups list if it meets criteria."""
-        shared_count, shared_resources, efficiency = self.calculate_shared_resources(
-            group_equipments
-        )
-
-        group = self.create_group(
-            group_equipments,
-            cache_manager=cache_manager,
-            api_client=api_client
-        )
-        if not (self.acceptance_policy or GroupAcceptancePolicy.from_values(
-            min_group_size=len(group_equipments),
-            max_group_size=len(group_equipments),
-            min_shared_resources=min_shared,
-            efficiency_threshold=efficiency_threshold,
-            quality_threshold=quality_threshold,
-        )).accepts(group):
-            return
-        groups.append(group)
-
-        stats["processed"] += len(group_equipments)
 
     def _split_large_community(
         self,
@@ -334,18 +227,6 @@ class GroupMapper:
                 subgroups.append(subgroup)
 
         return subgroups
-
-    def _print_retention_stats(self, stats: Dict) -> None:
-        """Print equipment retention statistics."""
-        total = stats["total_equipments"]
-        processed = stats["processed"]
-        retention_rate = (processed / total) if total > 0 else 0
-
-        print(f"\n=== GROUP MAPPING STATISTICS ===")
-        print(f"Equipment processed: {processed}/{total} ({retention_rate:.1%})")
-        print(f"Equipment excluded by size: {stats['excluded_by_size']} ({stats['excluded_by_size']/total:.1%})")
-        print(f"Equipment excluded by resources: {stats['excluded_by_resources']} ({stats['excluded_by_resources']/total:.1%})")
-        print(f"Equipment excluded by efficiency: {stats['excluded_by_efficiency']} ({stats['excluded_by_efficiency']/total:.1%})")
 
     def _resolve_equipment_objects(
         self,

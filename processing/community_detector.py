@@ -134,9 +134,6 @@ class CommunityDetector:
                 best_partition = partition
                 best_resolution = resolution
 
-        print(f"✓ Louvain optimal resolution: {best_resolution:.2f}, "
-              f"Score: {best_score:.3f}")
-
         return best_partition
 
     @staticmethod
@@ -206,9 +203,6 @@ class CommunityDetector:
 
         # Merge partitions
         full_partition = {**partition, **resource_partition}
-
-        print(f"✓ BiLouvain partition complete: "
-              f"{len(partition)} equipment, {len(resource_partition)} resources")
 
         return full_partition
 

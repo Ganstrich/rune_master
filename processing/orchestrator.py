@@ -4,7 +4,7 @@ This is the central hub that coordinates different GroupingExperts
 as a Mixture of Experts (MoE) committee.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from models import Equipment
 from processing.config_dataclass import ProcessingConfig
@@ -20,6 +20,47 @@ from processing.valuation.objective import GroupCandidate
 from processing.valuation.overlap import OverlapObjective
 from processing.evolutionary_search_state import PortfolioCandidate, WarmStartConfig
 from processing.evolutionary_search_engine import PortfolioEvolutionEngine
+
+
+def _build_shared_graph(
+    equipments: List[Equipment], config: ProcessingConfig
+) -> Tuple[Any, Dict[int, set]]:
+    """Build the equipment graph shared by all committee experts."""
+    return GraphBuilder.build_equipment_graph(
+        equipments,
+        min_shared_ratio=config.graph_min_shared_ratio,
+        min_shared_count=config.graph_min_shared_count,
+        min_component_size=config.graph_min_component_size,
+        same_set_edge_discount=config.same_set_edge_discount,
+    )
+
+
+def _dispatch_experts(
+    experts: Dict[str, Any],
+    equipments: List[Equipment],
+    config: ProcessingConfig,
+    shared_graph: Any,
+    shared_resources: Dict[int, set],
+) -> Tuple[List[Dict[str, Any]], Dict[str, str]]:
+    """Run all experts with shared graph, collect proposals and failures."""
+    all_groups: List[Dict[str, Any]] = []
+    failures: Dict[str, str] = {}
+    for expert_name, expert in experts.items():
+        print(f"\n[Expert: {expert_name}] Analyzing equipment pool...")
+        try:
+            groups = expert.discover_groups(
+                equipments, config,
+                precomputed_graph=shared_graph,
+                precomputed_resources=shared_resources,
+            )
+        except (IndexError, KeyError, RuntimeError, TypeError, ValueError) as error:
+            message = f"{type(error).__name__}: {error}"
+            failures[expert_name] = message
+            print(f"      ❌ {expert_name} failed: {message}")
+            continue
+        all_groups.extend(groups)
+        print(f"      ✓ {expert_name}: {len(groups)} proposals")
+    return all_groups, failures
 
 
 class RuneMaster:
@@ -158,60 +199,33 @@ class RuneMaster:
         return self.groups
 
     def run_survey(self) -> List[Dict[str, Any]]:
-        """Run every expert and keep the union, tagging each group's origin.
-
-        Unlike the committee this does not select a single portfolio: identical
-        groups found by several experts are merged into one entry that records
-        every origin, so the report shows what each expert contributes.
-        """
+        """Run every expert and keep the union, tagging each group's origin."""
         print("\n" + "=" * 60)
         print("🚀 RuneMaster: Survey (all experts, union of proposals)")
         print("=" * 60)
 
         self.expert_failures = {}
-        shared_graph, shared_resources = GraphBuilder.build_equipment_graph(
-            self.equipments,
-            min_shared_ratio=self.config.graph_min_shared_ratio,
-            min_shared_count=self.config.graph_min_shared_count,
-            min_component_size=self.config.graph_min_component_size,
-            same_set_edge_discount=self.config.same_set_edge_discount,
+        shared_graph, shared_resources = _build_shared_graph(self.equipments, self.config)
+
+        all_groups, self.expert_failures = _dispatch_experts(
+            self.experts, self.equipments, self.config, shared_graph, shared_resources
         )
 
         merged: Dict[frozenset, Dict[str, Any]] = {}
-        for expert_name, expert in self.experts.items():
-            print(f"\n[Expert: {expert_name}] Analyzing equipment pool...")
-            try:
-                expert_groups = expert.discover_groups(
-                    self.equipments,
-                    self.config,
-                    precomputed_graph=shared_graph,
-                    precomputed_resources=shared_resources,
-                )
-            except (IndexError, KeyError, RuntimeError, TypeError, ValueError) as error:
-                message = f"{type(error).__name__}: {error}"
-                self.expert_failures[expert_name] = message
-                print(f"      ❌ {expert_name} failed: {message}")
+        for group in all_groups:
+            fingerprint = frozenset(item.ankama_id for item in group.get("equipments", []))
+            if not fingerprint:
                 continue
+            existing = merged.get(fingerprint)
+            if existing is None:
+                group["origins"] = [group.get("expert_name", "unknown")]
+                merged[fingerprint] = group
+            else:
+                name = group.get("expert_name", "unknown")
+                if name not in existing["origins"]:
+                    existing["origins"].append(name)
 
-            for group in expert_groups:
-                fingerprint = frozenset(
-                    item.ankama_id for item in group.get("equipments", [])
-                )
-                if not fingerprint:
-                    continue
-                existing = merged.get(fingerprint)
-                if existing is None:
-                    group["origins"] = [expert_name]
-                    merged[fingerprint] = group
-                elif expert_name not in existing["origins"]:
-                    existing["origins"].append(expert_name)
-            print(f"      ✓ {expert_name}: {len(expert_groups)} proposals")
-
-        groups = sorted(
-            merged.values(),
-            key=lambda group: group.get("quality_score", 0.0),
-            reverse=True,
-        )
+        groups = sorted(merged.values(), key=lambda g: g.get("quality_score", 0.0), reverse=True)
         for group in groups:
             group["origin"] = "+".join(group["origins"])
 
@@ -222,59 +236,27 @@ class RuneMaster:
         return self.groups
 
     def run_committee(self) -> List[Dict[str, Any]]:
-        """Run the Mixture of Experts committee (MoE).
-
-        Each expert contributes its best discoveries, and the gating network
-        evaluates and selects the final ensemble.
-        """
+        """Run the Mixture of Experts committee (MoE)."""
         print("\n" + "=" * 60)
         print("🚀 RuneMaster: Mixture of Experts Committee")
         print("=" * 60)
 
         self.expert_failures = {}
+        shared_graph, shared_resources = _build_shared_graph(self.equipments, self.config)
 
-        # Pre-compute graph once for all experts
-        shared_graph, shared_resources = GraphBuilder.build_equipment_graph(
-            self.equipments,
-            min_shared_ratio=self.config.graph_min_shared_ratio,
-            min_shared_count=self.config.graph_min_shared_count,
-            min_component_size=self.config.graph_min_component_size,
-            same_set_edge_discount=self.config.same_set_edge_discount,
+        all_groups, self.expert_failures = _dispatch_experts(
+            self.experts, self.equipments, self.config, shared_graph, shared_resources
         )
 
-        all_potential_groups = []
+        # Score and select
+        for group in all_groups:
+            candidate = GroupCandidate(group["equipments"], self.config.excluded_resource_ids)
+            group["fitness_score"] = self.objective.score(candidate)
 
-        # 1. Dispatch to all experts
-        for expert_name, expert in self.experts.items():
-            print(f"\n[Expert: {expert_name}] Analyzing equipment pool...")
-            try:
-                expert_groups = expert.discover_groups(
-                    self.equipments,
-                    self.config,
-                    precomputed_graph=shared_graph,
-                    precomputed_resources=shared_resources,
-                )
-            except (IndexError, KeyError, RuntimeError, TypeError, ValueError) as error:
-                message = f"{type(error).__name__}: {error}"
-                self.expert_failures[expert_name] = message
-                print(f"      ❌ {expert_name} failed: {message}")
-                continue
-
-            # Evaluate each group using the expert's fitness function
-            for group in expert_groups:
-                candidate = GroupCandidate(
-                    group["equipments"], self.config.excluded_resource_ids
-                )
-                group["fitness_score"] = self.objective.score(candidate)
-                all_potential_groups.append(group)
-
-        # 2. Select the final non-duplicated portfolio.
         print("\n[Gating Network] Evaluating ensemble and de-duplicating...")
-        self.groups = PortfolioSelector.select(
-            all_potential_groups, self.config.dedup_overlap_threshold
-        )
+        self.groups = PortfolioSelector.select(all_groups, self.config.dedup_overlap_threshold)
 
-        print(f"\n      Committee gathered {len(all_potential_groups)} proposals.")
+        print(f"\n      Committee gathered {len(all_groups)} proposals.")
         print(f"      Final ensemble: {len(self.groups)} unique groups selected.")
         if self.expert_failures:
             print(f"      Expert failures: {self.expert_failures}")
@@ -306,35 +288,23 @@ class RuneMaster:
             return self.run_committee()
 
         self.expert_failures = {}
-
-        # Pre-compute graph once for all experts
-        shared_graph, shared_resources = GraphBuilder.build_equipment_graph(
-            self.equipments,
-            min_shared_ratio=self.config.graph_min_shared_ratio,
-            min_shared_count=self.config.graph_min_shared_count,
-            min_component_size=self.config.graph_min_component_size,
-            same_set_edge_discount=self.config.same_set_edge_discount,
-        )
+        shared_graph, shared_resources = _build_shared_graph(self.equipments, self.config)
 
         if shared_graph.number_of_nodes() == 0:
             print("      ❌ No connected equipment found in graph.")
             return []
 
         all_initial_proposals = []
-
-        # 1. Gather initial proposals from all experts
         print("\n[Experts] Gathering initial proposals...")
         for expert_name, expert in self.experts.items():
             print(f"  [{expert_name}] Running...")
             try:
                 expert_groups = expert.discover_groups(
-                    self.equipments,
-                    self.config,
+                    self.equipments, self.config,
                     precomputed_graph=shared_graph,
                     precomputed_resources=shared_resources,
                 )
                 if expert_groups:
-                    # Convert to portfolio (list of groups)
                     all_initial_proposals.append(expert_groups)
                     print(f"      ✓ {expert_name}: {len(expert_groups)} proposals")
             except (IndexError, KeyError, RuntimeError, TypeError, ValueError) as error:

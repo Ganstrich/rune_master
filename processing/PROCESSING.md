@@ -549,12 +549,18 @@ processing/
 |-- orchestrator.py           Method dispatch, hybrid, committee, summaries
 |-- tuner.py                  Parallel heuristic grid search
 |-- stat_calculator.py        Stat-weight calculation used upstream by data loaders
-|-- resource_optimizer.py     Empty placeholder; no runtime behavior
+|-- evolutionary_search_engine.py  Portfolio evolution engine
+|-- evolutionary_fitness.py   Portfolio fitness evaluation
+|-- evolutionary_operators.py  Portfolio mutation and crossover operators
+|-- evolutionary_search_state.py  Candidate and archive state
 `-- experts/
     |-- base.py               Shared expert interface and default evaluator
     |-- graph_expert.py       Deterministic graph/community path
     |-- random_expert.py      Density-filtered random path
-    `-- genetic_expert.py     Evolutionary path
+    |-- genetic_expert.py     Genetic expert orchestration
+    |-- genetic_operators.py  Genetic crossover, mutation, initialization
+    |-- baseline_expert.py    Break-density greedy packing
+    `-- greedy_expert.py      Objective-driven greedy growth
 ```
 
 `api_client` is retained in several signatures for compatibility but is not

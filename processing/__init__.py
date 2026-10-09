@@ -10,7 +10,6 @@ from processing.graph_builder import GraphBuilder
 from processing.community_detector import CommunityDetector
 from processing.group_mapper import GroupMapper
 from processing.group_metrics import GroupMetrics
-from processing.equipment_filter import EquipmentFilteringStrategy
 from processing.random_group_builder import RandomGroupBuilder
 from processing.quality_metrics import (
     GroupQualityEvaluator,
@@ -20,6 +19,9 @@ from processing.quality_metrics import (
     PortfolioQualityMetrics,
     PortfolioQualityWeights,
 )
+from processing.evolutionary_search_engine import PortfolioEvolutionEngine
+from processing.evolutionary_fitness import PortfolioFitnessEvaluator
+from processing.evolutionary_operators import EvolutionaryOperators
 
 __all__ = [
     "ProcessingConfig",
@@ -28,7 +30,6 @@ __all__ = [
     "CommunityDetector",
     "GroupMapper",
     "GroupMetrics",
-    "EquipmentFilteringStrategy",
     "RandomGroupBuilder",
     "GroupQualityEvaluator",
     "GroupQualityMetrics",
@@ -36,4 +37,7 @@ __all__ = [
     "PortfolioQualityEvaluator",
     "PortfolioQualityMetrics",
     "PortfolioQualityWeights",
+    "PortfolioEvolutionEngine",
+    "PortfolioFitnessEvaluator",
+    "EvolutionaryOperators",
 ]
