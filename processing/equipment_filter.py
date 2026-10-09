@@ -119,36 +119,4 @@ class EquipmentFilteringStrategy:
 
         return filtered, True
 
-    @staticmethod
-    def get_pool_stats(equipments: List[Equipment]) -> dict:
-        """Get statistics about equipment pool.
-        
-        Args:
-            equipments: List of Equipment objects
-            
-        Returns:
-            Dict with pool statistics
-        """
-        with_weight = [e for e in equipments if e.stat_weight is not None]
-        without_weight = [e for e in equipments if e.stat_weight is None]
 
-        if not with_weight:
-            return {
-                "total": len(equipments),
-                "with_stat_weight": 0,
-                "without_stat_weight": len(without_weight),
-                "avg_density": None,
-                "min_density": None,
-                "max_density": None,
-            }
-
-        densities = [e.stat_weight / e.level for e in with_weight if e.level > 0]
-
-        return {
-            "total": len(equipments),
-            "with_stat_weight": len(with_weight),
-            "without_stat_weight": len(without_weight),
-            "avg_density": sum(densities) / len(densities) if densities else None,
-            "min_density": min(densities) if densities else None,
-            "max_density": max(densities) if densities else None,
-        }
