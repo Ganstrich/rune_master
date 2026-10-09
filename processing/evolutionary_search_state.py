@@ -127,23 +127,6 @@ class EvolutionaryArchive:
             return None
         return max(self.candidates, key=lambda c: c.score)
 
-    def diversity_sample(self, size: int) -> List[PortfolioCandidate]:
-        """Sample diverse candidates for cold-start injection."""
-        if len(self.candidates) <= size:
-            return self.candidates.copy()
-
-        # Sort by fingerprint hash for pseudo-random but deterministic order
-        sorted_cands = sorted(
-            self.candidates, key=lambda c: c.fingerprint
-        )
-        return sorted_cands[::max(1, len(sorted_cands) // size)][:size]
-
-    def clear(self) -> None:
-        """Clear all candidates."""
-        self.candidates.clear()
-        self.fingerprints_seen.clear()
-        self.elite_candidates.clear()
-
 
 @dataclass
 class WarmStartConfig:
