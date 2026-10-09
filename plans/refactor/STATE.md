@@ -1,6 +1,6 @@
 # STATE
 
-Phase: C (complete)   Current step: PLAN.md written   Last green commit: fa07c7c
+Phase: D (executing)   Current step: S08-S15   Last green commit: 12ab9ee
 
 ## Done
 - Phase A: full inventory written to plans/refactor/INVENTORY.md.
