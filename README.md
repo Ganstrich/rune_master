@@ -166,6 +166,8 @@ used by the random expert; deterministic graph grouping uses the loaded pool.
 --random-seed N         Seed for reproducible random grouping
 --tune                  Grid-search graph ratio and minimum shared resources
 --no-serve              Generate reports without starting the HTTP server
+--job-levels JOB:LEVEL[,...]   Crafting job levels, e.g. 'forgeron:120,bijoutier:80'
+--no-job-filter         Ignore configured job levels and keep the full pool
 ```
 
 Examples:
@@ -174,6 +176,7 @@ Examples:
 uv run main.py --grouping-method deterministic --no-serve
 uv run main.py --grouping-method random --random-groups 10 --random-seed 42 --no-serve
 uv run main.py --grouping-method committee --tune --no-serve
+uv run main.py --job-levels "forgeron:120,bijoutier:80" --no-serve
 ```
 
 `--tune` searches Jaccard thresholds `0.15`, `0.2`, `0.25`, and `0.3` against
@@ -181,6 +184,56 @@ minimum shared-resource counts `2`, `3`, and `4`. It scores assignment-weighted
 group quality and unique equipment coverage while penalizing repeated equipment
 assignments. It is a narrow, seeded heuristic search, not a trained model or a
 general optimizer for every configuration field.
+
+## Job-Level Filtering
+
+Crafting an item needs a minimum job level, so a group you cannot craft is
+useless. Configure your job levels and RuneMaster keeps only the equipment
+you can actually craft — every expert, the policy, and the report then work
+on that pool.
+
+An item is kept when `job_levels[job] >= item_level`, where the job is the
+one that crafts its type:
+
+| Job | Item types |
+| --- | --- |
+| `cordonnier` | boots, belt |
+| `bijoutier` | ring, amulet |
+| `tailleur` | hat, cloak |
+| `forgeron` | sword, hammer, dagger, axe, shovel, lance, scythe |
+| `sculpteur` | staff, wand, bow |
+| `faconneur` | shield |
+
+Items whose type or job is unconfigured are kept — a new item type never
+silently disappears, and a partial configuration is not destructive.
+
+**Persistent config.** Copy `player_config.example.json` to
+`player_config.json` in the project root and fill in your levels:
+
+```json
+{
+  "job_levels": {
+    "forgeron": 120,
+    "bijoutier": 80
+  }
+}
+```
+
+Filtering stays off until at least one job level is present, so an empty or
+missing file changes nothing.
+
+**Per-run override.** `--job-levels` replaces the file value for the jobs it
+names; `--no-job-filter` ignores all levels for one run. The effective levels
+and the kept/filtered counts are printed and recorded in the report's run
+manifest.
+
+The pipeline prints a per-job breakdown of what was dropped:
+
+```text
+🔧 JOB-LEVEL FILTER
+   forgeron     level 100: 252 items filtered
+   kept                : 2606 items craftable
+```
 
 Equivalent Make targets include `make sync`, `make dev`, `make compute`,
 `make tune`, `make method METHOD=genetic`, and `make serve`. Note that
@@ -235,6 +288,7 @@ serve.py                  Standalone loopback static-file server
 models/                   Equipment, resource, recipe, and shared data types
 data/                     HTTP client, SQLite cache, and API-to-model loaders
 processing/               Graphs, metrics, filters, grouping experts, and tuner
+processing/job_filter.py  Craftability filter by player job levels
 processing/experts/       Deterministic, random, and genetic expert adapters
 visualization/            Static HTML generator and source assets
 test/                     Offline contract and group-structure tests

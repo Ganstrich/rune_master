@@ -151,3 +151,10 @@ class ProcessingConfig:
     portfolio_quality_weights: PortfolioQualityWeights = field(
         default_factory=PortfolioQualityWeights
     )
+
+    # Job-level filtering (craftability by player profession levels)
+    # use_job_level_filter=False keeps the whole pool (default behavior).
+    # When True and job_levels is populated, equipment whose crafting job is
+    # below the item level is dropped before any expert runs.
+    use_job_level_filter: bool = False
+    job_levels: dict = field(default_factory=dict)

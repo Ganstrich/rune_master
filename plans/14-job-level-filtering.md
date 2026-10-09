@@ -208,11 +208,7 @@ filter runs after `load_snapshot()` returns equipment, using the same
 - **Config file discovery:** `player_config.json` is loaded from the
   project root. If the user runs from a different directory, it won't be
   found. This can be resolved later with an explicit `--config` path.
-- **Level boundary semantics:** The model assumes `player_level >= item_level`
-  means craftable. In practice, Dofus may allow crafting items slightly
-  above job level, or the relationship may vary by item type. The user
-  can adjust their configured levels to compensate. This is a
-  player-calibratable heuristic, not a game-mechanic guarantee.
+
 
 ## Wiki updates
 

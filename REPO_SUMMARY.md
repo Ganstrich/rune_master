@@ -72,6 +72,7 @@ rune_master/
     DATA.md                     Data layer documentation
   processing/
     config_dataclass.py        ProcessingConfig — all pipeline defaults and hyperparameters
+    job_filter.py              Craftability filter by player job levels
     orchestrator.py             Dispatch only — routes to experts based on grouping_method
     quality_metrics.py          Group quality scoring (sharing efficiency, Jaccard, compression, etc.)
     group_metrics.py            Canonical group schema builder (GroupMetrics.build_group_dict)

@@ -14,6 +14,7 @@ import os
 import sys
 import time
 import argparse
+import json
 import webbrowser
 from dataclasses import asdict, is_dataclass, replace
 from http.server import HTTPServer, SimpleHTTPRequestHandler
@@ -28,8 +29,12 @@ from config import ALL_CRAFTABLE_TYPES, Config
 from data import DofusAPIClient, CacheManager, EquipmentLoader
 from models import Equipment
 from processing import RuneMaster, ProcessingConfig
+from processing.job_filter import JobLevelFilter
 from processing.tuner import ParameterTuner
 from visualization import HTMLGenerator
+
+JOB_LEVEL_JOBS = set(JobLevelFilter.JOB_TO_TYPES)
+PLAYER_CONFIG_PATH = PROJECT_ROOT / "player_config.json"
 
 
 def positive_int(value: str) -> int:
@@ -69,6 +74,40 @@ def validate_scope(min_level: int, max_level: int, selected_types: list[str]) ->
         raise ValueError("at least one item type is required")
 
 
+def job_levels(value: str) -> dict[str, int]:
+    """Parse a comma-separated ``job:level`` mapping."""
+    from processing.job_filter import JobLevelFilter
+
+    try:
+        return JobLevelFilter.parse_job_levels(value)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError(str(error)) from None
+
+
+def load_player_config(path: Path) -> dict:
+    """Load the optional persistent player configuration file.
+
+    A missing or unreadable file is not fatal: the caller falls back to
+    defaults. Malformed JSON or a missing ``job_levels`` mapping is reported
+    so a typo cannot silently disable filtering.
+    """
+    if not path.exists():
+        return {}
+    try:
+        config = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        print(f"⚠️  Ignoring unreadable {path}: {error}")
+        return {}
+    if not isinstance(config, dict):
+        print(f"⚠️  Ignoring {path}: expected a JSON object")
+        return {}
+    levels = config.get("job_levels", {})
+    if not isinstance(levels, dict):
+        print(f"⚠️  Ignoring {path}: 'job_levels' must be a JSON object")
+        return {}
+    return config
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Build the CLI parser separately so scope validation stays offline-testable."""
     parser = argparse.ArgumentParser(description="RuneMaster: Equipment Group Discovery")
@@ -93,6 +132,21 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--item-types", type=item_types, default=list(Config.ITEM_TYPES))
     parser.add_argument("--tune", action="store_true", help="Search for best grouping parameters")
     parser.add_argument("--no-serve", action="store_true", help="Generate reports without starting server")
+    parser.add_argument(
+        "--job-levels",
+        type=job_levels,
+        metavar="JOB:LEVEL[,...]",
+        help=(
+            "Crafting job levels, e.g. 'forgeron:120,bijoutier:80'. "
+            f"Jobs: {', '.join(sorted(JOB_LEVEL_JOBS))}. "
+            "Enables craftability filtering; overrides player_config.json."
+        ),
+    )
+    parser.add_argument(
+        "--no-job-filter",
+        action="store_true",
+        help="Ignore configured job levels and keep the full equipment pool",
+    )
     return parser
 
 
@@ -281,11 +335,48 @@ def _json_safe(value: Any) -> Any:
     return value
 
 
+def apply_job_level_filter(
+    equipments: List[Equipment],
+    processing_config: ProcessingConfig,
+) -> tuple[List[Equipment], dict[str, Any]]:
+    """Drop equipment the player's job levels cannot craft.
+
+    Returns (equipments, filter_report). The report is ``{}`` when filtering
+    is inactive so callers can omit it from the manifest unchanged.
+    """
+    if not processing_config.use_job_level_filter:
+        return equipments, {}
+    if not processing_config.job_levels:
+        print("\n⚠️  Job-level filter enabled but no job levels configured — keeping full pool")
+        return equipments, {}
+
+    print("\n" + "=" * 60)
+    print("🔧 JOB-LEVEL FILTER")
+    print("=" * 60)
+    craftable, filtered_out = JobLevelFilter.filter_equipments(
+        equipments, processing_config.job_levels
+    )
+    excluded_by_job = JobLevelFilter.summarize_excluded(filtered_out)
+    for job, count in sorted(excluded_by_job.items(), key=lambda item: -item[1]):
+        print(f"   {job:<12} level {processing_config.job_levels.get(job, '?'):>3}: {count} items filtered")
+    print(f"   {'kept':<12} {'':>5} {len(craftable)} items craftable")
+    if not craftable:
+        print("\n⚠️  No craftable equipment at these job levels — raise levels or widen the level scope")
+
+    return craftable, {
+        "job_levels": dict(processing_config.job_levels),
+        "kept": len(craftable),
+        "filtered_out": len(filtered_out),
+        "filtered_by_job": excluded_by_job,
+    }
+
+
 def build_run_manifest(
     processing_config: ProcessingConfig,
     cli_overrides: dict[str, Any],
     scope: dict[str, Any] | None = None,
     cache_status: dict[str, Any] | None = None,
+    job_filter: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build reproducibility metadata without including API payloads or secrets."""
     effective_scope = scope or {
@@ -302,6 +393,7 @@ def build_run_manifest(
         "processing_config": _json_safe(processing_config),
         "cli_overrides": _json_safe(cli_overrides),
         "scope": _json_safe(effective_scope),
+        "job_filter": _json_safe(job_filter or {"status": "disabled"}),
         "source": {"api": "DofusAPI", "cache": _json_safe(cache_status or {"status": "unavailable"})},
     }
 
@@ -373,6 +465,21 @@ def main():
     if args.random_seed is not None:
         processing_config.random_seed = args.random_seed
 
+    # Job levels: player_config.json is the baseline, --job-levels overrides
+    # individual jobs, --no-job-filter disables filtering entirely.
+    player_config = load_player_config(PLAYER_CONFIG_PATH)
+    file_job_levels = dict(player_config.get("job_levels") or {})
+    unknown = sorted(set(file_job_levels) - JOB_LEVEL_JOBS)
+    if unknown:
+        print(f"⚠️  Ignoring unknown jobs in {PLAYER_CONFIG_PATH}: {', '.join(unknown)}")
+        for job in unknown:
+            file_job_levels.pop(job)
+    if args.job_levels:
+        file_job_levels.update(args.job_levels)
+    if file_job_levels and not args.no_job_filter:
+        processing_config.use_job_level_filter = True
+        processing_config.job_levels = file_job_levels
+
     scope = {
         "min_level": args.min_level,
         "max_level": args.max_level,
@@ -381,6 +488,12 @@ def main():
 
     try:
         equipments, cache_manager, api_client = load_equipment(processing_config, scope)
+        equipments, job_filter_report = apply_job_level_filter(
+            equipments, processing_config
+        )
+        if not equipments:
+            print("\n⚠️  No equipment to process after filtering.")
+            sys.exit(1)
         groups = process_equipment(
             equipments, processing_config, cache_manager, api_client, args.tune
         )
@@ -394,6 +507,7 @@ def main():
             {key: value for key, value in vars(args).items() if value not in (None, False)},
             scope=scope,
             cache_status=getattr(api_client, "resource_cache_status", {"status": "unavailable"}),
+            job_filter=job_filter_report,
         )
         index_path = generate_visualizations(groups, manifest=manifest)
 

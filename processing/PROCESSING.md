@@ -25,6 +25,44 @@ Each input equipment is expected to provide:
 the random expert applies density filtering. Deterministic and genetic grouping
 use the complete equipment list passed to `RuneMaster`.
 
+## Job-Level Filtering
+
+Crafting an item requires a minimum job (profession) level, so a group the
+player cannot craft is useless. `main.py::apply_job_level_filter()` drops
+such equipment before `RuneMaster` is constructed, so every expert, the
+acceptance policy, and the report operate on the craftable pool only.
+
+The predicate lives in `processing/job_filter.py`:
+
+```
+craftable(item) = job_levels[job_for(item.type)] >= item.level
+```
+
+- An item at exactly the job level is craftable (`>=`, not `>`).
+- An item whose type maps to no known job is **kept**. A new item type must
+  not silently vanish from the report.
+- An item whose job is not in `job_levels` is **kept**. Partial
+  configurations are not silently destructive.
+
+The job-to-type mapping is the `CORDONNIER`, `BIJOUTIER`, `TAILLEUR`,
+`FORGERON`, `SCULPTEUR`, and `FACONNEUR` lists in `config.py`. Each
+craftable type belongs to exactly one job; a unit test asserts the mapping
+is total over `ALL_CRAFTABLE_TYPES`.
+
+**Type resolution.** The DofusDB API filter takes an English `name_id`
+(`sword`, `ring`, ...) while the equipment payload carries a French display
+name and a numeric id (`{"name": "Épée", "id": 80}`). `resolve_job()` matches
+the numeric id first, then the name, so a live API run and a frozen-snapshot
+run resolve identically regardless of language. `ITEM_TYPE_IDS` is the
+name_id-to-numeric-id table and the single place to extend for a new type.
+
+Filtering is off by default (`use_job_level_filter=False`), preserving the
+full pool. Levels come from `player_config.json` in the project root, or
+`--job-levels "forgeron:120,bijoutier:80"` on the CLI, which overrides the
+file per job. `--no-job-filter` disables filtering for one run. The effective
+levels and the kept/filtered counts are recorded in the run manifest under
+`job_filter`.
+
 ## End-To-End Dispatch
 
 `main.py::process_equipment()` constructs `RuneMaster` and dispatches from
@@ -78,6 +116,8 @@ Every accepted proposal is a canonical group dictionary built by
 | `random_group_count` | `50` | Random and hybrid | Maximum number of random generation attempts and hybrid threshold input |
 | `random_seed` | `None` | Louvain, random, genetic | Seeds the corresponding stochastic operations when set |
 | `min_equipment_density` | `0.0` | Loader only | Absolute minimum `stat_weight`, despite the historical field name |
+| `use_job_level_filter` | `False` | Pipeline entry (`main.py`) | When true and `job_levels` is populated, drop equipment whose crafting job is below the item level |
+| `job_levels` | `{}` | Pipeline entry (`main.py`) | Player job levels by job name (e.g. `{"forgeron": 100}`) |
 | `dedup_overlap_threshold` | `0.7` | Committee only | Equipment-set Jaccard at or above this value rejects a later proposal |
 | `portfolio_quality_weights` | `0.65/0.35/0.50` | Summary and tuner | Group-quality reward, coverage reward, and overlap penalty |
 
