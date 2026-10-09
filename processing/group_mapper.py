@@ -85,24 +85,6 @@ class GroupMapper:
         """
         return GroupMetrics.average_density(group_equipments)
 
-    def calculate_total_ingredients(
-        self,
-        group_equipments: List[Equipment],
-        cache_manager=None,
-        api_client=None
-    ) -> Dict[int, Dict[str, Any]]:
-        """Calculate total ingredients needed for all equipment in group.
-
-        Args:
-            group_equipments: List of Equipment objects
-            cache_manager: Optional CacheManager for resource name lookup (RECOMMENDED)
-            api_client: Optional API client (not used - resources should be cached)
-
-        Returns:
-            Dict mapping resource_id -> {name, total_quantity, quantity_per_equipment}
-        """
-        return GroupMetrics.aggregate_resources(group_equipments, cache_manager)
-
     def create_group(
         self,
         group_equipments: List[Equipment],
