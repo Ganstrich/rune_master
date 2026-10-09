@@ -1,12 +1,80 @@
 """Price-independent quality features for equipment groups."""
 
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from dataclasses import asdict, dataclass
 from itertools import combinations
 from typing import Any, Iterable, Mapping
 
 from models import Equipment
 from processing.blocks.similarity import jaccard
+
+ResourceUsage = namedtuple('ResourceUsage', [
+    'resource_sets', 'resource_usage', 'resource_quantities',
+    'unique_count', 'shared_resources', 'occurrence_count',
+    'repeated_occurrences', 'group_size'
+])
+
+
+def _resource_quantities(equipment, excluded_resource_ids):
+    quantities = defaultdict(int)
+    for requirement in equipment.recipe or []:
+        resource_id = int(requirement.resource_id)
+        if resource_id not in excluded_resource_ids:
+            quantities[resource_id] += max(int(requirement.quantity), 0)
+    return dict(quantities)
+
+
+def _compute_resource_usage(equipment_list, excluded):
+    resource_sets = []
+    resource_usage = defaultdict(int)
+    resource_quantities = defaultdict(int)
+
+    for equipment in equipment_list:
+        quantities = _resource_quantities(equipment, excluded)
+        resources = set(quantities)
+        resource_sets.append(resources)
+        for resource_id in resources:
+            resource_usage[resource_id] += 1
+            resource_quantities[resource_id] += quantities[resource_id]
+
+    unique_count = len(resource_usage)
+    shared_resources = {
+        resource_id
+        for resource_id, usage_count in resource_usage.items()
+        if usage_count >= 2
+    }
+    occurrence_count = sum(resource_usage.values())
+    repeated_occurrences = sum(
+        max(usage_count - 1, 0) for usage_count in resource_usage.values()
+    )
+    group_size = len(equipment_list)
+
+    return ResourceUsage(
+        resource_sets=resource_sets,
+        resource_usage=resource_usage,
+        resource_quantities=resource_quantities,
+        unique_count=unique_count,
+        shared_resources=shared_resources,
+        occurrence_count=occurrence_count,
+        repeated_occurrences=repeated_occurrences,
+        group_size=group_size,
+    )
+
+
+def _set_membership_features(equipment_list):
+    group_size = len(equipment_list)
+    if not group_size:
+        return 0, 0.0, 0.0
+    set_counts = defaultdict(int)
+    set_free_count = 0
+    for equipment in equipment_list:
+        set_id = getattr(equipment, "set_id", None)
+        if set_id is None:
+            set_free_count += 1
+        else:
+            set_counts[int(set_id)] += 1
+    largest_set_share = max(set_counts.values(), default=0) / group_size
+    return set_free_count, set_free_count / group_size, largest_set_share
 
 
 @dataclass(frozen=True)
@@ -77,34 +145,18 @@ class GroupQualityEvaluator:
         """Calculate recipe reuse, cohesion, and quantity concentration features."""
         equipment_list = list(equipments)
         excluded = excluded_resource_ids or set()
-        resource_sets: list[set[int]] = []
-        resource_usage: dict[int, int] = defaultdict(int)
-        resource_quantities: dict[int, int] = defaultdict(int)
+        usage = _compute_resource_usage(equipment_list, excluded)
 
-        for equipment in equipment_list:
-            quantities = self._resource_quantities(equipment, excluded)
-            resources = set(quantities)
-            resource_sets.append(resources)
-            for resource_id in resources:
-                resource_usage[resource_id] += 1
-                resource_quantities[resource_id] += quantities[resource_id]
-
-        unique_count = len(resource_usage)
-        shared_resources = {
-            resource_id
-            for resource_id, usage_count in resource_usage.items()
-            if usage_count >= 2
-        }
-        occurrence_count = sum(resource_usage.values())
-        repeated_occurrences = sum(
-            max(usage_count - 1, 0) for usage_count in resource_usage.values()
-        )
-        group_size = len(equipment_list)
+        unique_count = usage.unique_count
+        shared_resources = usage.shared_resources
+        group_size = usage.group_size
+        resource_sets = usage.resource_sets
+        resource_quantities = usage.resource_quantities
 
         reuse_ratio = len(shared_resources) / unique_count if unique_count else 0.0
         reuse_depth_denominator = unique_count * max(group_size - 1, 0)
         reuse_depth = (
-            repeated_occurrences / reuse_depth_denominator
+            usage.repeated_occurrences / reuse_depth_denominator
             if reuse_depth_denominator
             else 0.0
         )
@@ -133,7 +185,7 @@ class GroupQualityEvaluator:
             else 0.0
         )
 
-        set_free_count, set_free_ratio, largest_set_share = self._set_membership_features(
+        set_free_count, set_free_ratio, largest_set_share = _set_membership_features(
             equipment_list
         )
 
@@ -154,8 +206,8 @@ class GroupQualityEvaluator:
             group_size=group_size,
             unique_resource_count=unique_count,
             shared_resource_count=len(shared_resources),
-            resource_occurrence_count=occurrence_count,
-            repeated_resource_occurrence_count=repeated_occurrences,
+            resource_occurrence_count=usage.occurrence_count,
+            repeated_resource_occurrence_count=usage.repeated_occurrences,
             resource_reuse_ratio=reuse_ratio,
             resource_reuse_depth=reuse_depth,
             compression=compression,
@@ -169,35 +221,7 @@ class GroupQualityEvaluator:
             quality_score=quality_score,
         )
 
-    @staticmethod
-    def _set_membership_features(
-        equipment_list: list[Equipment],
-    ) -> tuple[int, float, float]:
-        """Reward items outside panoplies, which the game already promotes."""
-        group_size = len(equipment_list)
-        if not group_size:
-            return 0, 0.0, 0.0
-        set_counts: dict[int, int] = defaultdict(int)
-        set_free_count = 0
-        for equipment in equipment_list:
-            set_id = getattr(equipment, "set_id", None)
-            if set_id is None:
-                set_free_count += 1
-            else:
-                set_counts[int(set_id)] += 1
-        largest_set_share = max(set_counts.values(), default=0) / group_size
-        return set_free_count, set_free_count / group_size, largest_set_share
 
-    @staticmethod
-    def _resource_quantities(
-        equipment: Equipment, excluded_resource_ids: set[int]
-    ) -> dict[int, int]:
-        quantities: dict[int, int] = defaultdict(int)
-        for requirement in equipment.recipe or []:
-            resource_id = int(requirement.resource_id)
-            if resource_id not in excluded_resource_ids:
-                quantities[resource_id] += max(int(requirement.quantity), 0)
-        return dict(quantities)
 
 @dataclass(frozen=True)
 class PortfolioQualityWeights:
