@@ -139,6 +139,9 @@ class GroupMapper:
     ) -> List[Dict[str, Any]]:
         """Convert communities to equipment groups with filtering.
 
+        Communities larger than max_group_size are split into subgroups
+        rather than rejected outright.
+
         Args:
             communities: Dict from CommunityDetector.partition_to_communities()
             min_group_size: Minimum equipment per group
@@ -146,7 +149,7 @@ class GroupMapper:
             min_shared_resources: Minimum shared resources required
             efficiency_threshold: Minimum efficiency ratio required
             cache_manager: Optional CacheManager for resource names
-            api_client: Optional API client to fetch resource names
+            api_client: Optional APIClient to fetch resource names
 
         Returns:
             List of group dicts with equipment, ingredients, efficiency metrics
@@ -168,6 +171,24 @@ class GroupMapper:
             leave=True,
         ):
             group_equipments = self._resolve_equipment_objects(equip_ids)
+
+            # Split large communities into subgroups
+            if len(group_equipments) > max_group_size:
+                subgroups = self._split_large_community(
+                    group_equipments, max_size=max_group_size
+                )
+                for subgroup in subgroups:
+                    if len(subgroup) < min_group_size:
+                        continue
+                    group = self.create_group(
+                        subgroup,
+                        cache_manager=cache_manager,
+                        api_client=api_client,
+                    )
+                    if not policy.accepts(group):
+                        continue
+                    groups.append(group)
+                continue
 
             # Calculate metrics
             shared_count, shared_resources, efficiency = self.calculate_shared_resources(

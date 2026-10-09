@@ -44,7 +44,7 @@ def run_comparison(
         elif method == "random":
             groups = master.run_random_grouping()
         elif method == "genetic":
-            groups = master.run_genetic_grouping()
+            groups = master.run_genetic()
         elif method == "committee":
             groups = master.run_committee()
         else:
