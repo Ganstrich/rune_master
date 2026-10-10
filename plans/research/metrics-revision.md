@@ -1,18 +1,25 @@
 # Metrics Revision: Group-Evaluation Metrics Against the Data Profile
 
+---
+status: done
+last_reviewed: 2026-10-10
+related: [plans/research/data-profile.md, plans/research/group-evaluation-spec.md, plans/research/pipeline-challenge.md]
+---
+
+
 **Status:** implemented. All five sequencing steps from §6 are in the codebase; 136
 tests pass (was 120). Implementation validated against snapshot 3.7.7.6 — see
 "Implementation notes" at the end of this document.
 
-**Inputs:** `plans/data-profile.md` (snapshot 3.7.7.6), `plans/group-evaluation-spec.md`,
-`processing/quality_metrics.py`, `processing/group_metrics.py`, `processing/policy.py`,
-`processing/config_dataclass.py`.
+**Inputs:** `plans/research/data-profile.md` (snapshot 3.7.7.6), `plans/research/group-evaluation-spec.md`,
+`processing/metrics/quality_metrics.py`, `processing/metrics/group_metrics.py`, `processing/policy.py`,
+`processing/config.py`.
 
 **Probe scripts (read-only, in scratch, no `src` touched):**
 `/home/adamb/.hermes/cache/scratch/metrics_probe{,2,3,4,5b,6}.py` with outputs
 `/home/adamb/.hermes/cache/scratch/metrics_probe{,2,3,4,5,6}.txt`.
 
-**Citation convention:** "profile §N" = numbered table in `plans/data-profile.md`.
+**Citation convention:** "profile §N" = numbered table in `plans/research/data-profile.md`.
 "probe Q#/R#/S#/T#" = section of my own probe output. Every claim carries a number.
 
 **Verification first.** I re-derived the profile's similarity section from scratch
@@ -58,30 +65,30 @@ how you convert that into breakable items.
 
 ## 1. Verdict per current metric and parameter
 
-### 1.1 Group-level metrics (`processing/quality_metrics.py`)
+### 1.1 Group-level metrics (`processing/metrics/quality_metrics.py`)
 
 | Metric | Location | Verdict | Evidence |
 |---|---|---|---|
-| **A1 compression** `1-\|U\|/Σ\|R_i\|` | `quality_metrics.py:170` | **KEEP** | The only A-metric that is extensive (grows with group size), so it serves C1 directly. Probe R1: the 869-item component has compression 0.869 whole, 0.479 median at t=0.2 when split to policy size — still discriminates. |
-| **A2 resource_reuse_ratio** `\|shared\|/\|U\|` | `quality_metrics.py:156` | **CHANGE** — keep the field, remove from the objective | 34 of 1642 resources have breadth ≥ 50 (probe Q1), so `\|shared\|` is bounded ~34 and `\|U\|` by 12–90. Saturates: median reuse already 0.500 at t=0.4 (probe Q9). No gradient beyond A1. |
-| **A3 shared_quantity_ratio** | `quality_metrics.py:168` | **CHANGE** — demote to reporting-only | 14635 Pépite has avg 1098.92 units/item vs pool median 5.89 (profile §2, §3). Probe Q4: 92 of the 113 items over 500 units are Pépite-driven. A3 is a Pépite detector, not a sharing metric. |
-| **A4 items_per_line_item** | `group_metrics.py:151` | **KEEP** as reported diagnostic | Exactly `\|G\|/\|U\|` (probe R2), monotone in group size — no independent signal, but it is the direct readout of the `λ\|∪R_i\|` term. |
-| **A5 unique_resource_count** | `quality_metrics.py:207` | **KEEP** | The `λ` term's own variable. Profile §7: per-item distinct resources median 6, p90 8, **max 8** — only the union varies. |
-| **A6 total_units_needed** | `group_metrics.py:156` | **KEEP**, stop treating as hard cap | Profile §7: units per item median 27, p90 184, max 8046. Probe Q4: 113 items (3.95%) exceed 500 alone — a scope decision, not a cost model. |
-| **A7 acquisition_cost proxy** `λ·\|U\|` | spec A7 | **KEEP, stay unweighted** | `λ` is user-set (`config_dataclass.py:101`, currently 0.0). Probe Q2: resource records have keys `ankama_id, description, image_urls, level, name, pods, type` — **no price field anywhere**. Unimprovable until a price feed exists. |
-| **B1 largest_set_share** | `quality_metrics.py:77` | **KEEP as penalty** | The only set-metric wired into the score (`quality_metrics.py:202`). Serves C2. |
-| **B2 set_free_ratio** | `quality_metrics.py:77` | **KEEP as reward** | 1068 of 2858 items are setless (profile SETS, 37.4%). Setless is *preferable* per C2, not neutral. Probe S6: a setless-only portfolio still covers 1053 of 1068 setless items (98.60%), so the preference costs almost no coverage within the preferred subset. |
-| **B7 break_density** metrics | `group_metrics.py:147` | **CHANGE** — keep per-item, add group aggregates | 86 of 2858 items have break_density 0 (probe Q14). Profile §8: median rises 18.60 → 674.88 from band 0 to 10, a 36× range. Raw value only comparable within a band — see N7. |
-| **P1 equipment_coverage_rate** | `quality_metrics.py:290` | **KEEP** | The headline metric under the primary objective. Not gameable by fragmentation. |
-| **P2 assignment_overlap_rate** | `quality_metrics.py:293` | **KEEP** | Cheap and meaningful. |
-| **P3 mean_group_quality** | `quality_metrics.py:300` | **KEEP with P4** | Neither dominates when reported together. |
-| **P4 assignment_weighted_quality** | `quality_metrics.py:302` | **KEEP** | Weights by items actually assigned — the honest denominator. |
+| **A1 compression** `1-\|U\|/Σ\|R_i\|` | `metrics/quality_metrics.py:170` | **KEEP** | The only A-metric that is extensive (grows with group size), so it serves C1 directly. Probe R1: the 869-item component has compression 0.869 whole, 0.479 median at t=0.2 when split to policy size — still discriminates. |
+| **A2 resource_reuse_ratio** `\|shared\|/\|U\|` | `metrics/quality_metrics.py:156` | **CHANGE** — keep the field, remove from the objective | 34 of 1642 resources have breadth ≥ 50 (probe Q1), so `\|shared\|` is bounded ~34 and `\|U\|` by 12–90. Saturates: median reuse already 0.500 at t=0.4 (probe Q9). No gradient beyond A1. |
+| **A3 shared_quantity_ratio** | `metrics/quality_metrics.py:168` | **CHANGE** — demote to reporting-only | 14635 Pépite has avg 1098.92 units/item vs pool median 5.89 (profile §2, §3). Probe Q4: 92 of the 113 items over 500 units are Pépite-driven. A3 is a Pépite detector, not a sharing metric. |
+| **A4 items_per_line_item** | `metrics/group_metrics.py:151` | **KEEP** as reported diagnostic | Exactly `\|G\|/\|U\|` (probe R2), monotone in group size — no independent signal, but it is the direct readout of the `λ\|∪R_i\|` term. |
+| **A5 unique_resource_count** | `metrics/quality_metrics.py:207` | **KEEP** | The `λ` term's own variable. Profile §7: per-item distinct resources median 6, p90 8, **max 8** — only the union varies. |
+| **A6 total_units_needed** | `metrics/group_metrics.py:156` | **KEEP**, stop treating as hard cap | Profile §7: units per item median 27, p90 184, max 8046. Probe Q4: 113 items (3.95%) exceed 500 alone — a scope decision, not a cost model. |
+| **A7 acquisition_cost proxy** `λ·\|U\|` | spec A7 | **KEEP, stay unweighted** | `λ` is user-set (`config.py:101`, currently 0.0). Probe Q2: resource records have keys `ankama_id, description, image_urls, level, name, pods, type` — **no price field anywhere**. Unimprovable until a price feed exists. |
+| **B1 largest_set_share** | `metrics/quality_metrics.py:77` | **KEEP as penalty** | The only set-metric wired into the score (`metrics/quality_metrics.py:202`). Serves C2. |
+| **B2 set_free_ratio** | `metrics/quality_metrics.py:77` | **KEEP as reward** | 1068 of 2858 items are setless (profile SETS, 37.4%). Setless is *preferable* per C2, not neutral. Probe S6: a setless-only portfolio still covers 1053 of 1068 setless items (98.60%), so the preference costs almost no coverage within the preferred subset. |
+| **B7 break_density** metrics | `metrics/group_metrics.py:147` | **CHANGE** — keep per-item, add group aggregates | 86 of 2858 items have break_density 0 (probe Q14). Profile §8: median rises 18.60 → 674.88 from band 0 to 10, a 36× range. Raw value only comparable within a band — see N7. |
+| **P1 equipment_coverage_rate** | `metrics/quality_metrics.py:290` | **KEEP** | The headline metric under the primary objective. Not gameable by fragmentation. |
+| **P2 assignment_overlap_rate** | `metrics/quality_metrics.py:293` | **KEEP** | Cheap and meaningful. |
+| **P3 mean_group_quality** | `metrics/quality_metrics.py:300` | **KEEP with P4** | Neither dominates when reported together. |
+| **P4 assignment_weighted_quality** | `metrics/quality_metrics.py:302` | **KEEP** | Weights by items actually assigned — the honest denominator. |
 | **P5 portfolio_resource_overlap** | not computed | **ADD as N8** | Justified in §2. |
 | **P6 slot_coverage** | not computed | **ADD as N5** | Justified in §2. |
-| **P8 mean_group_overlap** | `quality_metrics.py:310` | **KEEP** | Already there. |
-| **`quality_score` blend** (0.45/0.25/0.15/0.15, penalty 0.45) | `quality_metrics.py:84-88` | **CHANGE the term set** | No replacement weights proposed, per the task rule. Term set surviving all three constraints: keep `compression` (C1), `shared_quantity_ratio`, `set_free_ratio` (C2, reward), `largest_set_share` (C2, penalty); **drop `resource_reuse_ratio`** as redundant with compression. Re-weighting is a separate decision. |
+| **P8 mean_group_overlap** | `metrics/quality_metrics.py:310` | **KEEP** | Already there. |
+| **`quality_score` blend** (0.45/0.25/0.15/0.15, penalty 0.45) | `metrics/quality_metrics.py:84-88` | **CHANGE the term set** | No replacement weights proposed, per the task rule. Term set surviving all three constraints: keep `compression` (C1), `shared_quantity_ratio`, `set_free_ratio` (C2, reward), `largest_set_share` (C2, penalty); **drop `resource_reuse_ratio`** as redundant with compression. Re-weighting is a separate decision. |
 
-### 1.2 Parameters (`processing/config_dataclass.py`)
+### 1.2 Parameters (`processing/config.py`)
 
 | Parameter | Current | Verdict | Evidence |
 |---|---|---|---|
@@ -94,7 +101,7 @@ how you convert that into breakable items.
 | `excluded_resource_ids` | {14635} | **KEEP 14635; DROP 15263** | Probe 3 §A: 15263 is absent from the resources table, appears in **zero** recipe entries of any subtype, and is not an equipment ID. The comment at `config_dataclass.py:108` claims otherwise — false on this snapshot. Removing it changes nothing numerically (0 of 246081 pairs) but removes a false claim. |
 | `MIN_LEVEL`/`MAX_LEVEL` | 1 / 100 | **CHANGE** to 1 / 200 (§3.3) | Probe Q3: ≤100 gives 1498 of 2858 items (52.41%) and 61352 of 246081 pairs (24.93%). Probe S5: at 1–100 coverage is b5=31 and **b6–b10 = 0** — six bands entirely unreachable. 1–100 remains a job-level convenience scope; 1–200 is the planning default. |
 | `equipment_density_level_ratio` | 3.0 | **CHANGE** to 2.0 **and wire it in** (§3.4) | Probe Q4: ratio 3.0 keeps 1169 of 2858 (40.90%), excluding 415 of 510 items in band 2 alone. Ratio 2.0 keeps 2062 (72.15%), at or below the band medians (1.846–3.374) in every band 0–8. |
-| `use_density_filtering` | True | **CHANGE — currently inert** | Verified: `get_active_pool` is called from nowhere in `orchestrator.py` or `main.py`. Only `tuner.py:36-37` sets it, with its own relaxed 1.5. The 3.0 default has never affected a production run. |
+| `use_density_filtering` | True | **CHANGE — currently inert** | Verified: `get_active_pool` is called from nowhere in `orchestrator.py` or `main.py`. Only `tools/tuner.py:36-37` sets it, with its own relaxed 1.5. The 3.0 default has never affected a production run. |
 | `same_set_edge_discount` | 1.0 | **KEEP** | Same-set candidate pairs are 0.89% of all pairs (probe Q6) — near-inert either way. No evidence to change. |
 | `group_max_size` | 32 | **CHANGE** to 12 (§3.2) | Unreachable while mli=12 (probe R2: no 8-item group fits). Probe S3: with mli=32 the greedy reaches median group size 6–12 and p90 12, so 12 is both reachable and consistent with C1. |
 | `flat_taux` | 1.0 | **KEEP, mark provisional** | See §5. |
@@ -322,7 +329,7 @@ From profile §10 and probe R6 (recomputed, identical):
 The most consequential number: **408 items (14.28%) have no edge at 0.3.** They are
 unreachable by the deterministic, graph and committee experts — only the greedy expert,
 which grows from seeds against the objective rather than from graph edges
-(`greedy_expert.py:34-90`), can reach them. At 0.25 the invisible set falls to 197 items
+(`experts/greedy_expert.py:34-90`), can reach them. At 0.25 the invisible set falls to 197 items
 (6.89%), at 0.20 to 62 (2.17%).
 
 Probe S1 adds the detail that decides whether this matters: **405 of those 408 still
@@ -446,7 +453,7 @@ loses 168 of 264. Median `stat_weight/level` per band runs 1.846 (band 2) to 3.3
 sits at or below the median in every band 0–8.
 
 **Important verified finding:** `get_active_pool` is never called from
-`processing/orchestrator.py` or `main.py`. The only caller is `tuner.py:36-37`, which
+`processing/orchestrator.py` or `main.py`. The only caller is `tools/tuner.py:36-37`, which
 sets `equipment_density_level_ratio=1.5` explicitly. The 3.0 default has never affected
 a production run. Changing the number alone accomplishes nothing — the filter must be
 wired into the orchestrator first.
@@ -460,7 +467,7 @@ Probe 3 §A, on snapshot 3.7.7.6:
 - It is not an equipment `ankama_id` either.
 - By contrast 14635 is present and appears in 148 recipes as a `resources` entry.
 
-The comment at `config_dataclass.py:108-109` describes 15263 as "an equipment item used
+The comment at `config.py:108-109` describes 15263 as "an equipment item used
 in a few recipes". On this snapshot that is not true. It is inert config that misleads
 the reader. Removing it changes nothing numerically (probe Q1: 0 of 246081 pairs) but
 removes a false claim from the codebase.
@@ -472,14 +479,14 @@ suggests.**
 
 **What is live.** `processing/policy.py:49` enforces `sharing_efficiency < threshold` as
 a hard reject and reads `config.group_efficiency_threshold`. The 0.15 in
-`GroupMapper.map_communities` (`group_mapper.py:116`) is shadowed by the config value
-passed from `graph_expert.py:116`, so the signature default is dead but the *parameter*
+`GroupMapper.map_communities` (`graph/group_mapper.py:116`) is shadowed by the config value
+passed from `experts/graph_expert.py:116`, so the signature default is dead but the *parameter*
 is very much alive.
 
 **What is actually dead.** The 0.10 in `GroupMapper.map_communities_inclusive`
-(`group_mapper.py:140`) is also shadowed — but more importantly that whole path never
+(`graph/group_mapper.py:140`) is also shadowed — but more importantly that whole path never
 runs, because `config.use_inclusive_mapping` defaults to `False`
-(`config_dataclass.py:105`) and nothing sets it True. That is the genuine legacy
+(`config.py:105`) and nothing sets it True. That is the genuine legacy
 artifact.
 
 **Why 0.15 is mis-scoped.** The metric's meaning changes with group size:
@@ -507,13 +514,13 @@ admissibility gate. Treating it as the latter is what makes it look vestigial.
 pool.**
 
 `GraphGroupingExpert` builds the Jaccard graph and returns `[]` if empty
-(`graph_expert.py:50-59`). `GeneticGroupingExpert` does the same
-(`genetic_expert.py:99-109`). Critically, the genetic expert's search is graph-bound
+(`experts/graph_expert.py:50-59`). `GeneticGroupingExpert` does the same
+(`genetic_expert.py` — deleted in 82a32ba). Critically, the genetic expert's search is graph-bound
 throughout:
 
-- `create_graph_individual` seeds only from `graph.nodes()` (`genetic_operators.py:189`).
+- `create_graph_individual` seeds only from `graph.nodes()` (`genetic_operators.py` — deleted in 82a32ba).
 - `mutate("add")` pulls candidates only from `graph.neighbors()`
-  (`genetic_operators.py:145-150`).
+  (`genetic_operators.py` — deleted in 82a32ba).
 
 An item with no edge at `graph_min_shared_ratio=0.3` is absent from the graph, so no
 amount of evolution can discover it. Probe S1: **408 items (14.28%) are in that dead
@@ -527,12 +534,12 @@ b1=50, b2=45, b3=67, b4=28, b5=65, b6=50, b7=24, b8=16, b9=40, b10=17). Dropping
 silently removes 14.28% of the craftable pool from every deterministic and genetic run.
 
 **Consequence for the committee.** Its value proposition is diversity across experts
-(`config_dataclass.py:5-16`). But deterministic and genetic are the same algorithm with
+(`config.py:5-16`). But deterministic and genetic are the same algorithm with
 different search strategies over the same graph — they share the blind spot and will
 tend to propose the same components. The genuine architectural diversity comes from
 `GreedyGroupingExpert`, which builds its own neighbour index from `recipe_resource_ids`
-rather than the Jaccard graph (`greedy_expert.py:49-54`), and `BaselineExpert`, which
-scans all equipments (`baseline_expert.py:63-67`). Those two are the only ones reaching
+rather than the Jaccard graph (`experts/greedy_expert.py:49-54`), and `BaselineExpert`, which
+scans all equipments (`baseline_expert.py` — deleted in 82a32ba). Those two are the only ones reaching
 the dead zone.
 
 **Recommendations, in order of value:**
@@ -619,7 +626,7 @@ boundary at exactly k, so keep it.
 
 **FM1 — Mega-component at low thresholds.** Profile §10: at ratio 0.05 there are 2
 components and the largest holds 2850 of 2858 items; at 0.10, largest 2835. The
-pipeline's split logic (`group_mapper.py:206-229`) slices communities into *contiguous*
+pipeline's split logic (`graph/group_mapper.py:206-229`) slices communities into *contiguous*
 chunks of `max_size`, ignoring resource structure. Probe R1: applied to the 869-item
 component at 0.3, all 28 chunks fail the policy — 100% loss. Any threshold low enough to
 fix the reachability gap (§3.1) worsens this, because reachability and component size
@@ -653,7 +660,7 @@ units are Pépite-driven. `shared_quantity_ratio` and `total_items_needed` are b
 dominated by this one resource; with `max_total_units=500` any group containing a
 Pépite-heavy item is rejected outright. `excluded_resource_ids` handles this for
 *sharing* but not for the shopping list — `GroupMetrics.aggregate_resources`
-(`group_metrics.py:64-105`) calls `iter_recipe` without exclusions, so Pépite still
+(`metrics/group_metrics.py:64-105`) calls `iter_recipe` without exclusions, so Pépite still
 lands in `total_items_needed`.
 
 **FM6 — Band-skewed density filter.** Probe Q4: if `equipment_density_level_ratio=3.0`
@@ -680,7 +687,7 @@ comes from the 12% tail, which is noise at group scale.
 
 **Missing: taux.** No break outcomes exist. `PosteriorTauxModel` is referenced in
 `frontier-model-iteration-prompt.md:56` but no break log has been ingested.
-`config_dataclass.py:102` sets `flat_taux = 1.0` explicitly as a "theoretical
+`config.py:102` sets `flat_taux = 1.0` explicitly as a "theoretical
 placeholder until break outcomes are logged". Until `break_log` exists, **no metric
 depending on `E[τ_i(n_i)]` is computable** — which is every revenue term in `docs/02`'s
 objective. Provisional until then: A7 acquisition cost, N3's value interpretation, and
@@ -744,7 +751,7 @@ from snapshot 3.7.7.6 alone, as the probes demonstrate.
 3. **`set_exclusion_min_size` = 5** with the `--no-set-filter` override and N10
    reporting. Independent of steps 1–2 (probe T5).
 4. **Genetic mutation fallback** so evolution can seed from ungrouped items
-   (`genetic_operators.py:145-150`).
+   (`genetic_operators.py` — deleted in 82a32ba).
 5. **Objective term-set change** — drop `resource_reuse_ratio`, keep `compression` +
    `shared_quantity_ratio` + `set_free_ratio` (reward) − `largest_set_share` (penalty).
    Re-weighting deferred to a separate decision.

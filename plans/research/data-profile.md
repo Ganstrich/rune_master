@@ -1,5 +1,12 @@
 # Data Profile: Full Snapshot
 
+---
+status: reference
+last_reviewed: 2026-10-10
+related: [plans/research/metrics-revision.md, plans/research/pipeline-challenge.md]
+---
+
+
 **Snapshot version:** 3.7.7.6  
 **Created:** 2026-10-09T19:56:21.637624+00:00  
 **Equipment:** 2858  

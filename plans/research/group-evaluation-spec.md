@@ -1,3 +1,9 @@
+---
+status: backlog
+last_reviewed: 2026-10-10
+related: [plans/research/metrics-revision.md, plans/research/pipeline-challenge.md, plans/research/data-profile.md]
+---
+
 # Group-Evaluation Spec: Metrics for Comparing Grouping Methods
 
 **Scope:** Comparing candidate grouping methods on two axes — (A) shopping-list efficiency and (B) exploration diversity — without picking weights or editing code.
@@ -59,25 +65,25 @@ These evaluate a complete algorithm output (set of groups) rather than a single 
 
 | Metric | Location | Notes |
 |--------|----------|-------|
-| A1 Compression | `quality_metrics.py` via `GroupQualityEvaluator` | Core feature, weighted in quality score |
-| A2 Resource Reuse Ratio | `quality_metrics.py` via `GroupQualityEvaluator` | Core feature, weighted in quality score |
-| A3 Shared Quantity Ratio | `quality_metrics.py` via `GroupQualityEvaluator` | Core feature, weighted in quality score |
-| A4 Items per Line Item | `group_metrics.py` via `GroupMetrics.build_group_dict` | Reported as `items_per_line_item` |
-| A5 Unique Resource Count | `quality_metrics.py` + `group_metrics.py` | `unique_resource_count` / `unique_ingredients_count` |
-| A6 Total Units Needed | `group_metrics.py` via `GroupMetrics.build_group_dict` | Reported as `total_items_needed` |
-| B1 Largest Set Share | `quality_metrics.py` via `_set_membership_features` | `largest_set_share`, penalized in quality score |
-| B2 Set-Free Ratio | `quality_metrics.py` via `_set_membership_features` | `set_free_ratio`, weighted in quality score |
+| A1 Compression | `metrics/quality_metrics.py` via `GroupQualityEvaluator` | Core feature, weighted in quality score |
+| A2 Resource Reuse Ratio | `metrics/quality_metrics.py` via `GroupQualityEvaluator` | Core feature, weighted in quality score |
+| A3 Shared Quantity Ratio | `metrics/quality_metrics.py` via `GroupQualityEvaluator` | Core feature, weighted in quality score |
+| A4 Items per Line Item | `metrics/group_metrics.py` via `GroupMetrics.build_group_dict` | Reported as `items_per_line_item` |
+| A5 Unique Resource Count | `metrics/quality_metrics.py` + `metrics/group_metrics.py` | `unique_resource_count` / `unique_ingredients_count` |
+| A6 Total Units Needed | `metrics/group_metrics.py` via `GroupMetrics.build_group_dict` | Reported as `total_items_needed` |
+| B1 Largest Set Share | `metrics/quality_metrics.py` via `_set_membership_features` | `largest_set_share`, penalized in quality score |
+| B2 Set-Free Ratio | `metrics/quality_metrics.py` via `_set_membership_features` | `set_free_ratio`, weighted in quality score |
 | B3 Distinct Set Count | **Not computed** | Derivable from `equipment.set_id` |
 | B5 Level Spread | **Not computed** | Derivable from `equipment.level` |
 | B7 Distinct Break Density Range | **Not computed** | Derivable from `break_density(equipment)` |
 | B8 Rune-Type Coverage | **Not computed** | Derivable from `equipment.effects` |
-| P1 Equipment Coverage Rate | `quality_metrics.py` via `PortfolioQualityEvaluator` | `equipment_coverage_rate` |
-| P2 Assignment Overlap Rate | `quality_metrics.py` via `PortfolioQualityEvaluator` | `assignment_overlap_rate` |
-| P3 Mean Group Quality | `quality_metrics.py` via `PortfolioQualityEvaluator` | `mean_group_quality` |
-| P4 Assignment-Weighted Quality | `quality_metrics.py` via `PortfolioQualityEvaluator` | `assignment_weighted_group_quality` |
+| P1 Equipment Coverage Rate | `metrics/quality_metrics.py` via `PortfolioQualityEvaluator` | `equipment_coverage_rate` |
+| P2 Assignment Overlap Rate | `metrics/quality_metrics.py` via `PortfolioQualityEvaluator` | `assignment_overlap_rate` |
+| P3 Mean Group Quality | `metrics/quality_metrics.py` via `PortfolioQualityEvaluator` | `mean_group_quality` |
+| P4 Assignment-Weighted Quality | `metrics/quality_metrics.py` via `PortfolioQualityEvaluator` | `assignment_weighted_group_quality` |
 | P5 Portfolio Resource Overlap | **Not computed** | Derivable from group recipes |
 | P6 Slot Coverage | **Not computed** | Derivable from `equipment.type` |
-| P8 Mean Pairwise Group Jaccard | `quality_metrics.py` via `PortfolioQualityEvaluator` | `mean_group_overlap` |
+| P8 Mean Pairwise Group Jaccard | `metrics/quality_metrics.py` via `PortfolioQualityEvaluator` | `mean_group_overlap` |
 
 ### New metrics (derivable from existing data, not yet computed)
 

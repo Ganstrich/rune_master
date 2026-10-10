@@ -1,11 +1,18 @@
 # Plan: Challenge the Pipeline and Every Expert/Method with New Metrics (Levels 1–200)
 
+---
+status: in-progress
+last_reviewed: 2026-10-10
+related: [plans/research/metrics-revision.md, plans/research/data-profile.md, plans/research/group-evaluation-spec.md]
+---
+
+
 **Status:** plan only — no code changed, no snapshot refetched. Supersedes the
-verdicts in `plans/metrics-revision.md` §3 where the two disagree; those disagreements
+verdicts in `plans/research/metrics-revision.md` §3 where the two disagree; those disagreements
 are listed explicitly in §5 so nothing is silently overwritten.
 
 **Objective (unchanged):** make breaking many items easier. C1 large groups, C2 no set
-items, C3 shared resources (`plans/metrics-revision.md` §0).
+items, C3 shared resources (`plans/research/metrics-revision.md` §0).
 
 **Data constraint (binding): API only.** Prices, taux, and true game rarity are not
 available and will not be for the foreseeable future. Every metric in this plan is
@@ -259,7 +266,7 @@ verdicts with cited numbers, and a revised per-expert/per-method recommendation.
 
 ---
 
-## 5. Where this plan conflicts with `plans/metrics-revision.md`
+## 5. Where this plan conflicts with `plans/research/metrics-revision.md`
 
 Stated explicitly so the conflict is a decision, not an accident.
 

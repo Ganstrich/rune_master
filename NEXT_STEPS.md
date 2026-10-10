@@ -54,14 +54,14 @@ Make the ranking visible through rank labels and concise evidence on each index
 card. This is the next implementation slice because it improves user trust
 without changing grouping behavior or introducing unsupported financial claims.
 
-Plan: [plans/01-explainable-shortlist.md](plans/01-explainable-shortlist.md)
+Plan: completed (explainable shortlist shipped)
 
 ### 2. Reproducible Run Manifest
 
 Record the query scope, grouping configuration, random seed, cache/data context,
 and generation timestamp with every report.
 
-Plan: [plans/02-run-manifest.md](plans/02-run-manifest.md)
+Plan: completed (run manifest shipped)
 
 ## Notes for Later Expansion
 
@@ -72,28 +72,28 @@ These are deliberately sequenced after explainability and reproducibility.
 Allow users to filter and reorder already-generated groups by level, group size,
 efficiency, density, and method without rerunning the pipeline.
 
-Plan: [plans/03-report-filtering.md](plans/03-report-filtering.md)
+Plan: completed (report filtering shipped)
 
 ### 4. Combined Shopping List
 
 Aggregate ingredients across selected groups to help plan several crafts while
 preserving each group's individual breakdown.
 
-Plan: [plans/04-combined-shopping-list.md](plans/04-combined-shopping-list.md)
+Plan: completed (combined shopping list shipped)
 
 ### 5. Configurable Analysis Scope
 
 Expose levels, item types, language, and game scope as explicit CLI options with
 the same values recorded in the run manifest.
 
-Plan: [plans/05-analysis-scope.md](plans/05-analysis-scope.md)
+Plan: completed (analysis scope shipped)
 
 ### 6. Cache and API Resilience
 
 Improve retries, partial-data warnings, cache freshness visibility, and failure
 reporting without hiding stale or incomplete source data.
 
-Plan: [plans/06-cache-api-resilience.md](plans/06-cache-api-resilience.md)
+Plan: completed (cache/API resilience shipped)
 
 ## Feature Slice Gate
 

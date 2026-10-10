@@ -1,5 +1,12 @@
 # Phase 1 Decision: Measured Method Comparison
 
+---
+status: done
+last_reviewed: 2026-10-10
+related: [plans/research/metrics-revision.md, plans/research/pipeline-challenge.md]
+---
+
+
 **Date:** 2026-10-10  
 **Pool:** Full 1-200 snapshot (3.7.7.6), per-craft runs  
 **Methods:** deterministic, random, genetic, greedy, hybrid, committee, evolutionary_committee, baseline
@@ -100,7 +107,7 @@
 
 ## Files to Modify
 
-- `processing/config_dataclass.py` — change default to `greedy`, mark others legacy
+- `processing/config.py` — change default to `greedy`, mark others legacy
 - `processing/orchestrator.py` — remove slow methods from `_dispatch_experts` and `run_*`
 - `main.py` — remove from CLI choices
 - `Makefile` — update targets
