@@ -34,7 +34,6 @@ from processing.filters.equipment_filter import SetExclusionFilter
 METHODS = (
     "deterministic",
     "random",
-    "hybrid",
     "greedy",
     "survey",
 )

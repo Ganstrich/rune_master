@@ -65,7 +65,7 @@ are click-to-copy. Recalculation requires rerunning the CLI.
   connected-component mapping.
 - `random`: density-filtered stochastic seed selection and companion matching.
   The requested group count is a target and may not be reached.
-- `hybrid`: deterministic first, random supplementation only below the threshold
+
   `max(5, int(random_group_count * 0.5))`; results are concatenated without
   committee-style de-duplication.
 - `committee`: deterministic, random, and genetic proposals scored by expert
@@ -83,7 +83,7 @@ $$
 
 Configured excluded resources do not count in the numerator.
 
-The default method is `hybrid`. Other important defaults are Jaccard ratio
+The default method is `greedy`. Other important defaults are Jaccard ratio
 `0.3`, group size `2..18`, minimum three shared resources, efficiency threshold
 `0.15`, density ratio `3.0`, random target `50`, no density-filter fallback, and
 committee overlap threshold `0.7`.

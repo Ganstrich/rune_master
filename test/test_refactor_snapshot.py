@@ -102,26 +102,6 @@ def test_random_grouping_with_fixed_seed(equipments):
     assert ids_2 == [5, 6, 7, 8]
 
 
-# --- Hybrid supplementation ---
-
-def test_hybrid_supplements_small_deterministic_result(equipments):
-    config = ProcessingConfig(
-        algorithm="none",
-        graph_min_shared_ratio=0.0,
-        graph_min_shared_count=1,
-        group_min_shared_resources=1,
-        group_efficiency_threshold=0.0,
-        random_group_count=3,
-        random_seed=42,
-        use_density_filtering=False,
-    )
-    master = RuneMaster(equipments, config=config)
-    groups = master.run_hybrid_grouping()
-
-    # 3 deterministic + 3 random supplement
-    assert len(groups) == 6
-
-
 # --- Density filtering ---
 
 def test_density_filter_fallback_enabled(equipments):

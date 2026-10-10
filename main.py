@@ -122,7 +122,6 @@ def build_parser() -> argparse.ArgumentParser:
         choices=[
             "deterministic",
             "random",
-            "hybrid",
             "greedy",
             "survey",
         ],
@@ -379,8 +378,6 @@ def process_equipment(
 
     if config.grouping_method == "random":
         groups = master.run_random_grouping()
-    elif config.grouping_method == "hybrid":
-        groups = master.run_hybrid_grouping()
     elif config.grouping_method == "greedy":
         groups = master.run_greedy()
     elif config.grouping_method == "survey":

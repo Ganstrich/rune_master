@@ -156,34 +156,6 @@ class RuneMaster:
         self.print_summary()
         return self.groups
 
-    def run_hybrid_grouping(self) -> List[Dict[str, Any]]:
-        """Run hybrid grouping: deterministic supplemented by random."""
-        print("\n" + "=" * 60)
-        print("🚀 RuneMaster: Hybrid Pipeline (Deterministic + Random)")
-        print("=" * 60)
-
-        # 1. Deterministic
-        det_groups = self.experts["deterministic"].discover_groups(
-            self.equipments, self.config
-        )
-
-        # 2. Check if random supplement needed
-        min_threshold = max(5, int(self.config.random_group_count * 0.5))
-        if len(det_groups) < min_threshold:
-            print(f"      Supplementing with random groups (count < {min_threshold})")
-            rand_groups = self.experts["random"].discover_groups(
-                self.equipments, self.config
-            )
-        else:
-            print(
-                f"      Deterministic groups sufficient ({len(det_groups)}). Skipping random."
-            )
-            rand_groups = []
-
-        self.groups = det_groups + rand_groups
-        self.print_summary()
-        return self.groups
-
     def run_survey(self) -> List[Dict[str, Any]]:
         """Run every expert and keep the union, tagging each group's origin."""
         print("\n" + "=" * 60)

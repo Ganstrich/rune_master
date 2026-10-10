@@ -72,7 +72,7 @@ levels and the kept/filtered counts are recorded in the run manifest under
 | --- | --- | --- |
 | `deterministic` | `run_all()` | Graph expert only; `run_all()` is a backward-compatible alias for `run_deterministic()` |
 | `random` | `run_random_grouping()` | Random expert only |
-| `hybrid` | `run_hybrid_grouping()` | Graph expert, optionally supplemented by random groups |
+
 | `greedy` | `run_greedy()` | Greedy objective-driven expert only |
 | `survey` | `run_survey()` | Every expert; union of proposals tagged with their origin |
 
@@ -113,7 +113,7 @@ Every accepted proposal is a canonical group dictionary built by
 | `density_percentile` | `0.0` | Loader pool | Within-level-band stat-density percentile; zero disables filtering |
 | `density_level_band` | `20` | Loader pool | Level width used for percentile filtering |
 | `grouping_method` | `greedy` | `main.py` dispatch | Selects the orchestrator path; `RuneMaster.run_all()` ignores it |
-| `random_group_count` | `50` | Random and hybrid | Maximum number of random generation attempts and hybrid threshold input |
+| `random_group_count` | `50` | Random | Maximum number of random generation attempts |
 | `random_seed` | `None` | Louvain and random | Seeds the corresponding stochastic operations when set |
 | `min_equipment_density` | `0.0` | Loader only | Absolute minimum `stat_weight`, despite the historical field name |
 | `use_job_level_filter` | `False` | Pipeline entry (`main.py`) | When true and `job_levels` is populated, drop equipment whose crafting job is below the item level |
@@ -359,7 +359,7 @@ Hybrid always runs the graph expert first. It calculates:
 supplement_threshold = max(5, int(random_group_count * 0.5))
 ```
 
-If the deterministic result count is below that threshold, hybrid runs the
+If the deterministic result count is below that threshold, the
 random expert and concatenates `deterministic_groups + random_groups`.
 Otherwise it returns deterministic groups only. Hybrid performs no cross-source
 sorting or de-duplication, so equipment and near-identical groups may repeat.
@@ -460,7 +460,7 @@ Parameter relevance depends on the method:
 | `deterministic` | Yes | Yes | Deterministic with default Louvain |
 | `random` | No | Yes, for companions and final filtering | Random |
 | `greedy` | Yes | Yes | Greedy |
-| Any other value, including `hybrid` | Yes | Yes | `run_all()`, therefore deterministic with default Louvain |
+| Any other value | Yes | Yes | `run_all()`, therefore deterministic with default Louvain |
 
 The tuner does not search or copy the caller's algorithm, quality weights,
 group sizes, density settings, resolution, seed, or overlap threshold into its
@@ -553,7 +553,7 @@ The offline tests that protect this specification are:
 
 - `test/test_quality_metrics.py`: feature boundaries, exclusions, quantity
   sensitivity, portfolio overlap, random threshold parity, and BiLouvain;
-- `test/test_pipeline_contracts.py`: deterministic, random, hybrid, summary,
+- `test/test_pipeline_contracts.py`: deterministic, random, summary,
   and report integration contracts;
 - `test/test_group_structure.py`: canonical group and ingredient schema.
 

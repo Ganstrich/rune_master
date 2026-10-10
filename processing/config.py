@@ -6,7 +6,6 @@ GROUPING METHOD SELECTION:
     Performance and quality trade-offs (measured, 2026-10-10):
     - "deterministic": 0.1-2.1s, PQ 0.23-0.43, cov 29-53% (graph-based, full coverage)
     - "random": 0.0-0.1s, PQ 0.04-0.25, cov 7-25% (stochastic sampling, baseline)
-    - "hybrid": 0.1-2.0s, PQ 0.00-0.41, cov 37-55% (deterministic + random fallback)
     - "greedy": 0.4-8.5s, PQ 0.34-0.58, cov 29-82% (objective-driven, full pool) ← DEFAULT
     
     RECOMMENDATION: Use "greedy" (default) for best quality/coverage/speed.
@@ -22,7 +21,7 @@ class ProcessingConfig:
     """Configuration for RuneMaster processing pipeline."""
 
     # -- Pipeline ----------------------------------------------------------
-    grouping_method: str = "greedy"  # "deterministic", "random", "hybrid", "greedy", "survey"
+    grouping_method: str = "greedy"  # "deterministic", "random", "greedy", "survey"
     random_group_count: int = 50
     random_seed: Optional[int] = None
     algorithm: str = "louvain"  # "louvain", "bilouvain", or "none"

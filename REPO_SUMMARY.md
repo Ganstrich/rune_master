@@ -192,7 +192,7 @@ class ResourceRequirement:
 | --- | --- | --- | --- |
 | `deterministic` | Very Fast | Good | Quick iterations, graph-only analysis |
 | `random` | Fast | Fair | Solution space exploration |
-| `hybrid` | Fast | Good | Balanced approach with deterministic fallback |
+
 | `greedy` | Fast | Very Good | Objective-driven greedy grouping (default) |
 | `survey` | Slowest | Diagnostic | Runs all experts, tags groups with origin |
 
@@ -243,7 +243,7 @@ Key defaults:
 uv run main.py [options]
 
 Options:
-  --grouping-method {deterministic,random,hybrid,greedy,survey}
+  --grouping-method {deterministic,random,greedy,survey}
   --random-groups N       Target number of random groups
   --density-ratio R       Density/level threshold
   --random-seed N         Seed for reproducible random grouping
@@ -265,7 +265,7 @@ python3 -m compileall -q data processing main.py config.py
 git diff --check
 ```
 
-**Test suite:** Offline tests covering canonical group fields, random-seed reproducibility, density-filter fallback, deterministic grouping, hybrid supplementation, and basic report generation. No live-API test or coverage percentage.
+**Test suite:** Offline tests covering canonical group fields, random-seed reproducibility, density-filter fallback, deterministic grouping, and basic report generation. No live-API test or coverage percentage.
 
 **Python API usage:**
 ```python

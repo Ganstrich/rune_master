@@ -183,9 +183,9 @@ Density filtering (`stat_weight >= level * ratio`,
 **only** inside the random expert. `use_density_filtering=True` reads as global;
 it is not.
 
-So `deterministic`, `hybrid`, `genetic`, and `committee` can all emit groups
+So `deterministic` can emit groups
 containing items that break into worthless runes. The default
-`grouping_method` is `hybrid`. Secondary: the filter is linear in level while
+`grouping_method` is `deterministic`. Secondary: the filter is linear in level while
 stat budgets scale super-linearly, so it over-retains high-level items.
 
 ## Failing 7 — Two Gates Measure The Same Thing Incompatibly

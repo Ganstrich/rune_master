@@ -80,7 +80,7 @@ Before moving any code:
    (6–12 items with overlapping recipes, built in the test, no network):
    - deterministic grouping output (group membership + canonical metrics)
    - random grouping with a fixed `random_seed`
-   - hybrid supplementation
+
    - density filtering (including the fallback-disabled case)
    - `get_summary()` keys and value types
    Store expected values as literals in the test (not recomputed).

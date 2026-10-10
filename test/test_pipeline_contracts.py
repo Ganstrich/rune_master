@@ -84,33 +84,6 @@ def test_deterministic_pipeline_returns_canonical_groups() -> None:
     assert all("total_ingredients" in group for group in groups)
 
 
-class StubExpert:
-    """Minimal expert double for testing hybrid dispatch decisions."""
-
-    def __init__(self, groups: list[dict]) -> None:
-        self.groups = groups
-
-    def discover_groups(self, *args: object, **kwargs: object) -> list[dict]:
-        return self.groups
-
-
-def test_hybrid_pipeline_supplements_small_deterministic_result() -> None:
-    """Hybrid mode should call the random expert below its threshold."""
-    equipments = make_equipments()
-    group = RandomGroupBuilder(equipments, seed=3).build_random_group(
-        equipments, min_shared_resources=1
-    )
-    assert group is not None
-
-    master = RuneMaster(equipments, ProcessingConfig(random_group_count=10))
-    master.experts["deterministic"] = StubExpert([])
-    master.experts["random"] = StubExpert([group])
-
-    result = master.run_hybrid_grouping()
-
-    assert result == [group]
-
-
 def test_visualization_generates_index_and_group_page(tmp_path: Path) -> None:
     """A canonical offline group should render a self-contained report."""
     group = RandomGroupBuilder(make_equipments(), seed=1).build_random_group(
