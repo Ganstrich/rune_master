@@ -219,7 +219,7 @@ def main() -> int:
               f"{report['group_count']} groups | "
               f"coverage {report['coverage']['global'] * 100:.2f}%")
 
-    out_path = ROOT / "plans" / "challenge-results.json"
+    out_path = ROOT / "data" / "plans" / "challenge-results.json"
     out_path.write_text(json.dumps(results, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"\nWrote {out_path}")
     return 0

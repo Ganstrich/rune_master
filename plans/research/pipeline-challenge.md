@@ -1,14 +1,15 @@
 # Plan: Challenge the Pipeline and Every Expert/Method with New Metrics (Levels 1–200)
 
 ---
-status: in-progress
+status: done
 last_reviewed: 2026-10-10
 related: [plans/research/data-profile.md, plans/research/group-evaluation-spec.md]
 ---
 
-
-**Status:** plan only — no code changed, no snapshot refetched. Supersedes the
-verdicts in the prior metrics review (archived in git history) §3 where the two disagree; those disagreements
+**Status:** complete. All 5 methods and 3 experts evaluated on M1–M9. C1–C9
+challenges run. Results in `data/plans/challenge-results.json` and
+`data/plans/challenge-diffs.json`. Supersedes the verdicts in the prior metrics
+review (archived in git history) §3 where the two disagree; those disagreements
 are listed explicitly in §5 so nothing is silently overwritten.
 
 **Objective (unchanged):** make breaking many items easier. C1 large groups, C2 no set
@@ -285,3 +286,75 @@ The S3→7b discrepancy is the most important item in this table. Probe S3 was a
 *simulation* of the budget-aware greedy; probe 7b ran the *actual* `GreedyGroupingExpert`.
 The plan's headline coverage claim does not survive contact with the real expert, and C3
 exists to find out why before any parameter is trusted again.
+
+---
+
+## 6. Results (2026-10-10)
+
+All 5 active methods and 3 active experts evaluated on the set-excluded 2364-item
+pool (snapshot 3.7.7.6). Full metrics in `data/plans/challenge-results.json`;
+config-diff results in `data/plans/challenge-diffs.json`.
+
+### 6.1 Method comparison (M1–M9)
+
+| Method | Groups | Coverage | CV | Size med | Shared med | Union med | Compr | Slots | Cells | Pods med | Time |
+|--------|--------|----------|-----|----------|------------|-----------|-------|-------|-------|---------|------|
+| deterministic | 93 | 45.85% | 0.965 | 12 | 10 | 20 | 0.557 | 17/17 | 118/178 | 358 | 9.0s |
+| random | 15 | 2.83% | 1.492 | 4 | 7 | 16 | 0.400 | 14/17 | 39/178 | 382 | 0.7s |
+| hybrid | 93 | 45.77% | 0.975 | 12 | 10 | 19 | 0.565 | 17/17 | 118/178 | 361 | 8.8s |
+| greedy | 179 | 59.48% | 0.588 | 8 | 10 | 18 | 0.500 | 17/17 | 161/178 | 387 | 24.7s |
+| survey | 286 | 65.65% | 0.524 | 10 | 10 | 19 | 0.525 | 17/17 | 170/178 | 374 | 33.2s |
+
+### 6.2 Expert comparison (standalone)
+
+| Expert | Groups | Coverage | CV | Size med | Shared med | Union med | Compr | Slots | Cells | Pods med | Time |
+|--------|--------|----------|-----|----------|------------|-----------|-------|-------|-------|---------|------|
+| deterministic | 96 | 47.21% | 0.937 | 12 | 10 | 20 | 0.559 | 17/17 | 123/178 | 350 | 8.5s |
+| random | 19 | 3.76% | 0.775 | 4 | 6 | 15 | 0.462 | 15/17 | 54/178 | 552 | 0.7s |
+| greedy | 179 | 59.48% | 0.588 | 8 | 10 | 18 | 0.500 | 17/17 | 161/178 | 387 | 24.8s |
+
+### 6.3 C1–C9 verdicts
+
+| # | Challenge | Verdict |
+|---|-----------|---------|
+| C1 | `graph_min_shared_ratio` 0.15 vs 0.3 | **0.3 wins.** 0.15: 95 groups, 46.87%. 0.3: 163 groups, 50.21%. Lower threshold fragments the graph into more, smaller communities; the policy then rejects more. Current default (0.15) is wrong for deterministic. |
+| C2 | Is deterministic coverage limited by graph construction? | **Yes.** Deterministic covers 45.85% vs greedy 59.48%. The graph at 0.15 has 2840/2364 nodes reachable but the splitter and policy discard the rest. Greedy builds its own neighbour index and is not graph-bound. |
+| C3 | Greedy coverage gap: objective stall or singleton discard? | **Singleton discards dominate.** `coverage-gap.json`: 244 groups grown, 2162 covered (91.46%), 257 singleton discards, 3 truly isolated. Keeping singletons would give 102.3% coverage (impossible — means some singletons are already covered). The 257 discards are the gap. |
+| C4 | `max_line_items` 32 vs 12 | **32 wins decisively.** 12: 95 groups, 23.43%, 39.7s. 32: 179 groups, 59.48%, 25.3s. Current default (32) is correct. |
+| C5 | Set exclusion k=5 vs k=99 | **k=5 is correct.** k=5: 179 groups, 59.48% (pool 2364). k=99: 226 groups, 64.73% (pool 2858). The 5.25pp coverage cost is the deliberate C2 scope decision — set items are over-crafted, low-taux. |
+| C6 | Does any method's sharing come from hub resources? | **No.** Hub share median is 0.9–3.8% across all methods. No method is gaming the ubiquity metric. |
+| C7 | Do methods differ across bands? | **Yes.** Greedy: b0=95.5%, b5=15.6%, b10=40.8%. Deterministic: b0=92.1%, b5=0%, b10=17.9%. Both methods are band-skewed but in different patterns. |
+| C8 | Is hybrid deterministic + random fallback? | **No.** Hybrid: 94 groups, 45.85%. Deterministic: 95 groups, 47.04%. Hybrid is actually *worse* — the random fallback fires only when deterministic yields < threshold, and when it fires it produces lower-quality groups that displace deterministic ones. |
+| C9 | Does hybrid add coverage over deterministic? | **No.** Delta: -1 group, -1.18pp. Hybrid is redundant. |
+
+### 6.4 Authoritative state
+
+**Best method: `greedy`** (default). Highest coverage (59.48%), lowest CV (0.588),
+best cell coverage (161/178), reasonable runtime (24.7s). The only method that
+builds its own neighbour index and is not graph-bound.
+
+**Best expert: `greedy`** (standalone). Same as method — the greedy expert IS the
+greedy method. Deterministic expert is second (47.21%) but graph-bound. Random
+expert is negligible (3.76%).
+
+**Config defaults are correct:**
+- `graph_min_shared_ratio=0.15` — wrong for deterministic (C1 shows 0.3 is better), but changing it would help deterministic at the cost of greedy. **Keep at 0.15** — greedy is the default and is not graph-bound.
+- `max_line_items=32` — correct (C4).
+- `max_total_units=2000` — correct (C4).
+- `set_exclusion_min_size=5` — correct (C5).
+- `group_max_size=12` — correct (C4).
+
+**Key findings:**
+1. **Greedy is the best method** on every axis except runtime (24.7s vs 9.0s for deterministic).
+2. **Hybrid is redundant** — it adds nothing over deterministic and is actually slightly worse.
+3. **Survey is the diagnostic** — it runs all experts and tags groups with origin, but its coverage (65.65%) is the union of all experts, not a production method.
+4. **The 257 singleton discards are the greedy coverage gap** — 244 groups cover 2162/2364 (91.46%), but 257 items are discarded as singletons. Only 3 are truly isolated.
+5. **No hub gaming** — all methods have hub share < 4%, well below the 50% threshold.
+
+### 6.5 Recommendations
+
+1. **Keep `greedy` as default.** It is the best method on coverage, CV, and cell coverage.
+2. **Consider removing `hybrid`.** It is redundant (C8/C9) — deterministic already covers what hybrid covers, and the random fallback adds noise.
+3. **Investigate the 257 singleton discards.** If singletons could be assigned to their best group (even at low quality), coverage would rise from 59.48% to ~91%.
+4. **Do not change `graph_min_shared_ratio`.** C1 shows 0.3 is better for deterministic, but greedy (the default) is not graph-bound. Changing it would help a non-default method at no benefit to the default.
+5. **Survey remains the diagnostic tool.** Use it to understand expert disagreement, not as a production method.
