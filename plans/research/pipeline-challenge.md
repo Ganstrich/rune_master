@@ -198,18 +198,19 @@ cannot be evaluated without data that does not exist.
 
 ## 3. What gets evaluated
 
-### 3.1 The 8 methods
-`deterministic`, `random`, `hybrid`, `committee`, `genetic`, `greedy`,
-`evolutionary_committee`, `survey` — each run over the full 1–200 pool with identical
-config, then scored on M1–M9.
+### 3.1 The 5 active methods
+`deterministic`, `random`, `hybrid`, `greedy`, `survey` — each run over
+the full 1–200 pool with identical config, then scored on M1–M9. (Four methods —
+genetic, evolutionary_committee, committee, baseline — were removed in commit 82a32ba;
+see `plans/research/phase1-decision.md`.)
 
 `survey` is the odd one and worth special attention: it returns the *union* of all
 expert proposals with an `origins` tag, so it is the only method that exposes which experts
 agree. That makes it the natural instrument for §3.2.
 
-### 3.2 The 5 experts, individually
-`deterministic` (GraphExpert), `random` (RandomExpert), `genetic` (GeneticExpert),
-`baseline` (BaselineExpert), `greedy` (GreedyExpert).
+### 3.2 The 3 active experts, individually
+`deterministic` (GraphExpert), `random` (RandomExpert), `greedy` (GreedyExpert).
+(GeneticExpert and BaselineExpert were removed in commit 82a32ba.)
 
 Per expert, report M1–M9 **and** the set of items it can reach at all:
 
@@ -227,14 +228,14 @@ experts cannot propose the other 25.
 | # | Challenge | Prediction to test | Metric |
 |---|---|---|---|
 | C1 | Does `graph_min_shared_ratio` 0.15 vs 0.3 change *coverage*, not just graph size? | 0.15 raises band-6–10 coverage; 0.3 leaves gaps | M1, M2 |
-| C2 | Are genetic/evo experts graph-bound? | GeneticExpert coverage ⊆ graph-reachable set; greedy ⊋ it | reachable_set |
+| C2 | Is the deterministic (graph) expert coverage limited by graph construction? | Deterministic coverage ⊆ graph-reachable set; greedy ⊋ it | reachable_set |
 | C3 | Does the greedy expert's coverage gap come from the objective stall or the singleton discard? | Singleton discards dominate | M1 + discard count |
 | C4 | Does `max_line_items` 32 vs 12 change coverage or just group size? | Coverage rises, not only size | M1, M7 |
 | C5 | Does set exclusion at k=5 cost coverage? | Retained pool coverage stays ≥99% | M1 |
 | C6 | Does any method's sharing come from hub resources? | `resource_reuse_ratio` high while M4 also high = Goodhart | M3, M4 |
 | C7 | Do methods differ across bands, or only in aggregate? | Some methods strong b0–b5, weak b6–b10 | M1, M2 |
 | C8 | Is `hybrid` actually deterministic + a random fallback, or redundant? | Hybrid ≈ Deterministic when deterministic yields ≥ threshold | M1 diff |
-| C9 | Does `evolutionary_committee` beat `committee` on coverage, or only on quality? | Quality up, coverage flat | M1 vs M7 |
+| C9 | Does `hybrid` (deterministic + random fallback) add coverage over deterministic alone? | Hybrid coverage > deterministic coverage | M1 diff |
 
 **C3 is the open question from the interrupted work** — the greedy expert covered
 1406/2364 (59.48%) while probe 8 found only 3 truly isolated items and 9 orphaned by the
@@ -250,7 +251,7 @@ covered-set rule. The gap is unexplained and must be attributed before any furth
    mutate the snapshot DB.
 3. **Run each of the 8 methods** with `grouping_method` set accordingly, identical
    `ProcessingConfig`, on the set-excluded 2364-item pool. Record wall-clock time per
-   method — runtime is now a first-class concern (the full committee run exceeded 550s).
+   method — runtime is now a first-class concern (the removed committee run exceeded 550s).
 4. **Run each expert standalone** on the same pool; record its reachable set.
 5. **Compute M1–M9 per method and per expert**, band-stratified.
 6. **Emit one comparison table** per metric, methods as columns, bands as rows. No prose
