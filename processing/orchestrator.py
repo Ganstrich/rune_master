@@ -14,7 +14,7 @@ from processing.experts.greedy_expert import GreedyGroupingExpert
 from processing.equipment_filter import SetExclusionFilter
 from processing.graph_builder import GraphBuilder
 from processing.policy import GroupAcceptancePolicy
-from processing.selection import PortfolioSelector, ProcessingReporter
+from processing.selection import ProcessingReporter
 from processing.valuation.objective import GroupCandidate
 from processing.valuation.overlap import OverlapObjective
 

@@ -3,7 +3,7 @@
 import pytest
 
 from models import Equipment, ResourceRequirement
-from processing.challenge_metrics import (
+from analysis.challenge_metrics import (
     band_of,
     compression,
     evaluate_portfolio,

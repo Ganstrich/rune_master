@@ -24,7 +24,7 @@ sys.path.insert(0, str(ROOT))
 
 from config import Config
 from data.snapshot import load_snapshot
-from processing.challenge_metrics import (
+from analysis.challenge_metrics import (
     evaluate_portfolio,
     resource_breadth,
     resource_pods,
