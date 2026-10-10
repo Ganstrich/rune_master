@@ -16,7 +16,6 @@ Each plan carries a YAML frontmatter header with status, last review date, and r
 | Plan | Status | Summary |
 |------|--------|---------|
 | `group-evaluation-spec.md` | backlog | Metric taxonomy for comparing grouping methods on two axes: shopping-list efficiency and exploration diversity |
-| `pipeline-challenge.md` | done | Full M1–M9 evaluation of all 5 methods and 3 experts; C1–C9 challenges run; authoritative state recorded |
 | `data-profile.md` | reference | Full snapshot profile (3.7.7.6): 2858 equipment, 1642 resources, 3646 set mappings |
 
 ---
@@ -33,7 +32,6 @@ Each plan carries a YAML frontmatter header with status, last review date, and r
 
 | Plan | Status | Summary |
 |------|--------|---------|
-| `pipeline-challenge-update.md` | backlog | Update pipeline-challenge.md for the 5 active methods (4 removed in 82a32ba) |
 | `quality-score-reweighting.md` | backlog | Propose new weights for the 4-term quality_score blend |
 
 ---

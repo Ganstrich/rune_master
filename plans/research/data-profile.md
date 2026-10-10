@@ -3,7 +3,7 @@
 ---
 status: reference
 last_reviewed: 2026-10-10
-related: [plans/research/pipeline-challenge.md]
+related: []
 ---
 
 **Snapshot version:** 3.7.7.6  
