@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Run every grouping method and expert through the challenge metrics.
 
-Implements plans/pipeline-challenge.md §4. API-only: no prices, no taux, no
+Implements the pipeline challenge plan §4. API-only: no prices, no taux, no
 rarity. Each method runs in a subprocess with a hard timeout, because the full
 committee run was observed to exceed 550s -- a method that cannot finish on the
 full pool is a finding, not an error to hide.

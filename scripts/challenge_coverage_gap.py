@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Attribute the greedy expert's coverage gap (plans/pipeline-challenge.md C3).
+"""Attribute the greedy expert's coverage gap (challenge plan C3).
 
 The shipped GreedyGroupingExpert covered 1406/2364 items (59.48%) where the
 plan's simulated sweep predicted 98.71%. This replays the expert's own growth
