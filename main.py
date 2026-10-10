@@ -29,8 +29,8 @@ from config import ALL_CRAFTABLE_TYPES, Config
 from data import DofusAPIClient, CacheManager, EquipmentLoader
 from models import Equipment
 from processing import RuneMaster, ProcessingConfig
-from processing.job_filter import JobLevelFilter
-from processing.tuner import ParameterTuner
+from processing.filters.job_filter import JobLevelFilter
+from processing.tools.tuner import ParameterTuner
 from visualization import HTMLGenerator
 
 JOB_LEVEL_JOBS = set(JobLevelFilter.JOB_TO_TYPES)
@@ -76,7 +76,7 @@ def validate_scope(min_level: int, max_level: int, selected_types: list[str]) ->
 
 def job_levels(value: str) -> dict[str, int]:
     """Parse a comma-separated ``job:level`` mapping."""
-    from processing.job_filter import JobLevelFilter
+    from processing.filters.job_filter import JobLevelFilter
 
     try:
         return JobLevelFilter.parse_job_levels(value)

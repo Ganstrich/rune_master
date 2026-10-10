@@ -1,5 +1,5 @@
 from models import Equipment, ResourceRequirement
-from processing.random_group_builder import RandomGroupBuilder
+from processing.experts.random_group_builder import RandomGroupBuilder
 from processing.valuation.objective import GroupCandidate, GroupObjective
 
 

@@ -5,11 +5,11 @@ from typing import Any, Dict, List, Optional, Set
 import networkx as nx
 
 from models import Equipment
-from processing.community_detector import CommunityDetector
-from processing.config_dataclass import ProcessingConfig
+from processing.graph.community_detector import CommunityDetector
+from processing.config import ProcessingConfig
 from processing.experts.base import GroupingExpert
-from processing.graph_builder import GraphBuilder
-from processing.group_mapper import GroupMapper
+from processing.graph.graph_builder import GraphBuilder
+from processing.graph.group_mapper import GroupMapper
 from processing.policy import GroupAcceptancePolicy
 from processing.valuation.objective import GroupObjective
 

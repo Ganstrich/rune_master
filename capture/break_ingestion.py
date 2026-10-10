@@ -4,7 +4,7 @@ import logging
 from typing import Any, Mapping
 
 from data.cache_manager import CacheManager
-from processing.break_log import rune_density
+from processing.metrics.break_log import rune_density
 
 logger = logging.getLogger(__name__)
 

@@ -7,14 +7,14 @@ as a Mixture of Experts (MoE) committee.
 from typing import Any, Dict, List, Optional, Tuple
 
 from models import Equipment
-from processing.config_dataclass import ProcessingConfig
+from processing.config import ProcessingConfig
 from processing.experts.graph_expert import GraphGroupingExpert
 from processing.experts.random_expert import RandomGroupingExpert
 from processing.experts.greedy_expert import GreedyGroupingExpert
-from processing.equipment_filter import SetExclusionFilter
-from processing.graph_builder import GraphBuilder
+from processing.filters.equipment_filter import SetExclusionFilter
+from processing.graph.graph_builder import GraphBuilder
 from processing.policy import GroupAcceptancePolicy
-from processing.selection import ProcessingReporter
+from processing.metrics.selection import ProcessingReporter
 from processing.valuation.objective import GroupCandidate
 from processing.valuation.overlap import OverlapObjective
 

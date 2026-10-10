@@ -8,7 +8,7 @@ import pytest
 
 from models import Equipment, ResourceRequirement
 from processing import ProcessingConfig, RuneMaster
-from processing.equipment_filter import EquipmentFilteringStrategy
+from processing.filters.equipment_filter import EquipmentFilteringStrategy
 
 
 def make_equipment(eid, recipe, set_id=None, level=50, stat_weight=100.0):

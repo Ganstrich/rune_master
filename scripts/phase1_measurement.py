@@ -25,9 +25,9 @@ if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
 from data.snapshot import load_snapshot
-from processing.config_dataclass import ProcessingConfig
+from processing.config import ProcessingConfig
 from processing.orchestrator import RuneMaster
-from processing.quality_metrics import PortfolioQualityEvaluator
+from processing.metrics.quality_metrics import PortfolioQualityEvaluator
 
 SNAPSHOT_DIR = Path("/home/adamb/rune_master/data/snapshots/3.7.7.6")
 RESULTS_FILE = Path("plans/phase1-results.json")

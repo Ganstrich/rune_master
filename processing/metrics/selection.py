@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from processing.quality_metrics import PortfolioQualityEvaluator
+from processing.metrics.quality_metrics import PortfolioQualityEvaluator
 
 
 class ProcessingReporter:

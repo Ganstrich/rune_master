@@ -15,7 +15,7 @@ GROUPING METHOD SELECTION:
 from dataclasses import dataclass, field
 from typing import Optional
 
-from processing.quality_metrics import GroupQualityWeights, PortfolioQualityWeights
+from processing.metrics.quality_metrics import GroupQualityWeights, PortfolioQualityWeights
 
 @dataclass
 class ProcessingConfig:

@@ -1,4 +1,4 @@
-from processing.config_dataclass import ProcessingConfig
+from processing.config import ProcessingConfig
 from processing.policy import GroupAcceptancePolicy
 
 

@@ -44,11 +44,11 @@ from data.loaders import EquipmentLoader
 from models import Equipment
 from processing.blocks.recipes import recipe_resource_ids
 from processing.blocks.similarity import jaccard
-from processing.community_detector import CommunityDetector
-from processing.config_dataclass import ProcessingConfig
-from processing.graph_builder import GraphBuilder
+from processing.graph.community_detector import CommunityDetector
+from processing.config import ProcessingConfig
+from processing.graph.graph_builder import GraphBuilder
 from processing.orchestrator import RuneMaster
-from processing.quality_metrics import PortfolioQualityEvaluator
+from processing.metrics.quality_metrics import PortfolioQualityEvaluator
 from processing.valuation.focus import break_density
 
 CRAFTS: Dict[str, List[str]] = {

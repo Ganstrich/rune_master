@@ -10,8 +10,8 @@ from typing import List, Dict, Any, Optional, Set
 from models import Equipment
 from data.cache_manager import CacheManager
 from processing.blocks.recipes import recipe_resource_ids
-from processing.group_metrics import GroupMetrics
-from processing.quality_metrics import GroupQualityWeights
+from processing.metrics.group_metrics import GroupMetrics
+from processing.metrics.quality_metrics import GroupQualityWeights
 from processing.valuation.objective import GroupCandidate, GroupObjective
 
 logger = logging.getLogger(__name__)

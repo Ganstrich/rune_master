@@ -10,9 +10,9 @@ from typing import Any, Dict, List, Optional, Set
 
 from models import Equipment
 from processing.blocks.recipes import recipe_resource_ids
-from processing.config_dataclass import ProcessingConfig
+from processing.config import ProcessingConfig
 from processing.experts.base import GroupingExpert
-from processing.group_metrics import GroupMetrics
+from processing.metrics.group_metrics import GroupMetrics
 from processing.policy import GroupAcceptancePolicy
 from processing.valuation.objective import GroupCandidate, GroupObjective
 from processing.valuation.overlap import OverlapObjective

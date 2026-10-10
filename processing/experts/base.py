@@ -4,7 +4,7 @@ from typing import List, Dict, Any, Optional, Set, TYPE_CHECKING
 from models import Equipment
 # Avoid circular import by importing inside methods or using type hints with string if needed
 # but ProcessingConfig is usually safe to import.
-from processing.config_dataclass import ProcessingConfig
+from processing.config import ProcessingConfig
 from processing.valuation.objective import GroupObjective
 
 if TYPE_CHECKING:

@@ -1,5 +1,5 @@
-from processing.config_dataclass import ProcessingConfig
-from processing.harness import run_comparison
+from processing.config import ProcessingConfig
+from processing.tools.harness import run_comparison
 from models import Equipment, ResourceRequirement
 
 

@@ -9,7 +9,7 @@ import itertools
 from typing import Any, Dict, List, Optional, Tuple
 
 from models import Equipment
-from processing.config_dataclass import ProcessingConfig
+from processing.config import ProcessingConfig
 from processing.orchestrator import RuneMaster
 
 

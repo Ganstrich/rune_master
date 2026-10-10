@@ -14,7 +14,7 @@ from uuid import uuid4
 from models import Equipment
 from processing.blocks.shopping_list import ShoppingList
 from processing.valuation.focus import break_density
-from processing.exploration import ExplorationCandidate
+from processing.valuation.exploration import ExplorationCandidate
 
 
 class HTMLGenerator:

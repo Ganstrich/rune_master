@@ -29,8 +29,8 @@ from analysis.challenge_metrics import (
     resource_breadth,
     resource_pods,
 )
-from processing.config_dataclass import ProcessingConfig
-from processing.equipment_filter import SetExclusionFilter
+from processing.config import ProcessingConfig
+from processing.filters.equipment_filter import SetExclusionFilter
 
 METHODS = (
     "deterministic",
@@ -187,7 +187,7 @@ def main() -> int:
     results: dict[str, dict] = {}
 
     # Methods run against the set-excluded pool, which is what the pipeline sees.
-    from processing.equipment_filter import SetExclusionFilter
+    from processing.filters.equipment_filter import SetExclusionFilter
 
     pool, _ = SetExclusionFilter.exclude_panoplie_items(
         equipments, ProcessingConfig().set_exclusion_min_size

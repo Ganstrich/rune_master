@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from models import Equipment
-from processing.config_dataclass import ProcessingConfig
+from processing.config import ProcessingConfig
 from processing.orchestrator import RuneMaster
 
 

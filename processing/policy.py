@@ -2,7 +2,7 @@
 
 from typing import Any, Mapping
 
-from processing.config_dataclass import ProcessingConfig
+from processing.config import ProcessingConfig
 
 
 class GroupAcceptancePolicy:

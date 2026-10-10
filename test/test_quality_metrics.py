@@ -10,7 +10,7 @@ from processing import (
 )
 from processing.experts.graph_expert import GraphGroupingExpert
 from processing.experts.random_expert import RandomGroupingExpert
-from processing.group_metrics import GroupMetrics
+from processing.metrics.group_metrics import GroupMetrics
 
 
 def make_equipment(
