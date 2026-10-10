@@ -35,34 +35,22 @@ RESULTS_FILE = Path("plans/phase1-results.json")
 METHODS = [
     "deterministic",
     "random",
-    "genetic",
     "greedy",
     "hybrid",
-    "committee",
-    "evolutionary_committee",
-    "baseline",
 ]
 
 TIMEOUTS = {
     "deterministic": 60,
     "random": 60,
-    "genetic": 120,
     "greedy": 60,
     "hybrid": 60,
-    "committee": 120,
-    "evolutionary_committee": 300,
-    "baseline": 60,
 }
 
 _RUNNERS = {
     "deterministic": "run_deterministic",
     "random": "run_random_grouping",
-    "genetic": "run_genetic",
     "greedy": "run_greedy",
     "hybrid": "run_hybrid_grouping",
-    "committee": "run_committee",
-    "evolutionary_committee": "run_evolutionary_committee",
-    "baseline": "run_baseline",
 }
 
 

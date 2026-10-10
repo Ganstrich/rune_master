@@ -28,11 +28,8 @@ METHOD_DISPATCH = {
     "deterministic": "run_deterministic",
     "random": "run_random_grouping",
     "hybrid": "run_hybrid_grouping",
-    "committee": "run_committee",
-    "genetic": "run_genetic",
     "greedy": "run_greedy",
     "survey": "run_survey",
-    "evolutionary_committee": "run_evolutionary_committee",
 }
 
 

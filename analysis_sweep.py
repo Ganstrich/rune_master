@@ -7,7 +7,7 @@ opt-in because they are only meaningful once the structure is understood.
 
 Usage:
     uv run analysis_sweep.py
-    uv run analysis_sweep.py --with-experts --methods deterministic,committee
+    uv run analysis_sweep.py --with-experts --methods deterministic,greedy
     uv run analysis_sweep.py --bands 1-50,50-100 --crafts bijoutier,forgeron
 """
 
@@ -65,23 +65,16 @@ DEFAULT_BANDS: List[Tuple[int, int]] = [(1, 50), (50, 100), (100, 150), (150, 20
 DEFAULT_METHODS: List[str] = [
     "deterministic",
     "random",
-    "genetic",
     "greedy",
     "hybrid",
-    "committee",
-    "evolutionary_committee",
 ]
 
 _METHOD_DISPATCH = {
     "deterministic": "run_deterministic",
     "random": "run_random_grouping",
-    "genetic": "run_genetic",
     "greedy": "run_greedy",
     "hybrid": "run_hybrid_grouping",
-    "committee": "run_committee",
-    "evolutionary_committee": "run_evolutionary_committee",
     "survey": "run_survey",
-    "baseline": "run_baseline",
 }
 
 SHARE_THRESHOLDS = (1, 2, 3)

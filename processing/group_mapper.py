@@ -41,8 +41,8 @@ class GroupMapper:
         """Calculate shared resources for a group.
 
         **CANONICAL DEFINITION** of sharing efficiency used across all experts.
-        All other experts (RandomGroupBuilder, GeneticExpert, etc.) must match
-        this definition for consistent MoE gating network fitness scores.
+        All other experts must match this definition for consistent MoE gating
+        network fitness scores.
 
         Definition:
             sharing_efficiency = resources_used_by_2plus / total_unique_resources

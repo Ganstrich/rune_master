@@ -11,13 +11,6 @@ GROUPING METHOD SELECTION:
     
     RECOMMENDATION: Use "greedy" (default) for best quality/coverage/speed.
     Use "deterministic" for development. Use "random" for baseline comparison.
-    
-    REMOVED METHODS (measured 2026-10-10, see plans/phase1-decision.md):
-    - "genetic": 10-17x slower than greedy, 3-4x lower coverage. Strictly dominated.
-    - "committee": 6-15x slower than greedy, 3-5x lower PQ. Quantity over quality.
-    - "evolutionary_committee": 4-12x slower, identical to baseline, crashes on some crafts.
-    - "baseline": identical to evolutionary_committee or dominated by greedy.
-    These methods are retained in code as legacy but removed from the active pipeline.
 """
 from dataclasses import dataclass, field
 from typing import Optional
@@ -85,30 +78,9 @@ class ProcessingConfig:
     min_filtered_pool_size: int = 10  # MIN_FILTERED_POOL_SIZE
 
     # Grouping method
-    grouping_method: str = "greedy"  # "deterministic", "random", "hybrid", "greedy", "survey", "baseline"
+    grouping_method: str = "greedy"  # "deterministic", "random", "hybrid", "greedy", "survey"
     random_group_count: int = 50
     random_seed: Optional[int] = None
-
-    # Genetic search hyperparameters (legacy, single-expert)
-    genetic_population_size: int = 30
-    genetic_generations: int = 50
-    genetic_mutation_rate: float = 0.3
-    genetic_elite_count: int = 3
-    genetic_stagnation_limit: int = 15
-
-    # Evolutionary portfolio search (iterative committee)
-    evolutionary_enabled: bool = True  # Enable iterative portfolio evolution by default
-    evolutionary_rounds: int = 5  # Number of committee evolution rounds
-    evolutionary_population_size: int = 30  # Population size per round
-    evolutionary_elite_count: int = 5  # Top candidates to preserve each round
-    evolutionary_mutation_rate: float = 0.4  # Portfolio mutation probability
-    evolutionary_crossover_rate: float = 0.6  # Portfolio crossover probability
-    evolutionary_cold_start_fraction: float = 0.2  # Fraction from cold starts
-    evolutionary_archive_size: int = 200  # Max candidates to track
-    evolutionary_diversity_threshold: float = 0.1  # Min fingerprint distance
-    evolutionary_stagnation_limit: int = 3  # Rounds before stopping
-    evolutionary_random_seed: Optional[int] = None  # Reproducibility
-    evolutionary_warm_start_enabled: bool = False  # Seed from prior portfolios
 
     # Equipment pre-filtering
     min_equipment_density: float = 0.0  # Minimum stat_weight per level (0 = no filter)

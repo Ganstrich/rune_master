@@ -36,14 +36,11 @@ METHODS = (
     "deterministic",
     "random",
     "hybrid",
-    "committee",
-    "genetic",
     "greedy",
-    "evolutionary_committee",
     "survey",
 )
 
-EXPERTS = ("deterministic", "random", "genetic", "baseline", "greedy")
+EXPERTS = ("deterministic", "random", "greedy")
 
 # Independent, single-process wall-clock budgets.
 METHOD_TIMEOUT = 900

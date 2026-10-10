@@ -101,9 +101,8 @@ class RuneMaster:
 
         self.objective = OverlapObjective(self.config.group_quality_weights)
         self.policy = GroupAcceptancePolicy(self.config)
-        # Initialize Experts (active methods only — genetic, committee,
-        # evolutionary_committee, baseline removed 2026-10-10, see
-        # plans/phase1-decision.md; retained in code as legacy)
+        # Active experts only (see plans/phase1-decision.md for the removed
+        # methods).
         self.experts = {
             "deterministic": GraphGroupingExpert(
                 cache_manager, api_client, self.objective, self.policy
@@ -223,14 +222,8 @@ class RuneMaster:
         self.print_summary()
         return self.groups
 
-    # run_committee and run_evolutionary_committee removed 2026-10-10 (see
-    # plans/phase1-decision.md). The methods were measured as dominated by
-    # greedy: committee had 3-5x lower PQ at 6-15x the runtime; evolutionary_committee
-    # was identical to baseline and crashed on some crafts. The underlying
-    # engine modules are retained as legacy code for reference.
-
     def get_expert_report(self) -> Dict[str, Any]:
-        """Return proposal and failure information from the last committee run."""
+        """Return proposal and failure information from the last survey run."""
         return {
             "failed_experts": dict(self.expert_failures),
             "selected_groups": len(self.groups),
