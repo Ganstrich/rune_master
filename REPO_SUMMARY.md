@@ -176,19 +176,18 @@ class ResourceRequirement:
 | `deterministic` | Very Fast | Good | Quick iterations, graph-only analysis |
 | `random` | Fast | Fair | Solution space exploration |
 | `hybrid` | Fast | Good | Balanced approach with deterministic fallback |
-| `committee` | Fast | Very Good | Fast multi-expert consensus |
-| `genetic` | Slower | Very Good | Focused evolutionary search |
-| `greedy` | Fast | Good | Objective-driven greedy grouping |
-| `evolutionary_committee` | Slowest | Excellent | Best overall results |
+| `greedy` | Fast | Very Good | Objective-driven greedy grouping (default) |
 | `survey` | Slowest | Diagnostic | Runs all experts, tags groups with origin |
 
-**Default:** `hybrid` (in ProcessingConfig). CLI can override with `--grouping-method`.
+**Default:** `greedy` (in ProcessingConfig). CLI can override with `--grouping-method`.
 
 **Make targets:**
 - `make compute` — runs survey mode (all experts)
-- `make evolve` — runs evolutionary_committee
-- `make method METHOD=hybrid` — runs specific method
+- `make evolve` — runs greedy (default)
+- `make method METHOD=greedy` — runs specific method
 - `make tune` — runs with parameter tuning
+
+**Removed methods (2026-10-10):** `committee`, `genetic`, `evolutionary_committee`, `baseline` — measured as dominated by greedy (see `plans/phase1-decision.md`). Code retained as legacy reference.
 
 ---
 
@@ -204,18 +203,18 @@ class ResourceRequirement:
 
 ### Processing-Level (processing/config_dataclass.py — ProcessingConfig)
 Key defaults:
-- `graph_min_shared_ratio = 0.3` — Jaccard threshold for graph edges
+- `graph_min_shared_ratio = 0.15` — Jaccard threshold for graph edges
 - `graph_min_shared_count = 1` — Min absolute shared resources for edge
-- `group_min_size = 2`, `group_max_size = 32`
+- `group_min_size = 2`, `group_max_size = 12`
 - `group_min_shared_resources = 3`
 - `group_efficiency_threshold = 0.15`
 - `group_max_set_share = 0.5` — Max share from one panoplie
-- `max_line_items = 12` — Cap on distinct resources per group
-- `max_total_units = 500` — Carry capacity cap
-- `excluded_resource_ids = {15263, 14635}` — Don't count toward sharing
+- `max_line_items = 32` — Cap on distinct resources per group
+- `max_total_units = 2000` — Carry capacity cap
+- `excluded_resource_ids = {14635}` — Don't count toward sharing
 - `use_density_filtering = True`
-- `equipment_density_level_ratio = 3.0`
-- `grouping_method = "hybrid"`
+- `equipment_density_level_ratio = 2.0`
+- `grouping_method = "greedy"`
 - `random_group_count = 50`
 - `dedup_overlap_threshold = 0.7`
 

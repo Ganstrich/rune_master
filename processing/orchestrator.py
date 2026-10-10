@@ -8,10 +8,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from models import Equipment
 from processing.config_dataclass import ProcessingConfig
-from processing.experts.genetic_expert import GeneticGroupingExpert
 from processing.experts.graph_expert import GraphGroupingExpert
 from processing.experts.random_expert import RandomGroupingExpert
-from processing.experts.baseline_expert import BaselineExpert
 from processing.experts.greedy_expert import GreedyGroupingExpert
 from processing.equipment_filter import SetExclusionFilter
 from processing.graph_builder import GraphBuilder
@@ -19,8 +17,6 @@ from processing.policy import GroupAcceptancePolicy
 from processing.selection import PortfolioSelector, ProcessingReporter
 from processing.valuation.objective import GroupCandidate
 from processing.valuation.overlap import OverlapObjective
-from processing.evolutionary_search_state import PortfolioCandidate, WarmStartConfig
-from processing.evolutionary_search_engine import PortfolioEvolutionEngine
 
 
 def _build_shared_graph(
@@ -105,18 +101,14 @@ class RuneMaster:
 
         self.objective = OverlapObjective(self.config.group_quality_weights)
         self.policy = GroupAcceptancePolicy(self.config)
-        # Initialize Experts
+        # Initialize Experts (active methods only — genetic, committee,
+        # evolutionary_committee, baseline removed 2026-10-10, see
+        # plans/phase1-decision.md; retained in code as legacy)
         self.experts = {
             "deterministic": GraphGroupingExpert(
                 cache_manager, api_client, self.objective, self.policy
             ),
             "random": RandomGroupingExpert(
-                cache_manager, api_client, self.objective, self.policy
-            ),
-            "genetic": GeneticGroupingExpert(
-                cache_manager, api_client, objective=self.objective, policy=self.policy
-            ),
-            "baseline": BaselineExpert(
                 cache_manager, api_client, self.objective, self.policy
             ),
             "greedy": GreedyGroupingExpert(
@@ -131,12 +123,6 @@ class RuneMaster:
     def run_all(self) -> List[Dict[str, Any]]:
         """Run the default pipeline (backward compatibility)."""
         return self.run_deterministic()
-
-    def run_baseline(self) -> List[Dict[str, Any]]:
-        """Run the objective-driven baseline expert."""
-        self.groups = self.experts["baseline"].discover_groups(self.equipments, self.config)
-        self.print_summary()
-        return self.groups
 
     def run_greedy(self) -> List[Dict[str, Any]]:
         """Run greedy objective-driven grouping."""
@@ -167,18 +153,6 @@ class RuneMaster:
         print("=" * 60)
 
         expert = self.experts["random"]
-        self.groups = expert.discover_groups(self.equipments, self.config)
-
-        self.print_summary()
-        return self.groups
-
-    def run_genetic(self) -> List[Dict[str, Any]]:
-        """Run genetic grouping with the canonical result and summary contract."""
-        print("\n" + "=" * 60)
-        print("🚀 RuneMaster: Genetic Pipeline (Genetic Expert)")
-        print("=" * 60)
-
-        expert = self.experts["genetic"]
         self.groups = expert.discover_groups(self.equipments, self.config)
 
         self.print_summary()
@@ -249,135 +223,11 @@ class RuneMaster:
         self.print_summary()
         return self.groups
 
-    def run_committee(self) -> List[Dict[str, Any]]:
-        """Run the Mixture of Experts committee (MoE)."""
-        print("\n" + "=" * 60)
-        print("🚀 RuneMaster: Mixture of Experts Committee")
-        print("=" * 60)
-
-        self.expert_failures = {}
-        shared_graph, shared_resources = _build_shared_graph(self.equipments, self.config)
-
-        all_groups, self.expert_failures = _dispatch_experts(
-            self.experts, self.equipments, self.config, shared_graph, shared_resources
-        )
-
-        # Score and select
-        for group in all_groups:
-            candidate = GroupCandidate(group["equipments"], self.config.excluded_resource_ids)
-            group["fitness_score"] = self.objective.score(candidate)
-
-        print("\n[Gating Network] Evaluating ensemble and de-duplicating...")
-        self.groups = PortfolioSelector.select(all_groups, self.config.dedup_overlap_threshold)
-
-        print(f"\n      Committee gathered {len(all_groups)} proposals.")
-        print(f"      Final ensemble: {len(self.groups)} unique groups selected.")
-        if self.expert_failures:
-            print(f"      Expert failures: {self.expert_failures}")
-
-        self.print_summary()
-        return self.groups
-
-    def run_evolutionary_committee(
-        self,
-        warm_start_portfolios: Optional[List[List[Dict[str, Any]]]] = None,
-    ) -> List[Dict[str, Any]]:
-        """Run evolutionary portfolio search with iterative committee rounds.
-
-        Combines expert proposals with multi-round evolution to discover
-        non-redundant, well-balanced equipment portfolios.
-
-        Args:
-            warm_start_portfolios: Optional list of prior portfolios to seed evolution
-
-        Returns:
-            List of final groups as group dictionaries
-        """
-        print("\n" + "=" * 60)
-        print("🚀 RuneMaster: Evolutionary Portfolio Committee")
-        print("=" * 60)
-
-        if not self.config.evolutionary_enabled:
-            print("      ⚠️ Evolutionary search disabled in config.")
-            return self.run_committee()
-
-        self.expert_failures = {}
-        shared_graph, shared_resources = _build_shared_graph(self.equipments, self.config)
-
-        if shared_graph.number_of_nodes() == 0:
-            print("      ❌ No connected equipment found in graph.")
-            return []
-
-        all_initial_proposals = []
-        print("\n[Experts] Gathering initial proposals...")
-        for expert_name, expert in self.experts.items():
-            print(f"  [{expert_name}] Running...")
-            try:
-                expert_groups = expert.discover_groups(
-                    self.equipments, self.config,
-                    precomputed_graph=shared_graph,
-                    precomputed_resources=shared_resources,
-                )
-                if expert_groups:
-                    all_initial_proposals.append(expert_groups)
-                    print(f"      ✓ {expert_name}: {len(expert_groups)} proposals")
-            except (IndexError, KeyError, RuntimeError, TypeError, ValueError) as error:
-                message = f"{type(error).__name__}: {error}"
-                self.expert_failures[expert_name] = message
-                print(f"      ❌ {expert_name} failed: {message}")
-                continue
-
-        if not all_initial_proposals:
-            print("      ❌ No expert proposals generated.")
-            return []
-
-        # 2. Set up warm-start configuration
-        warm_start_config = None
-        if warm_start_portfolios and self.config.evolutionary_warm_start_enabled:
-            warm_start_config = WarmStartConfig(
-                seed_portfolios=warm_start_portfolios,
-                cold_start_fraction=self.config.evolutionary_cold_start_fraction,
-                retain_eligible_seeds=True,
-            )
-            print(f"  [WarmStart] {len(warm_start_portfolios)} seed portfolios loaded")
-
-        # 3. Run evolutionary search
-        print("\n[EvolutionEngine] Starting iterative portfolio optimization...", flush=True)
-        engine = PortfolioEvolutionEngine(
-            self.equipments,
-            self.config,
-            objective=self.objective,
-            policy=self.policy,
-            cache_manager=self.cache_manager,
-            api_client=self.api_client,
-        )
-
-        best_candidate = engine.evolve_portfolio(all_initial_proposals, warm_start_config)
-
-        # 4. Convert best candidate to group dictionaries
-        if best_candidate and best_candidate.groups:
-            self.groups = list(best_candidate.groups)
-            print(
-                f"\n[Selection] Best portfolio: {len(self.groups)} groups, "
-                f"score: {best_candidate.score:.4f}"
-            )
-        else:
-            print("      ⚠️ Evolution produced no valid portfolio. Falling back to committee.")
-            self.groups = self.run_committee()
-            return self.groups
-
-        # 5. Final deduplication pass
-        print(f"\n[Gating Network] Final deduplication...")
-        self.groups = PortfolioSelector.select(
-            self.groups, self.config.dedup_overlap_threshold
-        )
-
-        print(f"      Final portfolio: {len(self.groups)} groups")
-        if self.expert_failures:
-            print(f"      Expert failures: {self.expert_failures}")
-
-        self.print_summary()
-        return self.groups
+    # run_committee and run_evolutionary_committee removed 2026-10-10 (see
+    # plans/phase1-decision.md). The methods were measured as dominated by
+    # greedy: committee had 3-5x lower PQ at 6-15x the runtime; evolutionary_committee
+    # was identical to baseline and crashed on some crafts. The underlying
+    # engine modules are retained as legacy code for reference.
 
     def get_expert_report(self) -> Dict[str, Any]:
         """Return proposal and failure information from the last committee run."""

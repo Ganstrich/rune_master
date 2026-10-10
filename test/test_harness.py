@@ -26,8 +26,8 @@ def test_baseline_comparison_is_repeatable_for_fixed_seed() -> None:
         genetic_generations=1,
         genetic_population_size=2,
     )
-    first = run_comparison(make_equipments(), config, ("baseline", "random"))
-    second = run_comparison(make_equipments(), config, ("baseline", "random"))
+    first = run_comparison(make_equipments(), config, ("greedy", "random"))
+    second = run_comparison(make_equipments(), config, ("greedy", "random"))
 
     for row in first + second:
         row.pop("runtime_seconds")

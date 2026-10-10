@@ -117,10 +117,7 @@ def build_parser() -> argparse.ArgumentParser:
             "deterministic",
             "random",
             "hybrid",
-            "committee",
-            "genetic",
             "greedy",
-            "evolutionary_committee",
             "survey",
         ],
     )
@@ -307,16 +304,10 @@ def process_equipment(
         groups = master.run_random_grouping()
     elif config.grouping_method == "hybrid":
         groups = master.run_hybrid_grouping()
-    elif config.grouping_method == "committee":
-        groups = master.run_committee()
-    elif config.grouping_method == "genetic":
-        groups = master.run_genetic()
     elif config.grouping_method == "greedy":
         groups = master.run_greedy()
     elif config.grouping_method == "survey":
         groups = master.run_survey()
-    elif config.grouping_method == "evolutionary_committee":
-        groups = master.run_evolutionary_committee()
     else:
         groups = master.run_all()
 

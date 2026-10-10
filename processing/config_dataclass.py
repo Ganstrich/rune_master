@@ -3,63 +3,21 @@
 GROUPING METHOD SELECTION:
     The grouping_method field determines which algorithm discovers equipment groups.
     
-    Performance and quality trade-offs:
-    - "deterministic": ~100ms, good results (fast graph-based)
-    - "random": ~200-500ms, fair results (stochastic sampling)
-    - "hybrid": ~200-500ms, good results (deterministic + random fallback)
-    - "committee": ~2-5s, very good results (multi-expert consensus, single pass)
-    - "genetic": ~10-30s, very good results (single expert evolution)
-    - "evolutionary_committee": ~30-120s, excellent results (multi-expert iteration) ← DEFAULT
+    Performance and quality trade-offs (measured, 2026-10-10):
+    - "deterministic": 0.1-2.1s, PQ 0.23-0.43, cov 29-53% (graph-based, full coverage)
+    - "random": 0.0-0.1s, PQ 0.04-0.25, cov 7-25% (stochastic sampling, baseline)
+    - "hybrid": 0.1-2.0s, PQ 0.00-0.41, cov 37-55% (deterministic + random fallback)
+    - "greedy": 0.4-8.5s, PQ 0.34-0.58, cov 29-82% (objective-driven, full pool) ← DEFAULT
     
-    RECOMMENDATION: Use "evolutionary_committee" (default) for best results.
-    Use "committee" for fast very-good results. Use "deterministic" for development.
-    See GROUPING_METHODS.md for detailed comparison and tuning guide.
-
-EVOLUTIONARY SEARCH (evolutionary_committee):
-    When grouping_method="evolutionary_committee", the engine:
-    1. Gathers initial proposals from all experts (deterministic, random, genetic)
-    2. Initializes population from proposals + warm-start + cold-start candidates
-    3. Runs evolutionary_rounds iterations of:
-       - Portfolio-level fitness evaluation (coverage + overlap penalty)
-       - Elite preservation (best N candidates)
-       - Cold-start diversity injection
-       - Population evolution via crossover and mutation
-    4. Returns best portfolio found
+    RECOMMENDATION: Use "greedy" (default) for best quality/coverage/speed.
+    Use "deterministic" for development. Use "random" for baseline comparison.
     
-    Key difference from single-expert genetic:
-    - Portfolio-level fitness (not just group sum)
-    - Multi-expert initialization
-    - Intelligent mutation operators
-    - Archive-based selection
-    
-    Parameters:
-    - evolutionary_enabled: Turn on/off (default True)
-    - evolutionary_rounds: Evolution iterations (5 = ~30-120s)
-    - evolutionary_population_size: Population per round (30)
-    - evolutionary_elite_count: Top candidates to preserve (5)
-    - evolutionary_mutation_rate: Mutation probability (0.4)
-    - evolutionary_crossover_rate: Crossover probability (0.6)
-    - evolutionary_cold_start_fraction: Random portfolio injection (0.2)
-    - evolutionary_archive_size: Candidate memory (200)
-    - evolutionary_stagnation_limit: Stop if no improvement (3 rounds)
-    - evolutionary_random_seed: Reproducibility seed (None = random)
-    - evolutionary_warm_start_enabled: Seed from priors (False)
-    
-    TUNING FOR SPEED:
-    To speed up ~3-5x (trade quality):
-        evolutionary_rounds = 2           # Was 5
-        evolutionary_population_size = 15  # Was 30
-        evolutionary_elite_count = 2      # Was 5
-
-LEGACY GENETIC SEARCH (genetic method):
-    When grouping_method="genetic", the engine runs single-expert evolution.
-    This is useful for focused study of one search strategy.
-    Parameters:
-    - genetic_population_size: Population size (30)
-    - genetic_generations: Evolution iterations (50)
-    - genetic_mutation_rate: Mutation probability (0.3)
-    - genetic_elite_count: Top candidates (3)
-    - genetic_stagnation_limit: Early stopping (15)
+    REMOVED METHODS (measured 2026-10-10, see plans/phase1-decision.md):
+    - "genetic": 10-17x slower than greedy, 3-4x lower coverage. Strictly dominated.
+    - "committee": 6-15x slower than greedy, 3-5x lower PQ. Quantity over quality.
+    - "evolutionary_committee": 4-12x slower, identical to baseline, crashes on some crafts.
+    - "baseline": identical to evolutionary_committee or dominated by greedy.
+    These methods are retained in code as legacy but removed from the active pipeline.
 """
 from dataclasses import dataclass, field
 from typing import Optional
@@ -127,7 +85,7 @@ class ProcessingConfig:
     min_filtered_pool_size: int = 10  # MIN_FILTERED_POOL_SIZE
 
     # Grouping method
-    grouping_method: str = "hybrid"  # "deterministic", "random", "hybrid", "committee"
+    grouping_method: str = "greedy"  # "deterministic", "random", "hybrid", "greedy", "survey", "baseline"
     random_group_count: int = 50
     random_seed: Optional[int] = None
 
