@@ -34,7 +34,7 @@ Each plan carries a YAML frontmatter header with status, last review date, and r
 | Plan | Status | Summary |
 |------|--------|---------|
 | `pipeline-challenge-update.md` | backlog | Update pipeline-challenge.md for the 5 active methods (4 removed in 82a32ba) |
-| `quality-score-reweighting.md` | backlog | Propose new weights for the 4-term quality_score blend (deferred in metrics-revision.md) |
+| `quality-score-reweighting.md` | backlog | Propose new weights for the 4-term quality_score blend |
 
 ---
 

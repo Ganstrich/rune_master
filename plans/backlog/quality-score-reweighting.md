@@ -1,14 +1,14 @@
 ---
 status: backlog
 last_reviewed: 2026-10-10
-related: [plans/research/metrics-revision.md, plans/research/group-evaluation-spec.md]
+related: [plans/research/group-evaluation-spec.md]
 ---
 
 # Plan: Quality Score Re-weighting Decision
 
 ## Objective
 
-`metrics-revision.md` §1.1 recommends dropping `resource_reuse_ratio` from the
+The prior metrics review (archived in git history) §1.1 recommends dropping `resource_reuse_ratio` from the
 `quality_score` blend and keeping `compression` + `shared_quantity_ratio` +
 `set_free_ratio` (reward) - `largest_set_share` (penalty). Re-weighting was explicitly
 deferred. This plan proposes the re-weighting decision.

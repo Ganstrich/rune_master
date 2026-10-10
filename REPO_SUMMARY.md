@@ -204,7 +204,7 @@ class ResourceRequirement:
 - `make method METHOD=greedy` — runs specific method
 - `make tune` — runs with parameter tuning
 
-**Removed methods (2026-10-10):** `committee`, `genetic`, `evolutionary_committee`, `baseline` — measured as dominated by greedy (see `plans/phase1-decision.md`). Their code and config fields have been deleted.
+**Removed methods (2026-10-10):** `committee`, `genetic`, `evolutionary_committee`, `baseline` — measured as dominated by greedy (see commit 82a32ba). Their code and config fields have been deleted.
 
 ---
 

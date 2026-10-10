@@ -1,7 +1,7 @@
 ---
 status: backlog
 last_reviewed: 2026-10-10
-related: [plans/research/pipeline-challenge.md, plans/research/phase1-decision.md]
+related: [plans/research/pipeline-challenge.md]
 ---
 
 # Plan: Update Pipeline Challenge for Active Method Set

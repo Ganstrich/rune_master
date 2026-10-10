@@ -1,7 +1,7 @@
 ---
 status: backlog
 last_reviewed: 2026-10-10
-related: [plans/research/metrics-revision.md, plans/research/pipeline-challenge.md, plans/research/data-profile.md]
+related: [plans/research/pipeline-challenge.md, plans/research/data-profile.md]
 ---
 
 # Group-Evaluation Spec: Metrics for Comparing Grouping Methods

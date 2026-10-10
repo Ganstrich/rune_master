@@ -1,4 +1,4 @@
-"""Tests for the metrics-revision implementation (snapshot 3.7.7.6, plans/metrics-revision.md)."""
+"""Tests for the metrics revision implementation (snapshot 3.7.7.6)."""
 
 import pytest
 

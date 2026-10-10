@@ -210,5 +210,5 @@ evaluated, validated, or reported. This allows fair comparison and smooth
 method switching.
 
 Removed methods (`committee`, `genetic`, `evolutionary_committee`, `baseline`)
-were measured as dominated by greedy — see `plans/phase1-decision.md`. Their
+were measured as dominated by greedy — see commit 82a32ba. Their
 code has been deleted.

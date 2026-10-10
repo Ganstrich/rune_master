@@ -3,16 +3,16 @@
 ---
 status: in-progress
 last_reviewed: 2026-10-10
-related: [plans/research/metrics-revision.md, plans/research/data-profile.md, plans/research/group-evaluation-spec.md]
+related: [plans/research/data-profile.md, plans/research/group-evaluation-spec.md]
 ---
 
 
 **Status:** plan only — no code changed, no snapshot refetched. Supersedes the
-verdicts in `plans/research/metrics-revision.md` §3 where the two disagree; those disagreements
+verdicts in the prior metrics review (archived in git history) §3 where the two disagree; those disagreements
 are listed explicitly in §5 so nothing is silently overwritten.
 
 **Objective (unchanged):** make breaking many items easier. C1 large groups, C2 no set
-items, C3 shared resources (`plans/research/metrics-revision.md` §0).
+items, C3 shared resources (prior metrics review, archived in git history, §0).
 
 **Data constraint (binding): API only.** Prices, taux, and true game rarity are not
 available and will not be for the foreseeable future. Every metric in this plan is
@@ -25,11 +25,11 @@ Two consequences, applied throughout:
   the API (how many items consume a resource). It is not game rarity and is never
   presented as such. It is used only as an anti-hub signal: it distinguishes a resource
   shared by 200 items from one shared by 2.
-- **Nothing here is provisional.** Unlike `metrics-revision.md` §5, this plan contains no
+- **Nothing here is provisional.** Unlike the prior metrics review (archived) §5, this plan contains no
   price- or taux-blocked metrics, because it proposes none.
 
-**Scope:** evaluate all 8 grouping methods and all 5 experts across the full 1–200 range,
-using the snapshot we already have.
+**Scope:** evaluate all 5 active grouping methods and 3 active experts across the
+full 1–200 range, using the snapshot we already have.
 
 ---
 
@@ -139,7 +139,7 @@ M1 so a uniformly-low result is distinguishable from uniformly-high.
 ubiquity_inv(r) = 1 / breadth(r)          ubiquity_log(r) = 1 / log(1 + breadth(r))
 shared_ubiquity(G) = Σ_{r ∈ shared(G)} ubiquity(r)
 ```
-Both reported, no preference committed (`metrics-revision.md` §6 decision 3). **Why:**
+Both reported, no preference committed (prior metrics review §6 decision 3). **Why:**
 breadth is violently right-skewed — median 5, p90 23, max 211; the top-15 resources touch
 59.13% of all candidate pairs as a union. Unweighted `resource_reuse_ratio` cannot
 distinguish sharing a ubiquitous component from a scarce one. Derived entirely from the
@@ -190,7 +190,7 @@ overlap(g_i,g_j) = |U_i ∩ U_j| / |U_i ∪ U_j|,   portfolio mean
 Cheap, and catches methods that pad coverage by double-assigning items.
 
 **No provisional metrics.** Every one of M1–M9 is computable from the API snapshot today.
-The price- and taux-dependent metrics in `metrics-revision.md` §5 (A7 acquisition cost,
+The price- and taux-dependent metrics in the prior metrics review (archived) §5 (A7 acquisition cost,
 N3 rune value, any profit estimate) are **excluded from this plan**, not deferred — they
 cannot be evaluated without data that does not exist.
 
@@ -202,7 +202,7 @@ cannot be evaluated without data that does not exist.
 `deterministic`, `random`, `hybrid`, `greedy`, `survey` — each run over
 the full 1–200 pool with identical config, then scored on M1–M9. (Four methods —
 genetic, evolutionary_committee, committee, baseline — were removed in commit 82a32ba;
-see `plans/research/phase1-decision.md`.)
+see commit 82a32ba.)
 
 `survey` is the odd one and worth special attention: it returns the *union* of all
 expert proposals with an `origins` tag, so it is the only method that exposes which experts
@@ -267,11 +267,11 @@ verdicts with cited numbers, and a revised per-expert/per-method recommendation.
 
 ---
 
-## 5. Where this plan conflicts with `plans/research/metrics-revision.md`
+## 5. Where this plan conflicts with the prior metrics review (archived in git history)
 
 Stated explicitly so the conflict is a decision, not an accident.
 
-| Topic | metrics-revision.md said | This plan says | Basis |
+| Topic | Prior review said | This plan says | Basis |
 |---|---|---|---|
 | Coverage at mli=32 | 98.71% (probe S3, simulated greedy) | **59.48%** — the shipped greedy covers 1406/2364 | probe 7b, real expert |
 | Rarity metric status | N1 proposed, both weightings | Unchanged — both reported | agreement |

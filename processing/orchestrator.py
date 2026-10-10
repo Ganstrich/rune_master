@@ -100,7 +100,7 @@ class RuneMaster:
 
         self.objective = OverlapObjective(self.config.group_quality_weights)
         self.policy = GroupAcceptancePolicy(self.config)
-        # Active experts only (see plans/phase1-decision.md for the removed
+        # Active experts only (see commit 82a32ba for the removed
         # methods).
         self.experts = {
             "deterministic": GraphGroupingExpert(
