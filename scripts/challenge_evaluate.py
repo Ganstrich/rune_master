@@ -8,7 +8,7 @@ full pool is a finding, not an error to hide.
 
 Usage:
     uv run python scripts/challenge_evaluate.py
-    uv run python scripts/challenge_evaluate.py --methods greedy,baseline
+    uv run python scripts/challenge_evaluate.py --methods greedy,survey
 """
 from __future__ import annotations
 
@@ -22,28 +22,24 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from config import Config
 from data.snapshot import load_snapshot
-from processing.challenge_metrics import (
+from analysis.challenge_metrics import (
     evaluate_portfolio,
     resource_breadth,
     resource_pods,
 )
-from processing.config_dataclass import ProcessingConfig
-from processing.equipment_filter import SetExclusionFilter
+from processing.config import ProcessingConfig
+from processing.filters.equipment_filter import SetExclusionFilter
 
 METHODS = (
     "deterministic",
     "random",
     "hybrid",
-    "committee",
-    "genetic",
     "greedy",
-    "evolutionary_committee",
     "survey",
 )
 
-EXPERTS = ("deterministic", "random", "genetic", "baseline", "greedy")
+EXPERTS = ("deterministic", "random", "greedy")
 
 # Independent, single-process wall-clock budgets.
 METHOD_TIMEOUT = 900
@@ -190,8 +186,6 @@ def main() -> int:
     results: dict[str, dict] = {}
 
     # Methods run against the set-excluded pool, which is what the pipeline sees.
-    from processing.equipment_filter import SetExclusionFilter
-
     pool, _ = SetExclusionFilter.exclude_panoplie_items(
         equipments, ProcessingConfig().set_exclusion_min_size
     )

@@ -4,7 +4,6 @@ This module handles detection of equipment communities (groups) using modularity
 optimization and bipartite-aware algorithms.
 """
 
-from itertools import combinations
 from typing import Dict, List, Optional, Set, Tuple
 
 import community
@@ -108,7 +107,6 @@ class CommunityDetector:
         """
         best_partition = None
         best_score = -1
-        best_resolution = 1.0
 
         start, stop, step = resolution_range
         if start is None or stop is None or step is None:
@@ -132,7 +130,6 @@ class CommunityDetector:
             if pairwise_similarity > best_score:
                 best_score = pairwise_similarity
                 best_partition = partition
-                best_resolution = resolution
 
         return best_partition
 

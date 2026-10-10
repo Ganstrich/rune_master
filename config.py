@@ -1,6 +1,6 @@
 """API-level configuration only.
 
-Processing pipeline configuration lives in processing.config_dataclass.ProcessingConfig.
+Processing pipeline configuration lives in processing.config.ProcessingConfig.
 """
 
 # The API also serves craftable trophies, Percepteur gear, Prysmaradite and

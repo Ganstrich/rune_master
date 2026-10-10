@@ -3,8 +3,8 @@
 import pytest
 
 from models import Equipment, ResourceRequirement
-from processing.config_dataclass import ProcessingConfig
-from processing.job_filter import JobLevelFilter
+from processing.config import ProcessingConfig
+from processing.filters.job_filter import JobLevelFilter
 
 # The DofusDB equipment payload carries a French display name plus a numeric
 # id, so the tests use that real shape rather than the API filter's name_id.

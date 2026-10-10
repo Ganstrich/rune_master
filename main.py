@@ -35,8 +35,8 @@ from data.snapshot_source import (
 )
 from models import Equipment, Resource
 from processing import RuneMaster, ProcessingConfig
-from processing.job_filter import JobLevelFilter
-from processing.tuner import ParameterTuner
+from processing.filters.job_filter import JobLevelFilter
+from processing.tools.tuner import ParameterTuner
 from visualization import HTMLGenerator
 
 JOB_LEVEL_JOBS = set(JobLevelFilter.JOB_TO_TYPES)
@@ -82,7 +82,7 @@ def validate_scope(min_level: int, max_level: int, selected_types: list[str]) ->
 
 def job_levels(value: str) -> dict[str, int]:
     """Parse a comma-separated ``job:level`` mapping."""
-    from processing.job_filter import JobLevelFilter
+    from processing.filters.job_filter import JobLevelFilter
 
     try:
         return JobLevelFilter.parse_job_levels(value)
@@ -123,10 +123,7 @@ def build_parser() -> argparse.ArgumentParser:
             "deterministic",
             "random",
             "hybrid",
-            "committee",
-            "genetic",
             "greedy",
-            "evolutionary_committee",
             "survey",
         ],
     )
@@ -384,16 +381,10 @@ def process_equipment(
         groups = master.run_random_grouping()
     elif config.grouping_method == "hybrid":
         groups = master.run_hybrid_grouping()
-    elif config.grouping_method == "committee":
-        groups = master.run_committee()
-    elif config.grouping_method == "genetic":
-        groups = master.run_genetic()
     elif config.grouping_method == "greedy":
         groups = master.run_greedy()
     elif config.grouping_method == "survey":
         groups = master.run_survey()
-    elif config.grouping_method == "evolutionary_committee":
-        groups = master.run_evolutionary_committee()
     else:
         groups = master.run_all()
 

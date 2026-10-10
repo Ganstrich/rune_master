@@ -1,38 +1,8 @@
-"""Portfolio proposal selection and reporting helpers."""
+"""Processing report helpers."""
 
-from collections.abc import Iterable, Mapping
 from typing import Any
 
-from processing.blocks.similarity import jaccard
-from processing.quality_metrics import PortfolioQualityEvaluator
-
-
-class PortfolioSelector:
-    """Select a non-duplicated portfolio from scored expert proposals."""
-
-    @staticmethod
-    def select(
-        proposals: Iterable[dict[str, Any]], overlap_threshold: float
-    ) -> list[dict[str, Any]]:
-        """Preserve the committee's score order and greedy deduplication."""
-        ordered = sorted(
-            proposals, key=lambda proposal: proposal.get("fitness_score", 0), reverse=True
-        )
-        selected: list[dict[str, Any]] = []
-        for proposal in ordered:
-            if len(proposal.get("equipments", [])) < 2:
-                continue
-            if any(
-                jaccard(
-                    {item.ankama_id for item in proposal["equipments"]},
-                    {item.ankama_id for item in existing["equipments"]},
-                )
-                >= overlap_threshold
-                for existing in selected
-            ):
-                continue
-            selected.append(proposal)
-        return selected
+from processing.metrics.quality_metrics import PortfolioQualityEvaluator
 
 
 class ProcessingReporter:

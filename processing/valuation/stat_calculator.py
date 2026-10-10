@@ -35,8 +35,7 @@ This approach eliminates the need for manually maintaining stat ID mappings,
 since we match on stat names instead.
 """
 
-from typing import Dict, Any, Optional
-from dataclasses import dataclass
+from typing import Dict, Optional
 from models import Equipment
 from processing.valuation.density import RUNE_DENSITY, resolve_stat_name
 

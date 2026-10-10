@@ -71,30 +71,47 @@ rune_master/
     loaders.py                  API-to-model loaders, stat weight calculation, density filtering
     DATA.md                     Data layer documentation
   processing/
-    config_dataclass.py        ProcessingConfig — all pipeline defaults and hyperparameters
-    job_filter.py              Craftability filter by player job levels
-    orchestrator.py             Dispatch only — routes to experts based on grouping_method
-    quality_metrics.py          Group quality scoring (sharing efficiency, Jaccard, compression, etc.)
-    group_metrics.py            Canonical group schema builder (GroupMetrics.build_group_dict)
-    policy.py                   Group acceptance policy (size, line-item cap, unit budget, set concentration)
-    graph_builder.py            Jaccard similarity graph construction
-    community_detector.py       Louvain/BiLouvain/connected-component community detection
-    group_mapper.py             Maps communities to groups, applies policy filters
-    random_group_builder.py     Stochastic seed-and-grow grouping
-    tuner.py                    Grid-search parameter tuner (Jaccard threshold x min shared resources)
-    selection.py                Portfolio assembly and dedup
-    equipment_filter.py          Equipment pre-filtering (density, percentile)
-    stat_calculator.py          Stat weight calculation (feeds into density)
+    orchestrator.py            RuneMaster MoE coordinator and method dispatch
+    config.py                  ProcessingConfig — all pipeline defaults and hyperparameters
+    policy.py                  Group acceptance policy (size, line-item cap, unit budget, set concentration)
+    graph/
+      graph_builder.py         Jaccard similarity graph construction
+      community_detector.py    Louvain/BiLouvain/connected-component community detection
+      group_mapper.py          Maps communities to groups, applies policy filters
     experts/
-      base.py                   Expert base class
-      deterministic_expert.py   Graph-based deterministic grouping
-      random_expert.py          Stochastic random grouping
-      genetic_expert.py         Single-expert evolutionary search
-      greedy_expert.py          Objective-driven greedy grouping
-      baseline_expert.py        Trivial baseline for comparison
-    evolutionary_committee.py   Multi-round portfolio evolution (iterative committee)
-    survey.py                   Runs all experts and tags groups with origin
-    PROCESSING.md               Authoritative end-to-end specification of group construction
+      base.py                  GroupingExpert ABC (the interface for all experts)
+      graph_expert.py          Graph-based deterministic grouping
+      random_expert.py         Stochastic random grouping
+      random_group_builder.py  Seed-and-companion proposal construction
+      greedy_expert.py         Objective-driven greedy grouping (default)
+    filters/
+      equipment_filter.py      Density filtering and panoplie set exclusion
+      job_filter.py            Craftability filter by player job levels
+    metrics/
+      quality_metrics.py       Group/portfolio quality scoring (sharing efficiency, Jaccard, compression)
+      group_metrics.py         Canonical group schema builder (GroupMetrics.build_group_dict)
+      break_log.py             Observed-taux and rune-density helpers
+      selection.py             ProcessingReporter (run summary)
+    valuation/
+      objective.py             GroupCandidate and GroupObjective protocol
+      overlap.py               OverlapObjective (current objective)
+      economic.py              ProfitObjective and FlatTauxModel
+      focus.py                 Break-density and focus formulas
+      density.py               RUNE_DENSITY table and stat-name resolution
+      taux.py                  PosteriorTauxModel
+      prices.py                PriceSource contracts
+      exploration.py           Break-exploration ranking
+      stat_calculator.py       Stat weight calculation (feeds into density)
+    blocks/
+      recipes.py               Recipe normalization helpers
+      shopping_list.py         Shopping-list arithmetic
+      similarity.py            Jaccard similarity
+    tools/
+      harness.py               Offline method comparison
+      tuner.py                 Grid-search parameter tuner
+    PROCESSING.md              Authoritative end-to-end specification of group construction
+  analysis/
+    challenge_metrics.py       API-only challenge metrics (not imported by the runtime pipeline)
   visualization/
     html_generator.py           Static HTML report generator (index + per-group pages)
     static/                     CSS and JS assets
@@ -163,7 +180,7 @@ class ResourceRequirement:
 1. **Fetch equipment:** DofusAPIClient requests paginated equipment records using configured game, language, level range, and item types.
 2. **Load models:** Loaders convert API dictionaries into Equipment, EquipmentStat, and ResourceRequirement dataclasses and calculate stat weights.
 3. **Populate cache:** Recipe resources are fetched individually when missing and stored in SQLite.
-4. **Discover groups:** The selected expert builds groups using graph, stochastic, genetic, or committee logic.
+4. **Discover groups:** The selected expert builds groups using graph, stochastic, or objective-driven greedy logic.
 5. **Measure groups:** Recipe reuse, pairwise cohesion, quantity concentration, average stat density, and total ingredients are calculated canonically.
 6. **Generate reports:** An index and one page per group are written as static HTML with copied CSS and JavaScript assets.
 
@@ -176,19 +193,18 @@ class ResourceRequirement:
 | `deterministic` | Very Fast | Good | Quick iterations, graph-only analysis |
 | `random` | Fast | Fair | Solution space exploration |
 | `hybrid` | Fast | Good | Balanced approach with deterministic fallback |
-| `committee` | Fast | Very Good | Fast multi-expert consensus |
-| `genetic` | Slower | Very Good | Focused evolutionary search |
-| `greedy` | Fast | Good | Objective-driven greedy grouping |
-| `evolutionary_committee` | Slowest | Excellent | Best overall results |
+| `greedy` | Fast | Very Good | Objective-driven greedy grouping (default) |
 | `survey` | Slowest | Diagnostic | Runs all experts, tags groups with origin |
 
-**Default:** `hybrid` (in ProcessingConfig). CLI can override with `--grouping-method`.
+**Default:** `greedy` (in ProcessingConfig). CLI can override with `--grouping-method`.
 
 **Make targets:**
 - `make compute` — runs survey mode (all experts)
-- `make evolve` — runs evolutionary_committee
-- `make method METHOD=hybrid` — runs specific method
+- `make evolve` — runs greedy (default)
+- `make method METHOD=greedy` — runs specific method
 - `make tune` — runs with parameter tuning
+
+**Removed methods (2026-10-10):** `committee`, `genetic`, `evolutionary_committee`, `baseline` — measured as dominated by greedy (see `plans/phase1-decision.md`). Their code and config fields have been deleted.
 
 ---
 
@@ -202,31 +218,22 @@ class ResourceRequirement:
 - `CACHE_FILE = "resource_cache.db"`
 - `OUTPUT_PREFIX = "crafting_groups"`
 
-### Processing-Level (processing/config_dataclass.py — ProcessingConfig)
+### Processing-Level (processing/config.py — ProcessingConfig)
 Key defaults:
-- `graph_min_shared_ratio = 0.3` — Jaccard threshold for graph edges
+- `graph_min_shared_ratio = 0.15` — Jaccard threshold for graph edges
 - `graph_min_shared_count = 1` — Min absolute shared resources for edge
-- `group_min_size = 2`, `group_max_size = 32`
+- `group_min_size = 2`, `group_max_size = 12`
 - `group_min_shared_resources = 3`
 - `group_efficiency_threshold = 0.15`
 - `group_max_set_share = 0.5` — Max share from one panoplie
-- `max_line_items = 12` — Cap on distinct resources per group
-- `max_total_units = 500` — Carry capacity cap
-- `excluded_resource_ids = {15263, 14635}` — Don't count toward sharing
+- `max_line_items = 32` — Cap on distinct resources per group
+- `max_total_units = 2000` — Carry capacity cap
+- `excluded_resource_ids = {14635}` — Don't count toward sharing
 - `use_density_filtering = True`
-- `equipment_density_level_ratio = 3.0`
-- `grouping_method = "hybrid"`
+- `equipment_density_level_ratio = 2.0`
+- `grouping_method = "greedy"`
 - `random_group_count = 50`
 - `dedup_overlap_threshold = 0.7`
-
-Evolutionary committee parameters:
-- `evolutionary_rounds = 5`
-- `evolutionary_population_size = 30`
-- `evolutionary_elite_count = 5`
-- `evolutionary_mutation_rate = 0.4`
-- `evolutionary_crossover_rate = 0.6`
-- `evolutionary_cold_start_fraction = 0.2`
-- `evolutionary_stagnation_limit = 3`
 
 ---
 
@@ -236,7 +243,7 @@ Evolutionary committee parameters:
 uv run main.py [options]
 
 Options:
-  --grouping-method {deterministic,random,hybrid,committee,genetic,greedy,evolutionary_committee,survey}
+  --grouping-method {deterministic,random,hybrid,greedy,survey}
   --random-groups N       Target number of random groups
   --density-ratio R       Density/level threshold
   --random-seed N         Seed for reproducible random grouping
@@ -340,8 +347,8 @@ summary = master.get_summary()
 
 | Task | Key Files |
 | --- | --- |
-| Change grouping behavior | processing/config_dataclass.py, processing/orchestrator.py, processing/experts/ |
-| Change quality scoring | processing/quality_metrics.py, processing/group_metrics.py |
+| Change grouping behavior | processing/config.py, processing/orchestrator.py, processing/experts/ |
+| Change quality scoring | processing/metrics/quality_metrics.py, processing/metrics/group_metrics.py |
 | Change group acceptance | processing/policy.py |
 | Change API/data fetching | data/api_client.py, data/loaders.py, data/cache_manager.py, config.py |
 | Change data models | models/equipment.py, models/common.py |

@@ -5,7 +5,7 @@ import json
 
 from config import Config
 from data.cache_manager import CacheManager
-from processing.break_log import rune_density
+from processing.metrics.break_log import rune_density
 from processing.valuation.density import RUNE_DENSITY
 
 

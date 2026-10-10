@@ -1,11 +1,11 @@
 """Shared calculations for equipment group metrics."""
 
 from collections import defaultdict
-from typing import Any, Dict, Iterable, List, Set
+from typing import Any, Dict, List, Set
 
 from models import Equipment
 from processing.blocks.recipes import iter_recipe
-from processing.quality_metrics import GroupQualityEvaluator, GroupQualityWeights
+from processing.metrics.quality_metrics import GroupQualityEvaluator, GroupQualityWeights
 from processing.valuation.focus import break_density
 
 

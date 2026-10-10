@@ -1,5 +1,5 @@
-from processing.config_dataclass import ProcessingConfig
-from processing.harness import run_comparison
+from processing.config import ProcessingConfig
+from processing.tools.harness import run_comparison
 from models import Equipment, ResourceRequirement
 
 
@@ -23,11 +23,9 @@ def test_baseline_comparison_is_repeatable_for_fixed_seed() -> None:
         group_min_shared_resources=1,
         group_efficiency_threshold=0.0,
         random_seed=7,
-        genetic_generations=1,
-        genetic_population_size=2,
     )
-    first = run_comparison(make_equipments(), config, ("baseline", "random"))
-    second = run_comparison(make_equipments(), config, ("baseline", "random"))
+    first = run_comparison(make_equipments(), config, ("greedy", "random"))
+    second = run_comparison(make_equipments(), config, ("greedy", "random"))
 
     for row in first + second:
         row.pop("runtime_seconds")

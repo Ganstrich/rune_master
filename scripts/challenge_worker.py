@@ -21,18 +21,15 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from data.snapshot import load_snapshot
-from processing.config_dataclass import ProcessingConfig
+from processing.config import ProcessingConfig
 from processing.orchestrator import RuneMaster
 
 METHOD_DISPATCH = {
     "deterministic": "run_deterministic",
     "random": "run_random_grouping",
     "hybrid": "run_hybrid_grouping",
-    "committee": "run_committee",
-    "genetic": "run_genetic",
     "greedy": "run_greedy",
     "survey": "run_survey",
-    "evolutionary_committee": "run_evolutionary_committee",
 }
 
 

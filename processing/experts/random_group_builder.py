@@ -10,8 +10,8 @@ from typing import List, Dict, Any, Optional, Set
 from models import Equipment
 from data.cache_manager import CacheManager
 from processing.blocks.recipes import recipe_resource_ids
-from processing.group_metrics import GroupMetrics
-from processing.quality_metrics import GroupQualityWeights
+from processing.metrics.group_metrics import GroupMetrics
+from processing.metrics.quality_metrics import GroupQualityWeights
 from processing.valuation.objective import GroupCandidate, GroupObjective
 
 logger = logging.getLogger(__name__)
@@ -59,7 +59,6 @@ class RandomGroupBuilder:
     ) -> Dict[int, List[int]]:
         """Build inverted index: resource_id -> list of equipment IDs in pool."""
         index: Dict[int, List[int]] = {}
-        pool_ids = {e.ankama_id for e in equipment_pool}
         for eq in equipment_pool:
             for req in eq.recipe:
                 rid = req.resource_id

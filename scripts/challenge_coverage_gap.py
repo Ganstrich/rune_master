@@ -27,8 +27,8 @@ sys.path.insert(0, str(ROOT))
 
 from data.snapshot import load_snapshot
 from processing.blocks.recipes import recipe_resource_ids
-from processing.config_dataclass import ProcessingConfig
-from processing.equipment_filter import SetExclusionFilter
+from processing.config import ProcessingConfig
+from processing.filters.equipment_filter import SetExclusionFilter
 from processing.valuation.focus import break_density
 from processing.valuation.objective import GroupCandidate
 from processing.valuation.overlap import OverlapObjective

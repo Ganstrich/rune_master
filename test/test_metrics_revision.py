@@ -3,11 +3,11 @@
 import pytest
 
 from models import Equipment, ResourceRequirement
-from processing.config_dataclass import ProcessingConfig
-from processing.equipment_filter import SetExclusionFilter
-from processing.group_mapper import GroupMapper
+from processing.config import ProcessingConfig
+from processing.filters.equipment_filter import SetExclusionFilter
+from processing.graph.group_mapper import GroupMapper
 from processing.policy import GroupAcceptancePolicy
-from processing.quality_metrics import GroupQualityEvaluator, GroupQualityWeights
+from processing.metrics.quality_metrics import GroupQualityEvaluator, GroupQualityWeights
 
 
 def make_equipment(

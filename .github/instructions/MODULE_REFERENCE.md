@@ -143,7 +143,7 @@ class ProcessingConfig:
 
 ---
 
-## `processing/graph_builder.py` - Network Graph Construction
+## `processing/graph/graph_builder.py` - Network Graph Construction
 
 **Key Method**: `build_equipment_graph(equipments, min_shared_ratio, min_component_size)`
 
@@ -164,7 +164,7 @@ class ProcessingConfig:
 
 ---
 
-## `processing/community_detector.py` - Community Detection
+## `processing/graph/community_detector.py` - Community Detection
 
 **Key Method**: `detect_communities_louvain(graph, resolution_range)`
 
@@ -182,7 +182,7 @@ class ProcessingConfig:
 
 ---
 
-## `processing/group_mapper.py` - Communities → Filterable Groups
+## `processing/graph/group_mapper.py` - Communities → Filterable Groups
 
 **Main Class**: `GroupMapper`
 

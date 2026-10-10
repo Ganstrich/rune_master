@@ -11,8 +11,8 @@ from data.api_client import DofusAPIClient
 from main import parse_args
 from models import Equipment, ResourceRequirement
 from processing import ProcessingConfig, RuneMaster
-from processing.equipment_filter import EquipmentFilteringStrategy
-from processing.random_group_builder import RandomGroupBuilder
+from processing.filters.equipment_filter import EquipmentFilteringStrategy
+from processing.experts.random_group_builder import RandomGroupBuilder
 from visualization import HTMLGenerator
 
 

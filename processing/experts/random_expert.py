@@ -2,8 +2,8 @@
 from typing import List, Dict, Any, Optional, Set
 from models import Equipment
 from processing.experts.base import GroupingExpert
-from processing.config_dataclass import ProcessingConfig
-from processing.random_group_builder import RandomGroupBuilder
+from processing.config import ProcessingConfig
+from processing.experts.random_group_builder import RandomGroupBuilder
 from processing.policy import GroupAcceptancePolicy
 from processing.valuation.objective import GroupObjective
 

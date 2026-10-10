@@ -6,7 +6,7 @@ Provides filtering strategies to reduce equipment pool based on stat density
 
 import logging
 from collections import defaultdict
-from typing import List, Optional
+from typing import List
 from models import Equipment
 
 logger = logging.getLogger(__name__)

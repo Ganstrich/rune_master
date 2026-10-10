@@ -1,17 +1,25 @@
 """Processing layer for equipment group discovery.
 
-Contains algorithms for graph building, community detection, 
-group mapping, and the Mixture of Experts (MoE) orchestrator.
+The MoE orchestrator (``RuneMaster``) coordinates the grouping experts over a
+shared equipment graph. Submodules:
+
+- ``graph``     — graph construction, community detection, group mapping
+- ``experts``   — one grouping algorithm per expert, behind ``GroupingExpert``
+- ``filters``   — pool filters applied once, before any expert runs
+- ``metrics``   — group/portfolio metrics and the run reporter
+- ``valuation`` — swappable group objectives and their inputs
+- ``blocks``    — pure recipe/similarity/shopping-list helpers
+- ``tools``     — offline comparison and tuning (not the runtime pipeline)
 """
 
-from processing.config_dataclass import ProcessingConfig
+from processing.config import ProcessingConfig
 from processing.orchestrator import RuneMaster
-from processing.graph_builder import GraphBuilder
-from processing.community_detector import CommunityDetector
-from processing.group_mapper import GroupMapper
-from processing.group_metrics import GroupMetrics
-from processing.random_group_builder import RandomGroupBuilder
-from processing.quality_metrics import (
+from processing.graph.graph_builder import GraphBuilder
+from processing.graph.community_detector import CommunityDetector
+from processing.graph.group_mapper import GroupMapper
+from processing.metrics.group_metrics import GroupMetrics
+from processing.experts.random_group_builder import RandomGroupBuilder
+from processing.metrics.quality_metrics import (
     GroupQualityEvaluator,
     GroupQualityMetrics,
     GroupQualityWeights,
@@ -19,10 +27,6 @@ from processing.quality_metrics import (
     PortfolioQualityMetrics,
     PortfolioQualityWeights,
 )
-from processing.evolutionary_search_engine import PortfolioEvolutionEngine
-from processing.evolutionary_fitness import PortfolioFitnessEvaluator
-from processing.evolutionary_operators import EvolutionaryOperators
-
 __all__ = [
     "ProcessingConfig",
     "RuneMaster",
@@ -37,7 +41,4 @@ __all__ = [
     "PortfolioQualityEvaluator",
     "PortfolioQualityMetrics",
     "PortfolioQualityWeights",
-    "PortfolioEvolutionEngine",
-    "PortfolioFitnessEvaluator",
-    "EvolutionaryOperators",
 ]

@@ -6,11 +6,11 @@ from pathlib import Path
 from typing import Any
 
 from models import Equipment
-from processing.config_dataclass import ProcessingConfig
+from processing.config import ProcessingConfig
 from processing.orchestrator import RuneMaster
 
 
-METHODS = ("baseline", "deterministic", "random", "genetic", "committee")
+METHODS = ("deterministic", "random", "greedy", "hybrid")
 
 
 def _comparison_row(name: str, groups: list[dict[str, Any]], summary: dict[str, Any], runtime: float) -> dict[str, Any]:
@@ -36,17 +36,14 @@ def run_comparison(
         method_config = config or ProcessingConfig(random_seed=0)
         master = RuneMaster(equipments, method_config)
         started = time.perf_counter()
-        if method == "baseline":
-            groups = master.experts["baseline"].discover_groups(equipments, method_config)
-            master.groups = groups
-        elif method == "deterministic":
+        if method == "deterministic":
             groups = master.run_deterministic()
         elif method == "random":
             groups = master.run_random_grouping()
-        elif method == "genetic":
-            groups = master.run_genetic()
-        elif method == "committee":
-            groups = master.run_committee()
+        elif method == "greedy":
+            groups = master.run_greedy()
+        elif method == "hybrid":
+            groups = master.run_hybrid_grouping()
         else:
             raise ValueError(f"Unknown comparison method: {method}")
         rows.append(_comparison_row(method, groups, master.get_summary(), time.perf_counter() - started))

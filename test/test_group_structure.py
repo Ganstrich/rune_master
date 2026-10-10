@@ -7,8 +7,8 @@ complete group objects with all required attributes.
 import pytest
 from typing import Dict, List, Any
 from models import Equipment, ResourceRequirement
-from processing.equipment_filter import EquipmentFilteringStrategy
-from processing.random_group_builder import RandomGroupBuilder
+from processing.filters.equipment_filter import EquipmentFilteringStrategy
+from processing.experts.random_group_builder import RandomGroupBuilder
 
 
 # Required fields for ALL groups

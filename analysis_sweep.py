@@ -7,7 +7,7 @@ opt-in because they are only meaningful once the structure is understood.
 
 Usage:
     uv run analysis_sweep.py
-    uv run analysis_sweep.py --with-experts --methods deterministic,committee
+    uv run analysis_sweep.py --with-experts --methods deterministic,greedy
     uv run analysis_sweep.py --bands 1-50,50-100 --crafts bijoutier,forgeron
 """
 
@@ -24,7 +24,7 @@ from collections import Counter
 from dataclasses import replace
 from itertools import combinations
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Sequence, Set, Tuple
+from typing import Any, Dict, Iterable, List, Sequence, Tuple
 
 import community as community_louvain
 import networkx as nx
@@ -44,11 +44,11 @@ from data.loaders import EquipmentLoader
 from models import Equipment
 from processing.blocks.recipes import recipe_resource_ids
 from processing.blocks.similarity import jaccard
-from processing.community_detector import CommunityDetector
-from processing.config_dataclass import ProcessingConfig
-from processing.graph_builder import GraphBuilder
+from processing.graph.community_detector import CommunityDetector
+from processing.config import ProcessingConfig
+from processing.graph.graph_builder import GraphBuilder
 from processing.orchestrator import RuneMaster
-from processing.quality_metrics import PortfolioQualityEvaluator
+from processing.metrics.quality_metrics import PortfolioQualityEvaluator
 from processing.valuation.focus import break_density
 
 CRAFTS: Dict[str, List[str]] = {
@@ -65,23 +65,16 @@ DEFAULT_BANDS: List[Tuple[int, int]] = [(1, 50), (50, 100), (100, 150), (150, 20
 DEFAULT_METHODS: List[str] = [
     "deterministic",
     "random",
-    "genetic",
     "greedy",
     "hybrid",
-    "committee",
-    "evolutionary_committee",
 ]
 
 _METHOD_DISPATCH = {
     "deterministic": "run_deterministic",
     "random": "run_random_grouping",
-    "genetic": "run_genetic",
     "greedy": "run_greedy",
     "hybrid": "run_hybrid_grouping",
-    "committee": "run_committee",
-    "evolutionary_committee": "run_evolutionary_committee",
     "survey": "run_survey",
-    "baseline": "run_baseline",
 }
 
 SHARE_THRESHOLDS = (1, 2, 3)

@@ -1,7 +1,7 @@
 import pytest
 
 from models import Equipment, ResourceRequirement
-from processing.quality_metrics import GroupQualityEvaluator
+from processing.metrics.quality_metrics import GroupQualityEvaluator
 
 
 def equipment(equipment_id: int, resources: list[int]) -> Equipment:

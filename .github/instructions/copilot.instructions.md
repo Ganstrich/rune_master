@@ -227,7 +227,7 @@ grep "ingredient-resource-name" visualizations/group_001.html | head -5
 |------|---------|---|
 | `main.py` | Main orchestrator, resource caching | Jan 16 |
 | `processing/orchestrator.py` | RuneMaster pipeline | Jan 16 |
-| `processing/group_mapper.py` | Community → groups + ingredients | Jan 16 |
+| `processing/graph/group_mapper.py` | Community → groups + ingredients | Jan 16 |
 | `visualization/html_generator.py` | HTML generation | Jan 16 |
 | `data/cache_manager.py` | Persistent caching | Jan 16 |
 | `visualization/style_templates.py` | CSS/JS utilities | Jan 16 |

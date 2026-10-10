@@ -6,10 +6,10 @@ them against a multi-objective quality function to find the 'Golden Config'.
 
 import concurrent.futures
 import itertools
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 from models import Equipment
-from processing.config_dataclass import ProcessingConfig
+from processing.config import ProcessingConfig
 from processing.orchestrator import RuneMaster
 
 
@@ -41,16 +41,14 @@ def _worker_run_config(
     # Run the master
     master = RuneMaster(equipments, config=config, cache_manager=cache_manager)
 
-    if method == "baseline":
-        master.run_baseline()
-    elif method == "deterministic":
+    if method == "deterministic":
         master.run_deterministic()
     elif method == "random":
         master.run_random_grouping()
-    elif method == "committee":
-        master.run_committee()
-    elif method == "genetic":
-        master.run_genetic_grouping()
+    elif method == "greedy":
+        master.run_greedy()
+    elif method == "hybrid":
+        master.run_hybrid_grouping()
     else:
         master.run_all()
 
