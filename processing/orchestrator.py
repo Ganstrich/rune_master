@@ -15,7 +15,6 @@ from processing.filters.equipment_filter import SetExclusionFilter
 from processing.graph.graph_builder import GraphBuilder
 from processing.policy import GroupAcceptancePolicy
 from processing.metrics.selection import ProcessingReporter
-from processing.valuation.objective import GroupCandidate
 from processing.valuation.overlap import OverlapObjective
 
 

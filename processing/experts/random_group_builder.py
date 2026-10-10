@@ -59,7 +59,6 @@ class RandomGroupBuilder:
     ) -> Dict[int, List[int]]:
         """Build inverted index: resource_id -> list of equipment IDs in pool."""
         index: Dict[int, List[int]] = {}
-        pool_ids = {e.ankama_id for e in equipment_pool}
         for eq in equipment_pool:
             for req in eq.recipe:
                 rid = req.resource_id

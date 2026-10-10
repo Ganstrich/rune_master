@@ -31,7 +31,7 @@ from config import (
     SCULPTEUR,
     TAILLEUR,
 )
-from models import Equipment, ItemType
+from models import Equipment
 
 # Job name -> item type name_ids (as used by config.py and the API filter).
 # Every craftable type belongs to exactly one job.

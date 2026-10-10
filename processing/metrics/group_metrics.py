@@ -1,7 +1,7 @@
 """Shared calculations for equipment group metrics."""
 
 from collections import defaultdict
-from typing import Any, Dict, Iterable, List, Set
+from typing import Any, Dict, List, Set
 
 from models import Equipment
 from processing.blocks.recipes import iter_recipe

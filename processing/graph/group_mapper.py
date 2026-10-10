@@ -6,7 +6,6 @@ equipment groups with ingredient analysis and efficiency metrics.
 
 from typing import Any, Dict, List, Tuple
 from models import Equipment
-from processing.blocks.recipes import iter_recipe
 from processing.metrics.group_metrics import GroupMetrics
 from processing.policy import GroupAcceptancePolicy
 from processing.metrics.quality_metrics import GroupQualityWeights

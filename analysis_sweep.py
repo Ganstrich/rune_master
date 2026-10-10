@@ -24,7 +24,7 @@ from collections import Counter
 from dataclasses import replace
 from itertools import combinations
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Sequence, Set, Tuple
+from typing import Any, Dict, Iterable, List, Sequence, Tuple
 
 import community as community_louvain
 import networkx as nx

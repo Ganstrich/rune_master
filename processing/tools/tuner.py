@@ -6,7 +6,7 @@ them against a multi-objective quality function to find the 'Golden Config'.
 
 import concurrent.futures
 import itertools
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 from models import Equipment
 from processing.config import ProcessingConfig
