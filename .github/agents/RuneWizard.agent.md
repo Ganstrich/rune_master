@@ -96,17 +96,13 @@ committee overlap threshold `0.7`.
 - `serve.py`: standalone static server for previously generated reports.
 - `models/`: domain dataclasses and shared types.
 - `data/`: HTTP transport, SQLite cache, and payload loaders.
-- `processing/config_dataclass.py`: processing defaults.
+- `processing/config.py`: processing defaults.
 - `processing/orchestrator.py`: expert coordination and summary metrics.
-- `processing/graph_builder.py`: bipartite and Jaccard graphs.
-- `processing/community_detector.py`: Louvain and BiLouvain partitioning.
-- `processing/group_metrics.py`: canonical metrics and group dictionary shape.
-- `processing/group_mapper.py`: community filtering and group conversion.
-- `processing/equipment_filter.py`: density filtering.
-- `processing/random_group_builder.py`: random group construction.
-- `processing/experts/`: deterministic, random, and genetic adapters.
-- `processing/tuner.py`: narrow parallel grid search for graph ratio and minimum
-  shared-resource count.
+- `processing/graph/`: bipartite/Jaccard graphs, Louvain partitioning, community-to-group mapping.
+- `processing/metrics/`: canonical group metrics, portfolio metrics, reporter.
+- `processing/filters/`: density, panoplie-set, and job-level pool filters.
+- `processing/experts/`: deterministic, random, and greedy adapters.
+- `processing/tools/`: offline comparison harness and parameter tuner.
 - `visualization/html_generator.py`: report HTML generation.
 - `visualization/static/`: source CSS and JavaScript copied into reports.
 - `test/`: offline contracts and group-structure tests.

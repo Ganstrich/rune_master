@@ -20,7 +20,7 @@ With the checked-in defaults, RuneMaster processes:
 - a SQLite cache in `resource_cache.db`.
 
 These API-level defaults live in `config.py`. Processing and grouping defaults
-live in `processing/config_dataclass.py`.
+live in `processing/config.py`.
 
 ## Requirements
 
@@ -60,7 +60,7 @@ server.
 3. **Populate the cache**: recipe resources are fetched individually when
      missing and stored in SQLite so reports can show resource names and images.
 4. **Discover groups**: the selected expert builds groups using graph,
-     stochastic, genetic, or committee logic.
+     stochastic, or objective-driven greedy logic.
 5. **Measure groups**: recipe reuse, pairwise cohesion, quantity concentration,
     average stat density, and total ingredients are calculated canonically.
 6. **Generate reports**: an index and one page per group are written as static
@@ -78,16 +78,15 @@ shortlist metrics, not estimates of profit or material savings.
 
 ## Grouping Methods
 
-The RuneMaster pipeline supports six grouping strategies, each with distinct trade-offs between speed and result quality:
+The RuneMaster pipeline supports five grouping strategies, each with distinct trade-offs between speed and result quality:
 
 | Method | Speed | Quality | Best For |
 | --- | --- | --- | --- |
 | `deterministic` | ⚡⚡⚡ Very Fast | Good | Quick iterations, graph-only analysis |
 | `random` | ⚡⚡ Fast | Fair | Solution space exploration |
 | `hybrid` | ⚡⚡ Fast | Good | Balanced approach with deterministic fallback |
-| `committee` | ⚡⚡ Fast | ⭐ Very Good | Fast multi-expert consensus |
-| `genetic` | ⚡ Slower | ⭐ Very Good | Focused evolutionary search |
-| `evolutionary_committee` | 🐢 Slowest | ⭐⭐⭐ Excellent | **Best overall results (default)** |
+| `greedy` | ⚡ Fast | ⭐ Very Good | **Best quality/coverage/speed (default)** |
+| `survey` | ⚡⚡ Fast | Good | Union of every expert's proposals |
 
 ### Detailed Descriptions
 
@@ -97,35 +96,31 @@ The RuneMaster pipeline supports six grouping strategies, each with distinct tra
 
 - **`hybrid`**: Runs deterministic grouping first and supplements it with random groups only when the deterministic result is below a threshold. Balances determinism with fallback coverage.
 
-- **`committee`**: Runs deterministic, random, and genetic experts in parallel, scores their proposals using the canonical objective, and removes groups whose equipment overlap exceeds the configured threshold. Individual expert failures are reported but do not block other experts. Single pass, fast.
+- **`greedy`** (default): Grows each group directly against the objective, seeding from high-density uncovered items and adding the best admissible companion until nothing improves the group. Reaches items the graph discards.
 
-- **`genetic`**: Evolves populations of candidate group sets using tournament selection, crossover, mutation, elitism, and stagnation-based early stopping. Single expert, focused optimization on group quality.
-
-- **`evolutionary_committee`** (new, default): Combines the committee approach with multi-round portfolio evolution. Starts with expert proposals, then evolves them across 5 rounds (configurable), preserving elite candidates and injecting diversity through cold starts. Each round applies intelligent portfolio operators (add/remove equipment, split/merge groups, etc.). Produces the highest-quality portfolios by optimizing for overall coverage, overlap penalties, and balance—not just summing isolated group scores. **Recommended for best results.**
+- **`survey`**: Runs every expert and keeps the union of their proposals, tagging each group with the expert(s) that found it and merging identical fingerprints.
 
 ### When to Use Each Method
 
-- **Need results now?** Use `hybrid` or `committee` (~seconds)
+- **Need results now?** Use `hybrid` or `deterministic` (~milliseconds to seconds)
 - **Quick dev iteration?** Use `deterministic` (~milliseconds)
-- **Want the best groups?** Use `evolutionary_committee` (~minutes)
+- **Want the best groups?** Use `greedy` (the default)
 - **Exploring solutions?** Use `random` to see different possibilities
-- **Single-expert deep dive?** Use `genetic` for focused evolution
 
 ### Default Behavior
 
-The default grouping method is `evolutionary_committee`, which delivers the best portfolio quality. You can run it via:
+The default grouping method is `greedy`, which delivers the best quality/coverage/speed trade-off. You can run it via:
 
 ```bash
-make compute                                    # Evolutionary committee (best)
-make method METHOD=committee                    # Fast multi-expert
+make evolve                                     # Greedy (default, best)
 make method METHOD=deterministic                # Fastest
 ```
 
-The default method is configured in `processing/config_dataclass.py` and can be overridden via CLI:
+The default method is configured in `processing/config.py` and can be overridden via CLI:
 
 ```bash
 uv run main.py --grouping-method deterministic
-uv run main.py --grouping-method evolutionary_committee
+uv run main.py --grouping-method greedy
 ```
 
 ## Processing Defaults
@@ -140,19 +135,19 @@ only a user-level summary and defers to that specification when details differ.
 
 | Setting | Default |
 | --- | ---: |
-| Jaccard threshold | `0.3` |
+| Jaccard threshold | `0.15` |
 | Minimum shared resources per graph edge | `1` |
 | Minimum graph component size | `2` |
 | Community algorithm | `louvain` |
-| Group size | `2` to `18` |
+| Group size | `2` to `12` |
 | Minimum shared resources per group | `3` |
 | Minimum sharing efficiency | `0.15` |
 | Minimum item-only quality | `0.0` |
 | Density filtering | enabled |
-| Density/level ratio | `3.0` |
+| Density/level ratio | `2.0` |
 | Fall back to the unfiltered pool | disabled |
 | Random group target | `50` |
-| Committee duplicate-overlap threshold | `0.7` |
+| Survey duplicate-overlap threshold | `0.7` |
 
 Density filtering keeps equipment where `stat_weight >= level * ratio`. It is
 used by the random expert; deterministic graph grouping uses the loaded pool.
@@ -160,7 +155,7 @@ used by the random expert; deterministic graph grouping uses the loaded pool.
 ## CLI
 
 ```text
---grouping-method {deterministic,random,hybrid,committee,genetic}
+--grouping-method {deterministic,random,hybrid,greedy,survey}
 --random-groups N       Positive target number of random groups
 --density-ratio R       Non-negative density/level threshold
 --random-seed N         Seed for reproducible random grouping
@@ -175,7 +170,7 @@ Examples:
 ```bash
 uv run main.py --grouping-method deterministic --no-serve
 uv run main.py --grouping-method random --random-groups 10 --random-seed 42 --no-serve
-uv run main.py --grouping-method committee --tune --no-serve
+uv run main.py --grouping-method greedy --no-serve
 uv run main.py --job-levels "forgeron:120,bijoutier:80" --no-serve
 ```
 
@@ -236,9 +231,9 @@ The pipeline prints a per-job breakdown of what was dropped:
 ```
 
 Equivalent Make targets include `make sync`, `make dev`, `make compute`,
-`make tune`, `make method METHOD=genetic`, and `make serve`. Note that
-`make compute` explicitly selects committee mode with tuning; it is not the same
-as the default hybrid run.
+`make tune`, `make method METHOD=greedy`, and `make serve`. Note that
+`make compute` selects survey mode (every expert); it is not the same as the
+default greedy run.
 
 ## Python API
 
@@ -287,9 +282,15 @@ main.py                   CLI, live data loading, dispatch, report generation
 serve.py                  Standalone loopback static-file server
 models/                   Equipment, resource, recipe, and shared data types
 data/                     HTTP client, SQLite cache, and API-to-model loaders
-processing/               Graphs, metrics, filters, grouping experts, and tuner
-processing/job_filter.py  Craftability filter by player job levels
-processing/experts/       Deterministic, random, and genetic expert adapters
+processing/               Orchestrator, config, policy, and subpackages below
+  graph/                  Graph building, community detection, group mapping
+  experts/                Deterministic, random, and greedy expert adapters
+  filters/                Density, panoplie-set, and job-level pool filters
+  metrics/                Group/portfolio metrics and the run reporter
+  valuation/              Objectives, density/taux/price inputs, exploration
+  blocks/                 Pure recipe, similarity, and shopping-list helpers
+  tools/                  Offline comparison harness and parameter tuner
+analysis/                 Analysis-only metrics (challenge metrics), not runtime
 visualization/            Static HTML generator and source assets
 test/                     Offline contract and group-structure tests
 plans/                    Reserved for the next feature plan after target definition
@@ -321,7 +322,7 @@ coverage percentage, benchmark suite, or automated live-API test.
 - Random grouping can return fewer groups than requested when sampled seeds do
     not have enough qualifying companions.
 - Hybrid concatenates deterministic and random results without de-duplicating
-    them; overlap de-duplication is specific to committee mode.
+    them; overlap de-duplication is specific to survey mode.
 - Performance varies with API latency, cache warmth, configuration, and data
     volume. No fixed runtime or speedup is claimed.
 - Type hints are present throughout much of the project, but no static type
