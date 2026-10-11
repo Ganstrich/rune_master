@@ -66,14 +66,13 @@ DEFAULT_METHODS: List[str] = [
     "deterministic",
     "random",
     "greedy",
-    "hybrid",
+    "survey",
 ]
 
 _METHOD_DISPATCH = {
     "deterministic": "run_deterministic",
     "random": "run_random_grouping",
     "greedy": "run_greedy",
-    "hybrid": "run_hybrid_grouping",
     "survey": "run_survey",
 }
 

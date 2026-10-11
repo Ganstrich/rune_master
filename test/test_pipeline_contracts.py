@@ -181,6 +181,19 @@ def test_scope_cli_parses_and_rejects_invalid_ranges() -> None:
         parse_args(["--item-types", "unknown"])
 
 
+def test_set_exclusion_min_size_cli_parses() -> None:
+    """The set-exclusion-min-size CLI flag overrides the config default."""
+    args = parse_args(["--set-exclusion-min-size", "1"])
+    assert args.set_exclusion_min_size == 1
+
+    args = parse_args(["--set-exclusion-min-size", "99"])
+    assert args.set_exclusion_min_size == 99
+
+    # Default is None (falls back to ProcessingConfig.set_exclusion_min_size)
+    args = parse_args([])
+    assert args.set_exclusion_min_size is None
+
+
 def test_api_query_receives_effective_scope(monkeypatch: pytest.MonkeyPatch) -> None:
     """The API request includes the configured levels and item types."""
     captured: dict[str, object] = {}
