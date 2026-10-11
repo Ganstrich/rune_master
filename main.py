@@ -117,18 +117,7 @@ def load_player_config(path: Path) -> dict:
 def build_parser() -> argparse.ArgumentParser:
     """Build the CLI parser separately so scope validation stays offline-testable."""
     parser = argparse.ArgumentParser(description="RuneMaster: Equipment Group Discovery")
-    parser.add_argument(
-        "--grouping-method",
-        choices=[
-            "deterministic",
-            "random",
-            "greedy",
-            "survey",
-        ],
-    )
-    parser.add_argument("--random-groups", type=positive_int, help="Number of random groups to generate")
     parser.add_argument("--density-ratio", type=nonnegative_float, help="Density/level ratio filter")
-    parser.add_argument("--random-seed", type=int, help="Seed for reproducible random grouping")
     parser.add_argument("--min-level", type=positive_int, default=Config.MIN_LEVEL)
     parser.add_argument("--max-level", type=positive_int, default=Config.MAX_LEVEL)
     parser.add_argument("--item-types", type=item_types, default=list(Config.ITEM_TYPES))
@@ -370,31 +359,13 @@ def process_equipment(
     print("⚙️  PROCESSING EQUIPMENT")
     print("="*60)
 
-    if tune_params:
-        tuner = ParameterTuner(equipments, cache_manager, api_client)
-        tuned_config, _ = tuner.tune(method=processing_config.grouping_method)
-        config = replace(
-            processing_config,
-            graph_min_shared_ratio=tuned_config.graph_min_shared_ratio,
-            group_min_shared_resources=tuned_config.group_min_shared_resources,
-        )
-    else:
-        config = processing_config
+    config = processing_config
 
     master = RuneMaster(equipments, config=config, cache_manager=cache_manager, api_client=api_client)
 
     print(f"\n📋 Grouping Method: {config.grouping_method.upper()}")
-    if tune_params:
-        print(f"📊 Using Tuned Parameters: Ratio={config.graph_min_shared_ratio}, MinItems={config.group_min_shared_resources}")
 
-    if config.grouping_method == "random":
-        groups = master.run_random_grouping()
-    elif config.grouping_method == "greedy":
-        groups = master.run_greedy()
-    elif config.grouping_method == "survey":
-        groups = master.run_survey()
-    else:
-        groups = master.run_all()
+    groups = master.run_greedy()
 
     master.print_summary()
     return groups
@@ -532,14 +503,8 @@ def main():
 
     # ProcessingConfig owns pipeline defaults; CLI arguments override them.
     processing_config = ProcessingConfig()
-    if args.grouping_method is not None:
-        processing_config.grouping_method = args.grouping_method
-    if args.random_groups is not None:
-        processing_config.random_group_count = args.random_groups
     if args.density_ratio is not None:
         processing_config.equipment_density_level_ratio = args.density_ratio
-    if args.random_seed is not None:
-        processing_config.random_seed = args.random_seed
     if args.set_exclusion_min_size is not None:
         processing_config.set_exclusion_min_size = args.set_exclusion_min_size
 

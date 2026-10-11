@@ -16,9 +16,9 @@ serve:
 dev:
 	uv run main.py --no-serve
 
-# Run the pipeline without starting the server (every expert, groups tagged with origin)
+# Run the pipeline without starting the server (greedy grouping)
 compute:
-	uv run main.py --no-serve --grouping-method survey
+	uv run main.py --no-serve
 
 # Run greedy grouping (default, best quality/coverage/speed)
 evolve:

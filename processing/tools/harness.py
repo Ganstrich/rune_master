@@ -1,55 +1,53 @@
-"""Offline baseline comparison harness."""
+"""Offline method comparison for grouping experts.
 
-import json
+Runs named methods offline and returns comparison rows for JSON persistence.
+"""
+
 import time
-from pathlib import Path
-from typing import Any
+from typing import Any, Dict, List, Optional
 
-from models import Equipment
 from processing.config import ProcessingConfig
 from processing.orchestrator import RuneMaster
 
 
-METHODS = ("deterministic", "random", "greedy")
+METHODS = ("greedy",)
 
 
 def _comparison_row(name: str, groups: list[dict[str, Any]], summary: dict[str, Any], runtime: float) -> dict[str, Any]:
+    """Build a stable comparison row from a grouping result."""
     return {
         "method": name,
-        "group_count": len(groups),
-        "group_sizes": sorted(len(group.get("equipments", [])) for group in groups),
-        "line_items": sorted(group.get("unique_ingredients_count", 0) for group in groups),
-        "mean_group_score": summary.get("average_quality_score", 0.0),
-        "portfolio_score": summary.get("portfolio_quality_score", 0.0),
-        "runtime_seconds": runtime,
+        "groups": summary.get("total_groups", 0),
+        "unique_covered": summary.get("unique_equipment_in_groups", 0),
+        "coverage_pct": round(summary.get("equipment_coverage_rate", 0.0) * 100, 2),
+        "overlap_pct": round(summary.get("assignment_overlap_rate", 0.0) * 100, 2),
+        "mean_group_size": round(summary.get("average_group_size", 0.0), 2),
+        "mean_quality": round(summary.get("average_quality_score", 0.0), 4),
+        "portfolio_quality": round(summary.get("portfolio_quality_score", 0.0), 4),
+        "runtime_seconds": round(runtime, 3),
     }
 
 
 def run_comparison(
-    equipments: list[Equipment],
-    config: ProcessingConfig | None = None,
+    equipments,
     methods: tuple[str, ...] = METHODS,
+    config: Optional[ProcessingConfig] = None,
+    cache_manager=None,
 ) -> list[dict[str, Any]]:
     """Run named methods offline and return stable comparison rows."""
     rows = []
     for method in methods:
-        method_config = config or ProcessingConfig(random_seed=0)
+        method_config = config or ProcessingConfig()
         master = RuneMaster(equipments, method_config)
         started = time.perf_counter()
-        if method == "deterministic":
-            groups = master.run_deterministic()
-        elif method == "random":
-            groups = master.run_random_grouping()
-        elif method == "greedy":
-            groups = master.run_greedy()
-        elif method == "hybrid":
-            raise ValueError("hybrid method has been removed (redundant with deterministic)")
-        else:
-            raise ValueError(f"Unknown comparison method: {method}")
-        rows.append(_comparison_row(method, groups, master.get_summary(), time.perf_counter() - started))
+        groups = master.run_greedy()
+        runtime = time.perf_counter() - started
+        rows.append(_comparison_row(method, groups, master.get_summary(), runtime))
     return rows
 
 
-def write_comparison(path: str | Path, rows: list[dict[str, Any]]) -> None:
+def persist(rows: list[dict[str, Any]], path: str) -> None:
     """Persist a comparison table as deterministic, diffable JSON."""
-    Path(path).write_text(json.dumps(rows, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    import json
+    from pathlib import Path
+    Path(path).write_text(json.dumps(rows, indent=2, sort_keys=True), encoding="utf-8")

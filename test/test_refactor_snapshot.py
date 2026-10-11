@@ -40,66 +40,19 @@ def equipments():
     ]
 
 
-# --- Deterministic grouping ---
+# --- Greedy grouping ---
 
-def test_deterministic_grouping_output(equipments):
+def test_greedy_grouping_output(equipments):
     config = ProcessingConfig(
-        algorithm="none",
-        graph_min_shared_ratio=0.0,
-        graph_min_shared_count=1,
         group_min_shared_resources=1,
         group_efficiency_threshold=0.0,
     )
     master = RuneMaster(equipments, config=config)
-    groups = master.run_deterministic()
+    groups = master.run_greedy()
 
-    assert len(groups) == 3
-
-    ids_0 = sorted(e.ankama_id for e in groups[0]["equipments"])
-    ids_1 = sorted(e.ankama_id for e in groups[1]["equipments"])
-    ids_2 = sorted(e.ankama_id for e in groups[2]["equipments"])
-    assert ids_0 == [1, 2, 3, 4]
-    assert ids_1 == [5, 6, 7, 8]
-    assert ids_2 == [9, 10]
-
-    assert groups[0]["group_size"] == 4
-    assert groups[0]["shared_resources_count"] == 2
-    assert groups[0]["sharing_efficiency"] == pytest.approx(0.333333, abs=1e-6)
-    assert groups[0]["quality_score"] == pytest.approx(0.65, abs=1e-6)
-
-    assert groups[1]["group_size"] == 4
-    assert groups[1]["shared_resources_count"] == 2
-    assert groups[1]["sharing_efficiency"] == pytest.approx(0.333333, abs=1e-6)
-    assert groups[1]["quality_score"] == pytest.approx(0.65, abs=1e-6)
-
-    assert groups[2]["group_size"] == 2
-    assert groups[2]["shared_resources_count"] == 1
-    assert groups[2]["sharing_efficiency"] == pytest.approx(0.333333, abs=1e-6)
-    assert groups[2]["quality_score"] == pytest.approx(0.45, abs=1e-6)
-
-
-# --- Random grouping with fixed seed ---
-
-def test_random_grouping_with_fixed_seed(equipments):
-    config = ProcessingConfig(
-        random_seed=42,
-        random_group_count=5,
-        group_min_shared_resources=1,
-        group_efficiency_threshold=0.0,
-        use_density_filtering=False,
-    )
-    master = RuneMaster(equipments, config=config)
-    groups = master.run_random_grouping()
-
-    assert len(groups) == 5
-
-    seeds = [g["seed_equipment_id"] for g in groups]
-    assert seeds == [2, 1, 7, 4, 5]
-
-    ids_0 = sorted(e.ankama_id for e in groups[0]["equipments"])
-    ids_2 = sorted(e.ankama_id for e in groups[2]["equipments"])
-    assert ids_0 == [1, 2, 3, 4]
-    assert ids_2 == [5, 6, 7, 8]
+    assert len(groups) >= 1
+    assert all(g["selection_method"] == "greedy" for g in groups)
+    assert all(g["group_size"] >= 2 for g in groups)
 
 
 # --- Density filtering ---
@@ -144,14 +97,11 @@ def test_density_filter_no_filtering(equipments):
 
 def test_get_summary_keys_and_types(equipments):
     config = ProcessingConfig(
-        algorithm="none",
-        graph_min_shared_ratio=0.0,
-        graph_min_shared_count=1,
         group_min_shared_resources=1,
         group_efficiency_threshold=0.0,
     )
     master = RuneMaster(equipments, config=config)
-    master.run_deterministic()
+    master.run_greedy()
     summary = master.get_summary()
 
     expected_keys = {
@@ -164,7 +114,6 @@ def test_get_summary_keys_and_types(equipments):
         "max_efficiency", "min_efficiency", "average_group_size", "max_group_size",
     }
     assert set(summary.keys()) == expected_keys
-
     assert isinstance(summary["total_groups"], int)
     assert isinstance(summary["total_equipment_in_groups"], int)
     assert isinstance(summary["unique_equipment_in_groups"], int)
@@ -178,38 +127,3 @@ def test_get_summary_keys_and_types(equipments):
                 "maximum_group_overlap", "portfolio_quality_score",
                 "max_efficiency", "min_efficiency", "average_group_size"]:
         assert isinstance(summary[key], float), f"{key} should be float"
-
-    assert summary["total_groups"] == 3
-    assert summary["total_equipment"] == 10
-    assert summary["total_equipment_in_groups"] == 10
-    assert summary["unique_equipment_in_groups"] == 10
-    assert summary["retention_rate"] == pytest.approx(1.0)
-    assert summary["equipment_coverage_rate"] == pytest.approx(1.0)
-    assert summary["duplicate_assignment_count"] == 0
-    assert summary["assignment_overlap_rate"] == pytest.approx(0.0)
-    assert summary["average_efficiency"] == pytest.approx(0.333333, abs=1e-6)
-    assert summary["average_quality_score"] == pytest.approx(0.583333, abs=1e-6)
-    assert summary["assignment_weighted_quality_score"] == pytest.approx(0.61, abs=1e-6)
-    assert summary["mean_group_overlap"] == pytest.approx(0.0)
-    assert summary["maximum_group_overlap"] == pytest.approx(0.0)
-    assert summary["portfolio_quality_score"] == pytest.approx(0.7465, abs=1e-6)
-    assert summary["max_efficiency"] == pytest.approx(0.333333, abs=1e-6)
-    assert summary["min_efficiency"] == pytest.approx(0.333333, abs=1e-6)
-    assert summary["average_group_size"] == pytest.approx(3.333333, abs=1e-6)
-    assert summary["max_group_size"] == 4
-
-
-# --- run_all() is alias of run_deterministic() ---
-
-def test_run_all_is_deterministic_alias(equipments):
-    config = ProcessingConfig(
-        algorithm="none",
-        graph_min_shared_ratio=0.0,
-        graph_min_shared_count=1,
-        group_min_shared_resources=1,
-        group_efficiency_threshold=0.0,
-    )
-    master = RuneMaster(equipments, config=config)
-    groups = master.run_all()
-    assert len(groups) == 3
-    assert all(g["selection_method"] == "deterministic" for g in groups)

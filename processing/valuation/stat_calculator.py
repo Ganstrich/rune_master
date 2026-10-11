@@ -125,9 +125,8 @@ def calculate_equipment_weight(
                 stat_weights=weights
             )
             total_weight += stat_line_weight
-        except (KeyError, AttributeError) as e:
-            # Log unknown stat types but continue calculation
-            print(f"⚠️  Skipping stat for equipment {equipment.name}: {e}")
+        except (KeyError, AttributeError):
+            # Unknown or non-rune stat types are silently skipped
             continue
     
     return total_weight
