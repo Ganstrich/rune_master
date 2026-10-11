@@ -12,7 +12,7 @@ from main import parse_args
 from models import Equipment, ResourceRequirement
 from processing import ProcessingConfig, RuneMaster
 from processing.filters.equipment_filter import EquipmentFilteringStrategy
-from processing.experts.random_group_builder import RandomGroupBuilder
+
 from visualization import HTMLGenerator
 
 
@@ -34,22 +34,15 @@ def make_equipments() -> list[Equipment]:
     ]
 
 
-def test_random_seed_is_reproducible_without_duplicate_seeds() -> None:
-    """A fixed builder seed should produce the same seed sequence."""
+def test_greedy_is_reproducible() -> None:
+    """Greedy grouping should produce the same groups on repeated runs."""
     equipments = make_equipments()
-    builder = RandomGroupBuilder(equipments, seed=7)
+    config = ProcessingConfig(group_min_shared_resources=1)
 
-    first = builder.build_multiple_random_groups(
-        equipments, count=4, min_shared_resources=1
-    )
-    second = RandomGroupBuilder(equipments, seed=7).build_multiple_random_groups(
-        equipments, count=4, min_shared_resources=1
-    )
+    first = RuneMaster(equipments, config=config).run_greedy()
+    second = RuneMaster(equipments, config=config).run_greedy()
 
-    first_seeds = [group["seed_equipment_id"] for group in first]
-    second_seeds = [group["seed_equipment_id"] for group in second]
-    assert first_seeds == second_seeds
-    assert len(first_seeds) == len(set(first_seeds))
+    assert [g["group_size"] for g in first] == [g["group_size"] for g in second]
 
 
 def test_density_filter_falls_back_when_pool_is_too_small() -> None:
@@ -67,31 +60,27 @@ def test_density_filter_falls_back_when_pool_is_too_small() -> None:
     assert was_filtered is False
 
 
-def test_deterministic_pipeline_returns_canonical_groups() -> None:
-    """The offline graph path should produce complete group metadata."""
+def test_greedy_pipeline_returns_canonical_groups() -> None:
+    """The greedy path should produce complete group metadata."""
     config = ProcessingConfig(
-        algorithm="none",
-        graph_min_shared_ratio=0.0,
-        graph_min_shared_count=1,
         group_min_shared_resources=1,
         group_efficiency_threshold=0.0,
     )
-    groups = RuneMaster(make_equipments(), config=config).run_deterministic()
+    groups = RuneMaster(make_equipments(), config=config).run_greedy()
 
     assert groups
-    assert all(group["selection_method"] == "deterministic" for group in groups)
+    assert all(group["selection_method"] == "greedy" for group in groups)
     assert all(group["equipments"] for group in groups)
     assert all("total_ingredients" in group for group in groups)
 
 
 def test_visualization_generates_index_and_group_page(tmp_path: Path) -> None:
     """A canonical offline group should render a self-contained report."""
-    group = RandomGroupBuilder(make_equipments(), seed=1).build_random_group(
-        make_equipments(), min_shared_resources=1
-    )
-    assert group is not None
+    config = ProcessingConfig(group_min_shared_resources=1)
+    groups = RuneMaster(make_equipments(), config=config).run_greedy()
+    assert groups
 
-    paths = HTMLGenerator(output_dir=str(tmp_path)).generate_all([group])
+    paths = HTMLGenerator(output_dir=str(tmp_path)).generate_all(groups)
 
     generated_names = {path.name for path in map(Path, paths)}
     assert "index.html" in generated_names
@@ -136,7 +125,7 @@ def test_visualization_writes_reproducible_manifest(tmp_path: Path) -> None:
     manifest = {
         "run_id": "fixed-run",
         "generated_at": "2026-09-30T00:00:00+00:00",
-        "grouping_method": "deterministic",
+        "grouping_method": "greedy",
         "scope": {"summary": "Levels 50-100; types: ring"},
     }
 
