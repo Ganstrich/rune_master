@@ -10,7 +10,7 @@ from processing.config import ProcessingConfig
 from processing.orchestrator import RuneMaster
 
 
-METHODS = ("deterministic", "random", "greedy", "hybrid")
+METHODS = ("deterministic", "random", "greedy")
 
 
 def _comparison_row(name: str, groups: list[dict[str, Any]], summary: dict[str, Any], runtime: float) -> dict[str, Any]:
@@ -43,7 +43,7 @@ def run_comparison(
         elif method == "greedy":
             groups = master.run_greedy()
         elif method == "hybrid":
-            groups = master.run_hybrid_grouping()
+            raise ValueError("hybrid method has been removed (redundant with deterministic)")
         else:
             raise ValueError(f"Unknown comparison method: {method}")
         rows.append(_comparison_row(method, groups, master.get_summary(), time.perf_counter() - started))

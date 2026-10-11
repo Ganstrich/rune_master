@@ -1,4 +1,4 @@
-"""Tests for the API-only challenge metrics (plans/pipeline-challenge.md §2)."""
+"""Tests for the API-only challenge metrics (M1-M9, §2 of the challenge plan)."""
 
 import pytest
 

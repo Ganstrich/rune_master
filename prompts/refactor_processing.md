@@ -27,9 +27,10 @@ a rewrite. The goal is the same behavior, in smaller, clearer pieces.
 
 I have seen you get stuck repeating yourself. To prevent that:
 
-- STATE FILE: Maintain `plans/refactor/STATE.md`. Update it after EVERY step
-  (format in section 6). At the start of every session and after any
-  confusion, re-read ONLY this file, not the whole codebase.
+- STATE FILE: Maintain a state file in `plans/refactor/` (if that directory
+  exists). Update it after EVERY step (format in section 6). At the start of
+  every session and after any confusion, re-read ONLY this file, not the
+  whole codebase.
 - ONE STEP AT A TIME. Each step touches at most ONE module/concern and at most
   ~150 changed lines. Finish it, verify, commit, update STATE.md, then pick
   the next.
@@ -50,7 +51,8 @@ I have seen you get stuck repeating yourself. To prevent that:
 
 ## 2. PHASE A: Inventory (no code changes)
 
-Goal: understand what exists. Output goes ONLY to `plans/refactor/INVENTORY.md`.
+Goal: understand what exists. Output goes ONLY to `plans/refactor/INVENTORY.md`
+(if that directory exists).
 
 For every `.py` file in `processing/` (including `processing/experts/`):
 - path, line count
@@ -78,7 +80,7 @@ Before moving any code:
    (6–12 items with overlapping recipes, built in the test, no network):
    - deterministic grouping output (group membership + canonical metrics)
    - random grouping with a fixed `random_seed`
-   - hybrid supplementation
+
    - density filtering (including the fallback-disabled case)
    - `get_summary()` keys and value types
    Store expected values as literals in the test (not recomputed).
@@ -90,7 +92,7 @@ two-strike rule.
 
 ## 4. PHASE C: Refactor plan
 
-Write `plans/refactor/PLAN.md` as an ordered checklist of atomic steps. Each step:
+Write `plans/refactor/PLAN.md` (if that directory exists) as an ordered checklist of atomic steps. Each step:
 - ID (S01, S02, ...)
 - what moves/changes, in one sentence
 - files touched
@@ -164,10 +166,10 @@ Phase: <A|B|C|D>   Current step: <ID>   Last green commit: <hash>
 - No file in `processing/` > ~250 lines, no function > ~40 lines (or justified)
 - `processing/PROCESSING.md` still accurate; update only file paths/names if
   they changed, never the algorithm descriptions
-- `plans/refactor/FINDINGS.md` lists every bug/oddity noticed but NOT changed
+- `plans/refactor/FINDINGS.md` (if that directory exists) lists every bug/oddity noticed but NOT changed
 
 ## 8. First action
 
-Start Phase A now. Create `plans/refactor/` and `STATE.md`, then do the
-inventory. Do not write any code outside `plans/refactor/` until I approve
-Phase C.
+Start Phase A now. Create `plans/refactor/` (if it does not exist) and
+`STATE.md`, then do the inventory. Do not write any code outside
+`plans/refactor/` until I approve Phase C.

@@ -1,22 +1,27 @@
 #!/usr/bin/env python3
-"""Attribute the greedy expert's coverage gap (plans/pipeline-challenge.md C3).
+"""Attribute the greedy expert's coverage gap, using the SHIPPED expert.
 
-The shipped GreedyGroupingExpert covered 1406/2364 items (59.48%) where the
-plan's simulated sweep predicted 98.71%. This replays the expert's own growth
-loop and classifies every uncovered item, so the gap is attributed rather than
-guessed at.
+The previous version of this script re-implemented the greedy growth loop and
+omitted the ``GroupAcceptancePolicy`` gate. That made its output internally
+impossible (``coverage_if_singletons_kept`` exceeded 1.0) and mis-attributed the
+gap to "singleton discards". This version runs ``RuneMaster.run_greedy()`` and
+classifies whatever the real pipeline left uncovered, then replays the same
+growth loop *with the policy applied* to attribute the loss.
 
-Findings it is built to distinguish:
-  - singleton discards  : the seed grew nothing, so it was dropped and never
-                          marked covered -> it can never join another group
-  - orphaned by covered : every neighbour was already consumed by an earlier group
-  - truly isolated      : the item shares no resource with the pool
+Findings it distinguishes:
+  - empty recipe      : the item has no recipe resources at all
+  - truly isolated    : the item shares no resource with any other pool item
+  - orphaned          : every partner was already consumed by an earlier group
+  - partner available : the item still has a free partner, so it was excluded by
+                        the acceptance budget rather than by reachability
 
 Usage:
-    uv run python scripts/challenge_coverage_gap.py
+    uv run python scripts/challenge_coverage_gap.py [snapshot_version]
 """
 from __future__ import annotations
 
+import contextlib
+import io
 import json
 import sys
 from collections import defaultdict
@@ -28,9 +33,11 @@ sys.path.insert(0, str(ROOT))
 from data.snapshot import load_snapshot
 from processing.blocks.recipes import recipe_resource_ids
 from processing.config import ProcessingConfig
-from processing.filters.equipment_filter import SetExclusionFilter
+from processing.experts.greedy_expert import GreedyGroupingExpert
+from processing.metrics.group_metrics import GroupMetrics
+from processing.orchestrator import RuneMaster
+from processing.policy import GroupAcceptancePolicy
 from processing.valuation.focus import break_density
-from processing.valuation.objective import GroupCandidate
 from processing.valuation.overlap import OverlapObjective
 
 
@@ -46,106 +53,104 @@ def resolve_snapshot(version: str | None) -> Path:
 
 def main() -> int:
     snapshot_dir = resolve_snapshot(sys.argv[1] if len(sys.argv) > 1 else None)
-    equipments, _, _ = load_snapshot(snapshot_dir)
+    with contextlib.redirect_stderr(io.StringIO()):
+        equipments, _, _ = load_snapshot(snapshot_dir)
 
     config = ProcessingConfig()
     excluded = set(config.excluded_resource_ids)
+
+    # --- 1. Run the real pipeline. -------------------------------------------
+    with contextlib.redirect_stdout(io.StringIO()):
+        master = RuneMaster(equipments, config=config)
+        groups = master.run_greedy()
+    pool = master.equipments
+    covered = {e.ankama_id for g in groups for e in g.get("equipments", [])}
+
+    # --- 2. Replay the growth loop WITH the policy, to attribute the loss. ----
     objective = OverlapObjective(config.group_quality_weights)
-
-    pool, _ = SetExclusionFilter.exclude_panoplie_items(
-        equipments, config.set_exclusion_min_size
-    )
-
-    by_id = {e.ankama_id: e for e in pool}
+    policy = GroupAcceptancePolicy(config)
     resources = {e.ankama_id: recipe_resource_ids(e) - excluded for e in pool}
+    by_id = {e.ankama_id: e for e in pool}
     neighbours: dict[int, set[int]] = defaultdict(set)
-    for equipment_id, resource_ids in resources.items():
-        for resource_id in resource_ids:
-            neighbours[resource_id].add(equipment_id)
+    for eid, rids in resources.items():
+        for rid in rids:
+            neighbours[rid].add(eid)
 
-    covered: set[int] = set()
-    singleton_discards: list[int] = []
-    singleton_by_band: dict[int, int] = defaultdict(int)
-    grown = 0
-
-    seeds = sorted(pool, key=break_density, reverse=True)
-    for seed in seeds:
-        seed_id = seed.ankama_id
-        if seed_id in covered or not resources[seed_id]:
+    replay_covered: set[int] = set()
+    singleton_seeds = 0
+    rejected_by: dict[str, int] = defaultdict(int)
+    for seed in sorted(pool, key=break_density, reverse=True):
+        if seed.ankama_id in replay_covered or not resources[seed.ankama_id]:
             continue
-
-        members = [seed]
-        member_ids = {seed_id}
-        pooled = set(resources[seed_id])
-        current = GroupCandidate(members, excluded)
-        current_score = objective.score(current)
-
-        while len(members) < config.group_max_size:
-            candidate_ids = {
-                neighbour
-                for resource_id in pooled
-                for neighbour in neighbours.get(resource_id, ())
-                if neighbour not in member_ids and neighbour not in covered
-            }
-            if not candidate_ids:
-                break
-            ranked = sorted(
-                candidate_ids,
-                key=lambda item_id: -len(resources[item_id] & pooled),
-            )[: config.greedy_candidate_limit]
-            best, best_score = None, current_score
-            for item_id in ranked:
-                score = objective.score(current.with_item(by_id[item_id]))
-                if score > best_score:
-                    best, best_score = item_id, score
-            if best is None:
-                break
-            members.append(by_id[best])
-            member_ids.add(best)
-            pooled |= resources[best]
-            current = GroupCandidate(members, excluded)
-            current_score = best_score
-
+        members = GreedyGroupingExpert._grow(
+            seed, by_id, resources, neighbours, objective, config, excluded,
+            replay_covered,
+        )
         if len(members) < config.group_min_size:
-            singleton_discards.append(seed_id)
-            singleton_by_band[(seed.level or 0) // 20] += 1
+            singleton_seeds += 1
             continue
+        group = GroupMetrics.build_group_dict(
+            members,
+            excluded_resource_ids=excluded,
+            quality_weights=config.group_quality_weights,
+        )
+        reason = policy.rejection_reason(group)
+        if reason is not None:
+            rejected_by[reason] += 1
+            continue
+        replay_covered |= {e.ankama_id for e in members}
 
-        grown += 1
-        covered |= member_ids
-
-    # Classify what remains uncovered.
-    uncovered = [item for item in pool if item.ankama_id not in covered]
-    truly_isolated = [
-        item for item in uncovered
-        if not any(
-            neighbours.get(resource_id, set()) - {item.ankama_id}
-            for resource_id in resources[item.ankama_id]
+    # --- 3. Classify the items the real run left uncovered. ------------------
+    uncovered = [e for e in pool if e.ankama_id not in covered]
+    empty_recipe = [e for e in uncovered if not resources[e.ankama_id]]
+    isolated = [
+        e for e in uncovered
+        if resources[e.ankama_id]
+        and not any(
+            neighbours.get(rid, set()) - {e.ankama_id}
+            for rid in resources[e.ankama_id]
         )
     ]
-    discarded_ids = set(singleton_discards)
-    residual = [
-        item for item in uncovered
-        if item.ankama_id not in discarded_ids and item not in truly_isolated
-    ]
+    rest = [e for e in uncovered if e not in empty_recipe and e not in isolated]
+    orphaned, available = [], []
+    for e in rest:
+        partners: set[int] = set()
+        for rid in resources[e.ankama_id]:
+            partners |= neighbours.get(rid, set())
+        partners -= {e.ankama_id}
+        (orphaned if partners and partners <= covered else available).append(e)
 
     report = {
         "snapshot": snapshot_dir.name,
         "pool_size": len(pool),
-        "groups_grown": grown,
+        "groups": len(groups),
         "covered": len(covered),
         "coverage": len(covered) / len(pool) if pool else 0.0,
-        "singleton_discards": len(singleton_discards),
-        "singleton_discards_by_band": dict(sorted(singleton_by_band.items())),
-        "truly_isolated": len(truly_isolated),
-        "residual_uncovered": len(residual),
-        "coverage_if_singletons_kept": (
-            (len(covered) + len(singleton_discards)) / len(pool) if pool else 0.0
-        ),
+        "gap_attribution": {
+            "singleton_seeds_below_min_size": singleton_seeds,
+            "grown_but_policy_rejected": sum(rejected_by.values()),
+            "rejected_by_reason": dict(sorted(rejected_by.items())),
+        },
+        "uncovered": len(uncovered),
+        "uncovered_breakdown": {
+            "empty_recipe": len(empty_recipe),
+            "truly_isolated": len(isolated),
+            "orphaned_all_partners_covered": len(orphaned),
+            "partner_available_but_unassigned": len(available),
+        },
     }
 
     print(json.dumps(report, indent=2, ensure_ascii=False))
-    out = ROOT / "plans" / "coverage-gap.json"
+
+    # Sanity checks: a coverage claim that violates these is a bug, not a finding.
+    assert report["covered"] <= report["pool_size"], "covered exceeds the pool"
+    assert report["coverage"] <= 1.0, "coverage exceeds 100%"
+    assert sum(report["uncovered_breakdown"].values()) == report["uncovered"], (
+        "uncovered breakdown does not sum to the uncovered count"
+    )
+
+    out = ROOT / "data" / "plans" / "coverage-gap.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"\nWrote {out}", file=sys.stderr)
     return 0

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Run every grouping method and expert through the challenge metrics.
 
-Implements plans/pipeline-challenge.md §4. API-only: no prices, no taux, no
+Implements the pipeline challenge plan §4. API-only: no prices, no taux, no
 rarity. Each method runs in a subprocess with a hard timeout, because the full
 committee run was observed to exceed 550s -- a method that cannot finish on the
 full pool is a finding, not an error to hide.
@@ -34,7 +34,6 @@ from processing.filters.equipment_filter import SetExclusionFilter
 METHODS = (
     "deterministic",
     "random",
-    "hybrid",
     "greedy",
     "survey",
 )
@@ -219,7 +218,7 @@ def main() -> int:
               f"{report['group_count']} groups | "
               f"coverage {report['coverage']['global'] * 100:.2f}%")
 
-    out_path = ROOT / "plans" / "challenge-results.json"
+    out_path = ROOT / "data" / "plans" / "challenge-results.json"
     out_path.write_text(json.dumps(results, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"\nWrote {out_path}")
     return 0

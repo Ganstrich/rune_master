@@ -27,7 +27,6 @@ from processing.orchestrator import RuneMaster
 METHOD_DISPATCH = {
     "deterministic": "run_deterministic",
     "random": "run_random_grouping",
-    "hybrid": "run_hybrid_grouping",
     "greedy": "run_greedy",
     "survey": "run_survey",
 }
@@ -46,7 +45,7 @@ def main() -> int:
         parser.error("exactly one of --method / --expert is required")
 
     equipments, _, _ = load_snapshot(Path(args.snapshot))
-    config = ProcessingConfig(grouping_method=args.method or "hybrid")
+    config = ProcessingConfig(grouping_method=args.method or "greedy")
     if args.no_set_filter:
         config.set_exclusion_min_size = 99
 

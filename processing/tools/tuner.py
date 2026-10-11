@@ -48,7 +48,7 @@ def _worker_run_config(
     elif method == "greedy":
         master.run_greedy()
     elif method == "hybrid":
-        master.run_hybrid_grouping()
+        raise ValueError("hybrid method has been removed (redundant with deterministic)")
     else:
         master.run_all()
 

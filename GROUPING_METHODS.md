@@ -16,7 +16,7 @@ differ in how they search the solution space and trade speed for quality.
 | --- | --- |
 | Best quality/coverage/speed | `greedy` (default) |
 | Fastest iteration | `deterministic` |
-| Reliable fallback | `hybrid` |
+| Reliable fallback | `deterministic` |
 | Exploring diversity | `random` |
 | Union of every expert | `survey` |
 
@@ -103,8 +103,8 @@ config.use_density_filtering = True      # Filter by equipment density
 **Best for**: scenarios where deterministic alone might be sparse.
 
 ```bash
-make method METHOD=hybrid
-uv run main.py --grouping-method hybrid --no-serve
+make method METHOD=deterministic
+uv run main.py --grouping-method deterministic --no-serve
 ```
 
 ---
@@ -210,5 +210,5 @@ evaluated, validated, or reported. This allows fair comparison and smooth
 method switching.
 
 Removed methods (`committee`, `genetic`, `evolutionary_committee`, `baseline`)
-were measured as dominated by greedy — see `plans/phase1-decision.md`. Their
+were measured as dominated by greedy — see commit 82a32ba. Their
 code has been deleted.

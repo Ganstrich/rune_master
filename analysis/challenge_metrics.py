@@ -4,7 +4,7 @@ Every metric here is computable from the frozen game snapshot alone: equipment
 recipes, resource records and the set index. Nothing depends on prices, taux or
 drop rates, because DofusAPI exposes none of them.
 
-Definitions live in ``plans/pipeline-challenge.md`` §2 (M1-M9) and §1.1 (A1-A4).
+Definitions live in the pipeline challenge plan (M1-M9, §2) and §1.1 (A1-A4).
 
 This module is additive: nothing in the existing pipeline imports it, so adding
 it cannot change grouping behaviour.

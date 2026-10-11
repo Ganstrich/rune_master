@@ -36,21 +36,21 @@ METHODS = [
     "deterministic",
     "random",
     "greedy",
-    "hybrid",
+    "survey",
 ]
 
 TIMEOUTS = {
     "deterministic": 60,
     "random": 60,
     "greedy": 60,
-    "hybrid": 60,
+    "survey": 120,
 }
 
 _RUNNERS = {
     "deterministic": "run_deterministic",
     "random": "run_random_grouping",
     "greedy": "run_greedy",
-    "hybrid": "run_hybrid_grouping",
+    "survey": "run_survey",
 }
 
 

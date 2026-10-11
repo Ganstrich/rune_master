@@ -35,7 +35,7 @@ The core dependencies are NetworkX, python-louvain, NumPy, Requests, and tqdm.
 ```bash
 uv sync
 
-# Run the default hybrid pipeline, generate reports, and open a local server.
+# Run the default greedy pipeline, generate reports, and open a local server.
 uv run main.py
 
 # Generate reports without keeping a server process open.
@@ -84,7 +84,7 @@ The RuneMaster pipeline supports five grouping strategies, each with distinct tr
 | --- | --- | --- | --- |
 | `deterministic` | ⚡⚡⚡ Very Fast | Good | Quick iterations, graph-only analysis |
 | `random` | ⚡⚡ Fast | Fair | Solution space exploration |
-| `hybrid` | ⚡⚡ Fast | Good | Balanced approach with deterministic fallback |
+
 | `greedy` | ⚡ Fast | ⭐ Very Good | **Best quality/coverage/speed (default)** |
 | `survey` | ⚡⚡ Fast | Good | Union of every expert's proposals |
 
@@ -94,7 +94,7 @@ The RuneMaster pipeline supports five grouping strategies, each with distinct tr
 
 - **`random`**: Applies density filtering, samples unique seed equipment, and finds compatible companions. Explores the solution space stochastically. A requested group count is a target, not a guarantee.
 
-- **`hybrid`**: Runs deterministic grouping first and supplements it with random groups only when the deterministic result is below a threshold. Balances determinism with fallback coverage.
+
 
 - **`greedy`** (default): Grows each group directly against the objective, seeding from high-density uncovered items and adding the best admissible companion until nothing improves the group. Reaches items the graph discards.
 
@@ -102,7 +102,7 @@ The RuneMaster pipeline supports five grouping strategies, each with distinct tr
 
 ### When to Use Each Method
 
-- **Need results now?** Use `hybrid` or `deterministic` (~milliseconds to seconds)
+- **Need results now?** Use `deterministic` (~milliseconds to seconds)
 - **Quick dev iteration?** Use `deterministic` (~milliseconds)
 - **Want the best groups?** Use `greedy` (the default)
 - **Exploring solutions?** Use `random` to see different possibilities
@@ -155,7 +155,7 @@ used by the random expert; deterministic graph grouping uses the loaded pool.
 ## CLI
 
 ```text
---grouping-method {deterministic,random,hybrid,greedy,survey}
+--grouping-method {deterministic,random,greedy,survey}
 --random-groups N       Positive target number of random groups
 --density-ratio R       Non-negative density/level threshold
 --random-seed N         Seed for reproducible random grouping
@@ -310,7 +310,7 @@ git diff --check
 ```
 
 The current suite is offline and covers canonical group fields, random-seed
-reproducibility, density-filter fallback, deterministic grouping, hybrid
+reproducibility, density-filter fallback, deterministic grouping, greedy
 supplementation, and basic report generation. It does not provide a published
 coverage percentage, benchmark suite, or automated live-API test.
 

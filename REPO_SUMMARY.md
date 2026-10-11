@@ -192,7 +192,7 @@ class ResourceRequirement:
 | --- | --- | --- | --- |
 | `deterministic` | Very Fast | Good | Quick iterations, graph-only analysis |
 | `random` | Fast | Fair | Solution space exploration |
-| `hybrid` | Fast | Good | Balanced approach with deterministic fallback |
+
 | `greedy` | Fast | Very Good | Objective-driven greedy grouping (default) |
 | `survey` | Slowest | Diagnostic | Runs all experts, tags groups with origin |
 
@@ -204,7 +204,7 @@ class ResourceRequirement:
 - `make method METHOD=greedy` — runs specific method
 - `make tune` — runs with parameter tuning
 
-**Removed methods (2026-10-10):** `committee`, `genetic`, `evolutionary_committee`, `baseline` — measured as dominated by greedy (see `plans/phase1-decision.md`). Their code and config fields have been deleted.
+**Removed methods (2026-10-10):** `committee`, `genetic`, `evolutionary_committee`, `baseline` — measured as dominated by greedy (see commit 82a32ba). Their code and config fields have been deleted.
 
 ---
 
@@ -243,7 +243,7 @@ Key defaults:
 uv run main.py [options]
 
 Options:
-  --grouping-method {deterministic,random,hybrid,greedy,survey}
+  --grouping-method {deterministic,random,greedy,survey}
   --random-groups N       Target number of random groups
   --density-ratio R       Density/level threshold
   --random-seed N         Seed for reproducible random grouping
@@ -265,7 +265,7 @@ python3 -m compileall -q data processing main.py config.py
 git diff --check
 ```
 
-**Test suite:** Offline tests covering canonical group fields, random-seed reproducibility, density-filter fallback, deterministic grouping, hybrid supplementation, and basic report generation. No live-API test or coverage percentage.
+**Test suite:** Offline tests covering canonical group fields, random-seed reproducibility, density-filter fallback, deterministic grouping, and basic report generation. No live-API test or coverage percentage.
 
 **Python API usage:**
 ```python

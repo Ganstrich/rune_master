@@ -100,7 +100,7 @@ class RuneMaster:
 
         self.objective = OverlapObjective(self.config.group_quality_weights)
         self.policy = GroupAcceptancePolicy(self.config)
-        # Active experts only (see plans/phase1-decision.md for the removed
+        # Active experts only (see commit 82a32ba for the removed
         # methods).
         self.experts = {
             "deterministic": GraphGroupingExpert(
@@ -153,34 +153,6 @@ class RuneMaster:
         expert = self.experts["random"]
         self.groups = expert.discover_groups(self.equipments, self.config)
 
-        self.print_summary()
-        return self.groups
-
-    def run_hybrid_grouping(self) -> List[Dict[str, Any]]:
-        """Run hybrid grouping: deterministic supplemented by random."""
-        print("\n" + "=" * 60)
-        print("🚀 RuneMaster: Hybrid Pipeline (Deterministic + Random)")
-        print("=" * 60)
-
-        # 1. Deterministic
-        det_groups = self.experts["deterministic"].discover_groups(
-            self.equipments, self.config
-        )
-
-        # 2. Check if random supplement needed
-        min_threshold = max(5, int(self.config.random_group_count * 0.5))
-        if len(det_groups) < min_threshold:
-            print(f"      Supplementing with random groups (count < {min_threshold})")
-            rand_groups = self.experts["random"].discover_groups(
-                self.equipments, self.config
-            )
-        else:
-            print(
-                f"      Deterministic groups sufficient ({len(det_groups)}). Skipping random."
-            )
-            rand_groups = []
-
-        self.groups = det_groups + rand_groups
         self.print_summary()
         return self.groups
 

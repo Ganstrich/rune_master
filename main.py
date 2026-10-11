@@ -122,7 +122,6 @@ def build_parser() -> argparse.ArgumentParser:
         choices=[
             "deterministic",
             "random",
-            "hybrid",
             "greedy",
             "survey",
         ],
@@ -149,6 +148,17 @@ def build_parser() -> argparse.ArgumentParser:
         "--no-job-filter",
         action="store_true",
         help="Ignore configured job levels and keep the full equipment pool",
+    )
+    parser.add_argument(
+        "--set-exclusion-min-size",
+        type=int,
+        default=None,
+        metavar="N",
+        help=(
+            "Exclude items belonging to a panoplie with at least N members "
+            "present in the pool. 1 excludes all set items; 99 disables the "
+            "filter. Default: 5 (ProcessingConfig)."
+        ),
     )
     return parser
 
@@ -379,8 +389,6 @@ def process_equipment(
 
     if config.grouping_method == "random":
         groups = master.run_random_grouping()
-    elif config.grouping_method == "hybrid":
-        groups = master.run_hybrid_grouping()
     elif config.grouping_method == "greedy":
         groups = master.run_greedy()
     elif config.grouping_method == "survey":
@@ -532,6 +540,8 @@ def main():
         processing_config.equipment_density_level_ratio = args.density_ratio
     if args.random_seed is not None:
         processing_config.random_seed = args.random_seed
+    if args.set_exclusion_min_size is not None:
+        processing_config.set_exclusion_min_size = args.set_exclusion_min_size
 
     # Job levels: player_config.json is the baseline, --job-levels overrides
     # individual jobs, --no-job-filter disables filtering entirely.

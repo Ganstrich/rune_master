@@ -130,8 +130,8 @@ which failing the change addresses.
 ## Future Work, Explicitly Out Of Scope
 
 **Learning a temporal model of taux evolution.** Observations age, and
-[../plans/processing/32-taux-model.md](../plans/processing/32-taux-model.md)
-handles this by down-weighting them on a fixed exponential half-life. A stronger
+A future taux-model plan would handle this by down-weighting them on a fixed
+exponential half-life. A stronger
 approach would *predict* how an item's taux evolves — as a function of elapsed
 time, server-wide break volume, patch cycles, or item popularity — rather than
 merely discounting stale data.
