@@ -9,7 +9,7 @@ def main() -> None:
     parser.add_argument("--input", required=True, help="JSON with items and observations")
     args = parser.parse_args()
     payload = json.loads(open(args.input, encoding="utf-8").read())
-    from processing.exploration import rank_exploration
+    from processing.valuation.exploration import rank_exploration
     from data.loaders import EquipmentLoader
 
     items = [EquipmentLoader().from_raw_api(raw) for raw in payload["items"]]

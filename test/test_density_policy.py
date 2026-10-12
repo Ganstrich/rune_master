@@ -1,5 +1,5 @@
 from models import Equipment
-from processing.config_dataclass import ProcessingConfig
+from processing.config import ProcessingConfig
 from data.loaders import EquipmentLoader
 
 

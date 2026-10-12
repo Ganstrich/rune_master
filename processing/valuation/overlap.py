@@ -1,6 +1,6 @@
 """The current price-independent overlap objective."""
 
-from processing.quality_metrics import GroupQualityEvaluator, GroupQualityWeights
+from processing.metrics.quality_metrics import GroupQualityEvaluator, GroupQualityWeights
 from processing.valuation.objective import GroupCandidate, GroupObjective
 
 

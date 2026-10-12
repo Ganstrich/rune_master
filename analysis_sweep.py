@@ -7,7 +7,7 @@ opt-in because they are only meaningful once the structure is understood.
 
 Usage:
     uv run analysis_sweep.py
-    uv run analysis_sweep.py --with-experts --methods deterministic,committee
+    uv run analysis_sweep.py --with-experts --methods greedy
     uv run analysis_sweep.py --bands 1-50,50-100 --crafts bijoutier,forgeron
 """
 
@@ -24,10 +24,7 @@ from collections import Counter
 from dataclasses import replace
 from itertools import combinations
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Sequence, Set, Tuple
-
-import community as community_louvain
-import networkx as nx
+from typing import Any, Dict, Iterable, List, Sequence, Tuple
 
 from config import (
     BIJOUTIER,
@@ -44,11 +41,9 @@ from data.loaders import EquipmentLoader
 from models import Equipment
 from processing.blocks.recipes import recipe_resource_ids
 from processing.blocks.similarity import jaccard
-from processing.community_detector import CommunityDetector
-from processing.config_dataclass import ProcessingConfig
-from processing.graph_builder import GraphBuilder
+from processing.config import ProcessingConfig
 from processing.orchestrator import RuneMaster
-from processing.quality_metrics import PortfolioQualityEvaluator
+from processing.metrics.quality_metrics import PortfolioQualityEvaluator
 from processing.valuation.focus import break_density
 
 CRAFTS: Dict[str, List[str]] = {
@@ -63,25 +58,11 @@ CRAFTS: Dict[str, List[str]] = {
 DEFAULT_BANDS: List[Tuple[int, int]] = [(1, 50), (50, 100), (100, 150), (150, 200)]
 
 DEFAULT_METHODS: List[str] = [
-    "deterministic",
-    "random",
-    "genetic",
     "greedy",
-    "hybrid",
-    "committee",
-    "evolutionary_committee",
 ]
 
 _METHOD_DISPATCH = {
-    "deterministic": "run_deterministic",
-    "random": "run_random_grouping",
-    "genetic": "run_genetic",
     "greedy": "run_greedy",
-    "hybrid": "run_hybrid_grouping",
-    "committee": "run_committee",
-    "evolutionary_committee": "run_evolutionary_committee",
-    "survey": "run_survey",
-    "baseline": "run_baseline",
 }
 
 SHARE_THRESHOLDS = (1, 2, 3)
@@ -192,79 +173,6 @@ def analyse_pairs(equipments: List[Equipment]) -> Dict[str, Any]:
             100 * bucket["same_set"] / total if total else 0.0
         )
     return result
-
-
-def analyse_graph(
-    equipments: List[Equipment], config: ProcessingConfig
-) -> Dict[str, Any]:
-    """Describe the similarity graph and its Louvain partition."""
-    graph, resources = GraphBuilder.build_equipment_graph(
-        equipments,
-        min_shared_ratio=config.graph_min_shared_ratio,
-        min_shared_count=config.graph_min_shared_count,
-        min_component_size=config.graph_min_component_size,
-        same_set_edge_discount=config.same_set_edge_discount,
-    )
-    by_id = {e.ankama_id: e for e in equipments}
-    node_count = graph.number_of_nodes()
-    edge_count = graph.number_of_edges()
-
-    if node_count == 0:
-        return {
-            "graph_nodes": 0,
-            "graph_edges": 0,
-            "graph_retained_pct": 0.0,
-            "graph_density": 0.0,
-            "graph_components": 0,
-            "graph_largest_component": 0,
-            "graph_same_set_edge_pct": 0.0,
-            "communities": 0,
-            "community_mean_size": 0.0,
-            "community_max_size": 0,
-            "modularity": 0.0,
-            "community_mean_largest_set_share": 0.0,
-            "community_pure_panoplie_pct": 0.0,
-        }
-
-    same_set_edges = sum(
-        1 for _, _, data in graph.edges(data=True) if data.get("same_set")
-    )
-    components = list(nx.connected_components(graph))
-
-    with contextlib.redirect_stdout(io.StringIO()):
-        partition = CommunityDetector.find_best_louvain_partition(
-            graph, resources, resolution_range=config.resolution_range, random_seed=42
-        )
-    grouped: Dict[int, List[int]] = {}
-    for equipment_id, community_id in partition.items():
-        grouped.setdefault(community_id, []).append(equipment_id)
-
-    set_shares: List[float] = []
-    for members in grouped.values():
-        counts = Counter(
-            by_id[m].set_id for m in members if by_id.get(m) and by_id[m].set_id is not None
-        )
-        set_shares.append(max(counts.values(), default=0) / len(members))
-
-    return {
-        "graph_nodes": node_count,
-        "graph_edges": edge_count,
-        "graph_retained_pct": 100 * node_count / len(equipments) if equipments else 0.0,
-        "graph_density": nx.density(graph),
-        "graph_components": len(components),
-        "graph_largest_component": max((len(c) for c in components), default=0),
-        "graph_same_set_edge_pct": 100 * same_set_edges / edge_count if edge_count else 0.0,
-        "communities": len(grouped),
-        "community_mean_size": _mean([len(m) for m in grouped.values()]),
-        "community_max_size": max((len(m) for m in grouped.values()), default=0),
-        "modularity": community_louvain.modularity(partition, graph),
-        "community_mean_largest_set_share": _mean(set_shares),
-        "community_pure_panoplie_pct": (
-            100 * sum(1 for s in set_shares if s >= 0.8) / len(set_shares)
-            if set_shares
-            else 0.0
-        ),
-    }
 
 
 def analyse_expert_run(
@@ -393,7 +301,6 @@ def main() -> None:
             }
             row.update(analyse_pool(pool))
             row.update(analyse_pairs(pool))
-            row.update(analyse_graph(pool, base_config))
             structure_rows.append(row)
 
             print(

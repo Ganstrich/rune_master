@@ -1,5 +1,5 @@
 from data.cache_manager import CacheManager
-from processing.break_log import observed_taux, rune_density
+from processing.metrics.break_log import observed_taux, rune_density
 from processing.valuation.density import RUNE_DENSITY
 
 

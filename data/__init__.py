@@ -9,10 +9,13 @@ Components:
 from .api_client import DofusAPIClient
 from .cache_manager import CacheManager
 from .loaders import EquipmentLoader, ResourceLoader
+from .snapshot import load_manifest, load_snapshot
 
 __all__ = [
     "DofusAPIClient",
     "CacheManager",
     "EquipmentLoader",
     "ResourceLoader",
+    "load_snapshot",
+    "load_manifest",
 ]

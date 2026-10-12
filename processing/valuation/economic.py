@@ -1,7 +1,6 @@
 """Profit objective over craft costs and priced break density."""
 
 from dataclasses import dataclass
-from typing import Mapping
 
 from models import Equipment
 from processing.blocks.recipes import iter_recipe

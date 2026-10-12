@@ -1,9 +1,20 @@
 """Pure recipe normalization helpers."""
 
 from collections.abc import Iterable, Iterator
-from typing import Any
+from typing import Any, Dict, Set
 
 from models import Equipment, ResourceRequirement
+
+
+def _build_inverted_index(
+    equipment_resources: Dict[int, Set[int]],
+) -> Dict[int, Set[int]]:
+    """Build shared inverted index: resource_id -> set of equipment_ids."""
+    index: Dict[int, Set[int]] = {}
+    for eq_id, resources in equipment_resources.items():
+        for rid in resources:
+            index.setdefault(rid, set()).add(eq_id)
+    return index
 
 
 def iter_recipe(equipment: Equipment | dict[str, Any]) -> Iterator[tuple[int, int]]:

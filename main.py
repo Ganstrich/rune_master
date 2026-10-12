@@ -14,11 +14,12 @@ import os
 import sys
 import time
 import argparse
+import json
 import webbrowser
 from dataclasses import asdict, is_dataclass, replace
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
-from typing import Any, List
+from typing import Any, List, Optional
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.resolve()
@@ -26,10 +27,20 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from config import ALL_CRAFTABLE_TYPES, Config
 from data import DofusAPIClient, CacheManager, EquipmentLoader
-from models import Equipment
+from data.snapshot import load_snapshot
+from data.snapshot_source import (
+    _NoOpAPI,
+    _ResourceCacheBridge,
+    find_matching_snapshot,
+)
+from models import Equipment, Resource
 from processing import RuneMaster, ProcessingConfig
-from processing.tuner import ParameterTuner
+from processing.filters.job_filter import JobLevelFilter
+from processing.tools.tuner import ParameterTuner
 from visualization import HTMLGenerator
+
+JOB_LEVEL_JOBS = set(JobLevelFilter.JOB_TO_TYPES)
+PLAYER_CONFIG_PATH = PROJECT_ROOT / "player_config.json"
 
 
 def positive_int(value: str) -> int:
@@ -69,30 +80,75 @@ def validate_scope(min_level: int, max_level: int, selected_types: list[str]) ->
         raise ValueError("at least one item type is required")
 
 
+def job_levels(value: str) -> dict[str, int]:
+    """Parse a comma-separated ``job:level`` mapping."""
+    from processing.filters.job_filter import JobLevelFilter
+
+    try:
+        return JobLevelFilter.parse_job_levels(value)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError(str(error)) from None
+
+
+def load_player_config(path: Path) -> dict:
+    """Load the optional persistent player configuration file.
+
+    A missing or unreadable file is not fatal: the caller falls back to
+    defaults. Malformed JSON or a missing ``job_levels`` mapping is reported
+    so a typo cannot silently disable filtering.
+    """
+    if not path.exists():
+        return {}
+    try:
+        config = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        print(f"⚠️  Ignoring unreadable {path}: {error}")
+        return {}
+    if not isinstance(config, dict):
+        print(f"⚠️  Ignoring {path}: expected a JSON object")
+        return {}
+    levels = config.get("job_levels", {})
+    if not isinstance(levels, dict):
+        print(f"⚠️  Ignoring {path}: 'job_levels' must be a JSON object")
+        return {}
+    return config
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Build the CLI parser separately so scope validation stays offline-testable."""
     parser = argparse.ArgumentParser(description="RuneMaster: Equipment Group Discovery")
-    parser.add_argument(
-        "--grouping-method",
-        choices=[
-            "deterministic",
-            "random",
-            "hybrid",
-            "committee",
-            "genetic",
-            "greedy",
-            "evolutionary_committee",
-            "survey",
-        ],
-    )
-    parser.add_argument("--random-groups", type=positive_int, help="Number of random groups to generate")
     parser.add_argument("--density-ratio", type=nonnegative_float, help="Density/level ratio filter")
-    parser.add_argument("--random-seed", type=int, help="Seed for reproducible random grouping")
     parser.add_argument("--min-level", type=positive_int, default=Config.MIN_LEVEL)
     parser.add_argument("--max-level", type=positive_int, default=Config.MAX_LEVEL)
     parser.add_argument("--item-types", type=item_types, default=list(Config.ITEM_TYPES))
     parser.add_argument("--tune", action="store_true", help="Search for best grouping parameters")
     parser.add_argument("--no-serve", action="store_true", help="Generate reports without starting server")
+    parser.add_argument(
+        "--job-levels",
+        type=job_levels,
+        metavar="JOB:LEVEL[,...]",
+        help=(
+            "Crafting job levels, e.g. 'forgeron:120,bijoutier:80'. "
+            f"Jobs: {', '.join(sorted(JOB_LEVEL_JOBS))}. "
+            "Enables craftability filtering; overrides player_config.json."
+        ),
+    )
+    parser.add_argument(
+        "--no-job-filter",
+        action="store_true",
+        help="Ignore configured job levels and keep the full equipment pool",
+    )
+    parser.add_argument(
+        "--set-exclusion-min-size",
+        type=int,
+        default=None,
+        metavar="N",
+        help=(
+            "Exclude items belonging to a panoplie with at least N members "
+            "present in the pool. 1 excludes all set items; 99 disables the "
+            "filter. Default: 5 (ProcessingConfig)."
+        ),
+    )
     return parser
 
 
@@ -107,10 +163,76 @@ def parse_args(arguments: list[str] | None = None) -> argparse.Namespace:
     return args
 
 
+def resolve_equipment_source() -> tuple[str, Optional[Path]]:
+    """Pick the equipment source: a matching snapshot, or the live API.
+
+    A snapshot is only trustworthy when it records the same game version the
+    API currently serves, because item recipes, levels, and set membership
+    all shift between patches. That check is one ``/meta/version`` request.
+
+    Returns:
+        Tuple of (label, snapshot path or None). The path is None when no
+        snapshot matches and the caller must fall back to the live API.
+    """
+    api = DofusAPIClient()
+    match = find_matching_snapshot(api)
+
+    if match is not None:
+        print(f"\n🗂️  Using snapshot {match.path.name} (game {match.version})")
+        return "snapshot", match.path
+
+    live_version = "unknown"
+    payload = api._make_request(f"/{api.game}/v1/meta/version")
+    if payload and payload.get("version"):
+        live_version = str(payload["version"])
+
+    print(
+        f"\n⚠️  No snapshot matches the live API (live: {live_version}).\n"
+        f"   Falling back to the live API. Run scripts/snapshot_data.py\n"
+        f"   to freeze a snapshot for {live_version}."
+    )
+    return "live", None
+
+
+def _filter_equipments(
+    equipments: List[Equipment], scope: dict[str, Any]
+) -> List[Equipment]:
+    """Apply the item-type and level scope to a loaded pool.
+
+    The snapshot stores the full population, so the CLI scope still has to be
+    applied here. The scope uses the API's English name_ids (``ring``) while
+    the payload carries French display names (``Anneau``), so the type check
+    goes through the numeric type id, which is language-independent.
+    """
+    wanted_ids = {
+        JobLevelFilter.ITEM_TYPE_IDS[name_id]
+        for name_id in scope.get("item_types", [])
+        if name_id in JobLevelFilter.ITEM_TYPE_IDS
+    }
+    min_level = int(scope.get("min_level", Config.MIN_LEVEL))
+    max_level = int(scope.get("max_level", Config.MAX_LEVEL))
+
+    def in_scope(eq: Equipment) -> bool:
+        if wanted_ids and int(eq.type.get("id", -1)) not in wanted_ids:
+            return False
+        return min_level <= eq.level <= max_level
+
+    return [eq for eq in equipments if in_scope(eq)]
+
+
 def load_equipment(
     processing_config: ProcessingConfig, scope: dict[str, Any] | None = None
 ) -> tuple:
-    """Load equipment from API with caching."""
+    """Load equipment from the version-matched snapshot, or the live API.
+
+    Args:
+        processing_config: Pipeline configuration.
+        scope: Item-type and level window. A None scope uses the Config
+            defaults and keeps the full snapshot population.
+
+    Returns:
+        Tuple of (equipments, cache_manager, api_client)
+    """
     print("\n" + "="*60)
     print("📦 LOADING EQUIPMENT")
     print("="*60)
@@ -125,33 +247,38 @@ def load_equipment(
         f"types: {', '.join(effective_scope['item_types'])}"
     )
 
-    # Initialize cache and API
-    cache = CacheManager(cache_file=Config.CACHE_FILE)
-    api = DofusAPIClient()
-    loader = EquipmentLoader(cache=cache, set_index=_load_set_index(cache, api))
-
-    # Load equipments
-    print(f"\n📡 Fetching equipment from API...")
+    source_label, snapshot_path = resolve_equipment_source()
     start_time = time.time()
 
-    try:
-        raw_equipments = api.get_all_equipments(
-            item_types=effective_scope["item_types"],
-            min_level=effective_scope["min_level"],
-            max_level=effective_scope["max_level"],
-        )
-        equipments = loader.from_raw_batch(raw_equipments, processing_config=processing_config)
-    except Exception as e:
-        print(f"\n❌ Error loading equipment: {e}")
-        print("Make sure DofusAPI is accessible: https://api.dofusdu.de")
-        raise
+    if snapshot_path is not None:
+        # The snapshot already carries recipes, effects, stat weights, and the
+        # set index, so no resource or set network access is needed.
+        equipments, resources, _set_index = load_snapshot(snapshot_path)
+        cache = _ResourceCacheBridge(resources)
+        api = _NoOpAPI()
+        equipments = _filter_equipments(equipments, effective_scope)
+    else:
+        cache = CacheManager(cache_file=Config.CACHE_FILE)
+        api = DofusAPIClient()
+        loader = EquipmentLoader(cache=cache, set_index=_load_set_index(cache, api))
+
+        print(f"\n📡 Fetching equipment from API...")
+        try:
+            raw_equipments = api.get_all_equipments(
+                item_types=effective_scope["item_types"],
+                min_level=effective_scope["min_level"],
+                max_level=effective_scope["max_level"],
+            )
+            equipments = loader.from_raw_batch(raw_equipments, processing_config=processing_config)
+        except Exception as e:
+            print(f"\n❌ Error loading equipment: {e}")
+            print("Make sure DofusAPI is accessible: https://api.dofusdu.de")
+            raise
+
+        _cache_equipment_resources(equipments, cache, api)
 
     elapsed = time.time() - start_time
-    print(f"\n✅ Loaded {len(equipments)} equipments in {elapsed:.2f}s")
-
-    # Pre-fetch and cache all resources from equipment recipes
-    _cache_equipment_resources(equipments, cache, api)
-
+    print(f"\n✅ Loaded {len(equipments)} equipments in {elapsed:.2f}s ({source_label})")
     return equipments, cache, api
 
 
@@ -232,39 +359,13 @@ def process_equipment(
     print("⚙️  PROCESSING EQUIPMENT")
     print("="*60)
 
-    if tune_params:
-        tuner = ParameterTuner(equipments, cache_manager, api_client)
-        tuned_config, _ = tuner.tune(method=processing_config.grouping_method)
-        config = replace(
-            processing_config,
-            graph_min_shared_ratio=tuned_config.graph_min_shared_ratio,
-            group_min_shared_resources=tuned_config.group_min_shared_resources,
-        )
-    else:
-        config = processing_config
+    config = processing_config
 
     master = RuneMaster(equipments, config=config, cache_manager=cache_manager, api_client=api_client)
 
     print(f"\n📋 Grouping Method: {config.grouping_method.upper()}")
-    if tune_params:
-        print(f"📊 Using Tuned Parameters: Ratio={config.graph_min_shared_ratio}, MinItems={config.group_min_shared_resources}")
 
-    if config.grouping_method == "random":
-        groups = master.run_random_grouping()
-    elif config.grouping_method == "hybrid":
-        groups = master.run_hybrid_grouping()
-    elif config.grouping_method == "committee":
-        groups = master.run_committee()
-    elif config.grouping_method == "genetic":
-        groups = master.run_genetic()
-    elif config.grouping_method == "greedy":
-        groups = master.run_greedy()
-    elif config.grouping_method == "survey":
-        groups = master.run_survey()
-    elif config.grouping_method == "evolutionary_committee":
-        groups = master.run_evolutionary_committee()
-    else:
-        groups = master.run_all()
+    groups = master.run_greedy()
 
     master.print_summary()
     return groups
@@ -281,11 +382,48 @@ def _json_safe(value: Any) -> Any:
     return value
 
 
+def apply_job_level_filter(
+    equipments: List[Equipment],
+    processing_config: ProcessingConfig,
+) -> tuple[List[Equipment], dict[str, Any]]:
+    """Drop equipment the player's job levels cannot craft.
+
+    Returns (equipments, filter_report). The report is ``{}`` when filtering
+    is inactive so callers can omit it from the manifest unchanged.
+    """
+    if not processing_config.use_job_level_filter:
+        return equipments, {}
+    if not processing_config.job_levels:
+        print("\n⚠️  Job-level filter enabled but no job levels configured — keeping full pool")
+        return equipments, {}
+
+    print("\n" + "=" * 60)
+    print("🔧 JOB-LEVEL FILTER")
+    print("=" * 60)
+    craftable, filtered_out = JobLevelFilter.filter_equipments(
+        equipments, processing_config.job_levels
+    )
+    excluded_by_job = JobLevelFilter.summarize_excluded(filtered_out)
+    for job, count in sorted(excluded_by_job.items(), key=lambda item: -item[1]):
+        print(f"   {job:<12} level {processing_config.job_levels.get(job, '?'):>3}: {count} items filtered")
+    print(f"   {'kept':<12} {'':>5} {len(craftable)} items craftable")
+    if not craftable:
+        print("\n⚠️  No craftable equipment at these job levels — raise levels or widen the level scope")
+
+    return craftable, {
+        "job_levels": dict(processing_config.job_levels),
+        "kept": len(craftable),
+        "filtered_out": len(filtered_out),
+        "filtered_by_job": excluded_by_job,
+    }
+
+
 def build_run_manifest(
     processing_config: ProcessingConfig,
     cli_overrides: dict[str, Any],
     scope: dict[str, Any] | None = None,
     cache_status: dict[str, Any] | None = None,
+    job_filter: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build reproducibility metadata without including API payloads or secrets."""
     effective_scope = scope or {
@@ -302,6 +440,7 @@ def build_run_manifest(
         "processing_config": _json_safe(processing_config),
         "cli_overrides": _json_safe(cli_overrides),
         "scope": _json_safe(effective_scope),
+        "job_filter": _json_safe(job_filter or {"status": "disabled"}),
         "source": {"api": "DofusAPI", "cache": _json_safe(cache_status or {"status": "unavailable"})},
     }
 
@@ -364,14 +503,25 @@ def main():
 
     # ProcessingConfig owns pipeline defaults; CLI arguments override them.
     processing_config = ProcessingConfig()
-    if args.grouping_method is not None:
-        processing_config.grouping_method = args.grouping_method
-    if args.random_groups is not None:
-        processing_config.random_group_count = args.random_groups
     if args.density_ratio is not None:
         processing_config.equipment_density_level_ratio = args.density_ratio
-    if args.random_seed is not None:
-        processing_config.random_seed = args.random_seed
+    if args.set_exclusion_min_size is not None:
+        processing_config.set_exclusion_min_size = args.set_exclusion_min_size
+
+    # Job levels: player_config.json is the baseline, --job-levels overrides
+    # individual jobs, --no-job-filter disables filtering entirely.
+    player_config = load_player_config(PLAYER_CONFIG_PATH)
+    file_job_levels = dict(player_config.get("job_levels") or {})
+    unknown = sorted(set(file_job_levels) - JOB_LEVEL_JOBS)
+    if unknown:
+        print(f"⚠️  Ignoring unknown jobs in {PLAYER_CONFIG_PATH}: {', '.join(unknown)}")
+        for job in unknown:
+            file_job_levels.pop(job)
+    if args.job_levels:
+        file_job_levels.update(args.job_levels)
+    if file_job_levels and not args.no_job_filter:
+        processing_config.use_job_level_filter = True
+        processing_config.job_levels = file_job_levels
 
     scope = {
         "min_level": args.min_level,
@@ -381,6 +531,12 @@ def main():
 
     try:
         equipments, cache_manager, api_client = load_equipment(processing_config, scope)
+        equipments, job_filter_report = apply_job_level_filter(
+            equipments, processing_config
+        )
+        if not equipments:
+            print("\n⚠️  No equipment to process after filtering.")
+            sys.exit(1)
         groups = process_equipment(
             equipments, processing_config, cache_manager, api_client, args.tune
         )
@@ -394,6 +550,7 @@ def main():
             {key: value for key, value in vars(args).items() if value not in (None, False)},
             scope=scope,
             cache_status=getattr(api_client, "resource_cache_status", {"status": "unavailable"}),
+            job_filter=job_filter_report,
         )
         index_path = generate_visualizations(groups, manifest=manifest)
 

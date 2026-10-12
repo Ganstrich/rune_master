@@ -11,8 +11,8 @@ from data.api_client import DofusAPIClient
 from main import parse_args
 from models import Equipment, ResourceRequirement
 from processing import ProcessingConfig, RuneMaster
-from processing.equipment_filter import EquipmentFilteringStrategy
-from processing.random_group_builder import RandomGroupBuilder
+from processing.filters.equipment_filter import EquipmentFilteringStrategy
+
 from visualization import HTMLGenerator
 
 
@@ -34,22 +34,15 @@ def make_equipments() -> list[Equipment]:
     ]
 
 
-def test_random_seed_is_reproducible_without_duplicate_seeds() -> None:
-    """A fixed builder seed should produce the same seed sequence."""
+def test_greedy_is_reproducible() -> None:
+    """Greedy grouping should produce the same groups on repeated runs."""
     equipments = make_equipments()
-    builder = RandomGroupBuilder(equipments, seed=7)
+    config = ProcessingConfig(group_min_shared_resources=1)
 
-    first = builder.build_multiple_random_groups(
-        equipments, count=4, min_shared_resources=1
-    )
-    second = RandomGroupBuilder(equipments, seed=7).build_multiple_random_groups(
-        equipments, count=4, min_shared_resources=1
-    )
+    first = RuneMaster(equipments, config=config).run_greedy()
+    second = RuneMaster(equipments, config=config).run_greedy()
 
-    first_seeds = [group["seed_equipment_id"] for group in first]
-    second_seeds = [group["seed_equipment_id"] for group in second]
-    assert first_seeds == second_seeds
-    assert len(first_seeds) == len(set(first_seeds))
+    assert [g["group_size"] for g in first] == [g["group_size"] for g in second]
 
 
 def test_density_filter_falls_back_when_pool_is_too_small() -> None:
@@ -67,58 +60,27 @@ def test_density_filter_falls_back_when_pool_is_too_small() -> None:
     assert was_filtered is False
 
 
-def test_deterministic_pipeline_returns_canonical_groups() -> None:
-    """The offline graph path should produce complete group metadata."""
+def test_greedy_pipeline_returns_canonical_groups() -> None:
+    """The greedy path should produce complete group metadata."""
     config = ProcessingConfig(
-        algorithm="none",
-        graph_min_shared_ratio=0.0,
-        graph_min_shared_count=1,
         group_min_shared_resources=1,
         group_efficiency_threshold=0.0,
     )
-    groups = RuneMaster(make_equipments(), config=config).run_deterministic()
+    groups = RuneMaster(make_equipments(), config=config).run_greedy()
 
     assert groups
-    assert all(group["selection_method"] == "deterministic" for group in groups)
+    assert all(group["selection_method"] == "greedy" for group in groups)
     assert all(group["equipments"] for group in groups)
     assert all("total_ingredients" in group for group in groups)
 
 
-class StubExpert:
-    """Minimal expert double for testing hybrid dispatch decisions."""
-
-    def __init__(self, groups: list[dict]) -> None:
-        self.groups = groups
-
-    def discover_groups(self, *args: object, **kwargs: object) -> list[dict]:
-        return self.groups
-
-
-def test_hybrid_pipeline_supplements_small_deterministic_result() -> None:
-    """Hybrid mode should call the random expert below its threshold."""
-    equipments = make_equipments()
-    group = RandomGroupBuilder(equipments, seed=3).build_random_group(
-        equipments, min_shared_resources=1
-    )
-    assert group is not None
-
-    master = RuneMaster(equipments, ProcessingConfig(random_group_count=10))
-    master.experts["deterministic"] = StubExpert([])
-    master.experts["random"] = StubExpert([group])
-
-    result = master.run_hybrid_grouping()
-
-    assert result == [group]
-
-
 def test_visualization_generates_index_and_group_page(tmp_path: Path) -> None:
     """A canonical offline group should render a self-contained report."""
-    group = RandomGroupBuilder(make_equipments(), seed=1).build_random_group(
-        make_equipments(), min_shared_resources=1
-    )
-    assert group is not None
+    config = ProcessingConfig(group_min_shared_resources=1)
+    groups = RuneMaster(make_equipments(), config=config).run_greedy()
+    assert groups
 
-    paths = HTMLGenerator(output_dir=str(tmp_path)).generate_all([group])
+    paths = HTMLGenerator(output_dir=str(tmp_path)).generate_all(groups)
 
     generated_names = {path.name for path in map(Path, paths)}
     assert "index.html" in generated_names
@@ -163,7 +125,7 @@ def test_visualization_writes_reproducible_manifest(tmp_path: Path) -> None:
     manifest = {
         "run_id": "fixed-run",
         "generated_at": "2026-09-30T00:00:00+00:00",
-        "grouping_method": "deterministic",
+        "grouping_method": "greedy",
         "scope": {"summary": "Levels 50-100; types: ring"},
     }
 
@@ -208,6 +170,19 @@ def test_scope_cli_parses_and_rejects_invalid_ranges() -> None:
         parse_args(["--item-types", "unknown"])
 
 
+def test_set_exclusion_min_size_cli_parses() -> None:
+    """The set-exclusion-min-size CLI flag overrides the config default."""
+    args = parse_args(["--set-exclusion-min-size", "1"])
+    assert args.set_exclusion_min_size == 1
+
+    args = parse_args(["--set-exclusion-min-size", "99"])
+    assert args.set_exclusion_min_size == 99
+
+    # Default is None (falls back to ProcessingConfig.set_exclusion_min_size)
+    args = parse_args([])
+    assert args.set_exclusion_min_size is None
+
+
 def test_api_query_receives_effective_scope(monkeypatch: pytest.MonkeyPatch) -> None:
     """The API request includes the configured levels and item types."""
     captured: dict[str, object] = {}
@@ -227,32 +202,86 @@ def test_api_query_receives_effective_scope(monkeypatch: pytest.MonkeyPatch) -> 
     assert captured["filter[type.name_id]"] == "ring"
 
 
-def test_api_shrinks_page_size_when_scope_is_smaller_than_a_page(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """The API rejects page[size] above the result count, so narrow scopes shrink it."""
-    available = 18
-    sizes_tried: list[int] = []
+def test_api_uses_the_all_endpoint_in_a_single_request(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The /all endpoint returns every match at once, so no paging is needed."""
+    endpoints: list[str] = []
+    pages: list[int] = []
     client = DofusAPIClient()
 
     def request(
         endpoint: str, params: dict[str, object], quiet: bool = False
-    ) -> dict[str, object] | None:
-        size = int(params["page[size]"])
-        sizes_tried.append(size)
-        if size > available:
-            client.last_request_status = {"status": "permanent_failure"}
-            return None
-        number = int(params["page[number]"])
-        start = (number - 1) * size
-        page = [{"recipe": []} for _ in range(max(min(size, available - start), 0))]
-        return {"items": page}
+    ) -> dict[str, object]:
+        endpoints.append(endpoint)
+        pages.append(int(params.get("page[number]", 0)))
+        return {"items": [{"ankama_id": 1, "recipe": [{"item_ankama_id": 10}]}]}
 
     monkeypatch.setattr(client, "_make_request", request)
     equipments = client.get_all_equipments(item_types=["shield"], min_level=1, max_level=50)
 
-    assert sizes_tried[0] == DofusAPIClient.DEFAULT_PAGE_SIZE
-    assert len(equipments) == available
+    assert endpoints == ["/dofus3/v1/fr/items/equipment/all"]
+    assert pages == [0]  # no page[...] parameter was ever sent
+    assert len(equipments) == 1
+
+
+def test_api_drops_equipment_without_a_recipe(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Items that cannot be crafted from resources are not equipment for us."""
+    client = DofusAPIClient()
+
+    def request(
+        endpoint: str, params: dict[str, object], quiet: bool = False
+    ) -> dict[str, object]:
+        return {
+            "items": [
+                {"ankama_id": 1, "recipe": [{"item_ankama_id": 10}]},
+                {"ankama_id": 2, "recipe": None},
+                {"ankama_id": 3},  # key absent entirely
+            ]
+        }
+
+    monkeypatch.setattr(client, "_make_request", request)
+
+    assert [eq["ankama_id"] for eq in client.get_all_equipments()] == [1]
+
+
+def test_api_tolerates_malformed_all_payloads(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A failed or oddly shaped /all response yields an empty list, never a crash."""
+    client = DofusAPIClient()
+
+    monkeypatch.setattr(client, "_make_request", lambda *a, **k: None)
+    assert client.get_all_equipments() == []
+    assert client.get_all_resources() == []
+    assert client.get_all_sets() == []
+
+    def malformed(endpoint: str, params: object = None, quiet: bool = False):
+        return {"items": None, "sets": "nope"}
+
+    monkeypatch.setattr(client, "_make_request", malformed)
+    assert client.get_all_equipments() == []
+    assert client.get_all_resources() == []
+    assert client.get_all_sets() == []
+
+
+def test_api_set_index_reads_equipment_ids_from_sets(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Set membership comes from each panoplie's equipment_ids in one request."""
+    calls: list[str] = []
+    client = DofusAPIClient()
+
+    def request(endpoint: str, params: object = None, quiet: bool = False):
+        calls.append(endpoint)
+        return {
+            "sets": [
+                {"ankama_id": 1, "equipment_ids": [10, 11, 12]},
+                {"ankama_id": 2, "equipment_ids": [13]},
+                {"ankama_id": 3, "equipment_ids": None},
+            ]
+        }
+
+    monkeypatch.setattr(client, "_make_request", request)
+
+    index = client.get_equipment_set_index()
+
+    assert calls == ["/dofus3/v1/fr/sets/all"]
+    assert index == {10: 1, 11: 1, 12: 1, 13: 2}
 
 
 def test_api_retries_transient_failure_and_classifies_success(

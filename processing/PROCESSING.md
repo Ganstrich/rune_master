@@ -6,6 +6,10 @@ the dispatch performed by `main.py`. A change to group construction, filtering,
 scoring, selection, or configuration is incomplete until this file and its
 contract tests are updated in the same change.
 
+Every default and code reference in this file was verified against
+`processing/config.py` and the module it names. Where a number is empirical it
+carries the snapshot it was measured on.
+
 ## Purpose And Boundaries
 
 RuneMaster receives loaded `Equipment` objects and proposes small sets of items
@@ -20,10 +24,67 @@ Each input equipment is expected to provide:
 - `level` and an optional precomputed `stat_weight`;
 - a recipe containing `(resource_id, quantity)` requirements.
 
-`data.loaders` calculates stat weights and may apply
-`min_equipment_density` before this module is called. Within `processing/`, only
-the random expert applies density filtering. Deterministic and genetic grouping
-use the complete equipment list passed to `RuneMaster`.
+`data.loaders` calculates stat weights and applies `min_equipment_density` and
+`density_percentile` before this module is called. Within `processing/`, no
+expert applies density filtering: `EquipmentFilteringStrategy` is retained but
+is not wired into the runtime pipeline (see "Inert Filters" below).
+
+## Job-Level Filtering
+
+Crafting an item requires a minimum job (profession) level, so a group the
+player cannot craft is useless. `main.py::apply_job_level_filter()` drops
+such equipment before `RuneMaster` is constructed, so every expert, the
+acceptance policy, and the report operate on the craftable pool only.
+
+The predicate lives in `processing/filters/job_filter.py`:
+
+```
+craftable(item) = job_levels[job_for(item.type)] >= item.level
+```
+
+- An item at exactly the job level is craftable (`>=`, not `>`).
+- An item whose type maps to no known job is **kept**. A new item type must
+  not silently vanish from the report.
+- An item whose job is not in `job_levels` is **kept**. Partial
+  configurations are not silently destructive.
+
+The job-to-type mapping is the `CORDONNIER`, `BIJOUTIER`, `TAILLEUR`,
+`FORGERON`, `SCULPTEUR`, and `FACONNEUR` lists in `config.py`. Each
+craftable type belongs to exactly one job; a unit test asserts the mapping
+is total over `ALL_CRAFTABLE_TYPES`.
+
+**Type resolution.** The DofusDB API filter takes an English `name_id`
+(`sword`, `ring`, ...) while the equipment payload carries a French display
+name and a numeric id (`{"name": "Épée", "id": 80}`). `resolve_job()` matches
+the numeric id first, then the name, so a live API run and a frozen-snapshot
+run resolve identically regardless of language. `ITEM_TYPE_IDS` is the
+name_id-to-numeric-id table and the single place to extend for a new type.
+
+Filtering is off by default (`use_job_level_filter=False`), preserving the
+full pool. Levels come from `player_config.json` in the project root, or
+`--job-levels "forgeron:120,bijoutier:80"` on the CLI, which overrides the
+file per job. `--no-job-filter` disables filtering for one run. The effective
+levels and the kept/filtered counts are recorded in the run manifest under
+`job_filter`.
+
+## Panoplie Set Exclusion
+
+Constraint C2: groups must not be built from panoplie items, because set items
+are the systematically over-crafted, low-taux choices. `SetExclusionFilter`
+applies this once in `RuneMaster.__init__`, before any expert runs, so every
+`run_*` path sees the same pool.
+
+An item is excluded when its panoplie has at least `set_exclusion_min_size`
+members **present in the pool being filtered**. Membership counts are computed
+from the supplied list, not from a global index, so the exclusion is relative
+to the loaded scope. `set_exclusion_min_size=99` or higher disables the filter.
+
+The removal is reported through `summarize_excluded()` (metric N10: band and
+slot breakdown) and carried in `self.set_exclusion_report`, so a deliberate
+scope decision cannot later read as a coverage regression.
+
+Measured on snapshot 3.7.7.6: `k=5` removes 494 of 2858 items (17.28%),
+leaving a 2364-item pool.
 
 ## End-To-End Dispatch
 
@@ -32,58 +93,111 @@ use the complete equipment list passed to `RuneMaster`.
 
 | Value | Method called | Result |
 | --- | --- | --- |
-| `deterministic` | `run_all()` | Graph expert only; `run_all()` is a backward-compatible alias for `run_deterministic()` |
+| `deterministic` | `run_deterministic()` | Graph expert only |
 | `random` | `run_random_grouping()` | Random expert only |
-| `hybrid` | `run_hybrid_grouping()` | Graph expert, optionally supplemented by random groups |
-| `committee` | `run_committee()` | Greedy ensemble of graph, random, and genetic proposals |
-| `genetic` | `run_genetic_grouping()` | Genetic expert only |
+| `greedy` | `run_greedy()` | Greedy objective-driven expert only (default) |
+| `survey` | `run_survey()` | Every expert; union of proposals tagged with their origin |
 
-The CLI restricts the value to those five choices. Calling `run_all()` directly
-does not inspect `grouping_method`; it always runs deterministic grouping.
+The CLI restricts the value to those four choices. `run_all()` is a
+backward-compatible alias for `run_deterministic()`; calling it directly does
+not inspect `grouping_method` and always runs deterministic grouping.
 
 Every accepted proposal is a canonical group dictionary built by
 `GroupMetrics.build_group_dict()`. Expert-specific metadata is added afterward.
 
 ## Configuration
 
-`ProcessingConfig` is the runtime configuration contract.
+`ProcessingConfig` (`processing/config.py`) is the runtime configuration
+contract. "Consumed by" names the module that actually reads the field; a field
+marked **inert** is declared but never read anywhere in the repository.
 
-| Field | Default | Applies to | Exact behavior |
+### Pipeline And Graph
+
+| Field | Default | Consumed by | Exact behavior |
 | --- | ---: | --- | --- |
-| `graph_min_shared_ratio` | `0.3` | Jaccard graph paths; not BiLouvain | Minimum pairwise recipe Jaccard for a similarity edge |
+| `grouping_method` | `"greedy"` | `main.py` dispatch | Selects the orchestrator path; `run_all()` ignores it |
+| `random_group_count` | `50` | Random expert | Maximum number of generation attempts |
+| `random_seed` | `None` | Louvain and random expert | Seeds the corresponding stochastic operations when set |
+| `algorithm` | `"louvain"` | Graph expert | `louvain`, `bilouvain`, or any other value for connected components |
+| `resolution_range` | `(1, 10, 1)` | Louvain and BiLouvain | Passed to `np.arange(start, stop, step)`; the stop value is excluded |
+| `graph_min_shared_ratio` | `0.15` | Jaccard graph paths; not BiLouvain | Minimum pairwise recipe Jaccard for a similarity edge |
 | `graph_min_shared_count` | `1` | Jaccard graph paths; not BiLouvain | Minimum absolute shared resource IDs for the same edge; both edge conditions must pass |
 | `graph_min_component_size` | `2` | Jaccard graph paths; not BiLouvain | Connected components smaller than this are removed |
-| `algorithm` | `louvain` | Graph expert | `louvain`, `bilouvain`, or any other value for connected components |
-| `resolution_range` | `(1, 10, 1)` | Louvain and BiLouvain | Passed to `np.arange(start, stop, step)`; the stop value is excluded |
-| `group_min_size` | `2` | All experts | Minimum accepted group size, except the documented inclusive-split edge case |
-| `group_max_size` | `32` | All experts | Generous upper bound; shopping-list caps are primary |
-| `group_min_shared_resources` | `3` | All experts | Minimum number of non-excluded resource IDs used by at least two items |
-| `group_efficiency_threshold` | `0.15` | All experts | Minimum legacy `sharing_efficiency` |
-| `group_quality_threshold` | `0.0` | All experts | Minimum item-only `quality_score` |
-| `group_max_set_share` | `0.5` | Acceptance policy | Maximum share of a group coming from one panoplie |
-| `same_set_edge_discount` | `1.0` | Graph building | Weight multiplier for edges inside one panoplie |
+| `same_set_edge_discount` | `1.0` | Graph building | Weight multiplier for edges inside one panoplie; `1.0` disables the correction |
+
+The `0.15` ratio is data-backed: at `0.3`, 408 of 2858 items (14.28%) have no
+graph edge at all, while `0.15` leaves 18 (0.63%). Both figures are measured on
+the full pool; on the post-set-exclusion pool the same comparison is 394
+(16.67%) versus 25 (1.06%).
+
+### Experts
+
+| Field | Default | Consumed by | Exact behavior |
+| --- | ---: | --- | --- |
 | `greedy_candidate_limit` | `25` | Greedy expert | Candidates scored per growth step |
 | `greedy_seed_limit` | `0` | Greedy expert | Seeds to expand; zero uses the whole pool |
-| `max_line_items` | `12` | Acceptance policy | Maximum distinct resources in the shopping list |
-| `max_total_units` | `500` | Acceptance policy | Maximum total recipe units in the shopping list |
-| `acquisition_cost` | `0.0` | Profit objective | Kama-equivalent fixed cost per distinct resource |
-| `flat_taux` | `1.0` | Profit objective | Theoretical constant until break outcomes are logged |
-| `price_max_age_seconds` | `3600.0` | Price source | Maximum age for a usable cached price |
-| `group_quality_weights` | `0.45/0.25/0.15/0.15` + `0.45` penalty | Canonical group evaluator | Weights for compression, reuse, shared quantity, and set-free share, plus the same-set concentration penalty |
-| `use_inclusive_mapping` | `False` | Graph expert | Split oversized communities instead of rejecting them whole |
-| `excluded_resource_ids` | `{15263, 14635}` | Group filters, quality, random/genetic affinity | Resource IDs ignored where explicitly described below |
-| `density_percentile` | `0.0` | Loader pool | Within-level-band stat-density percentile; zero disables filtering |
-| `density_level_band` | `20` | Loader pool | Level width used for percentile filtering |
-| `grouping_method` | `hybrid` | `main.py` dispatch | Selects the orchestrator path; `RuneMaster.run_all()` ignores it |
-| `random_group_count` | `50` | Random and hybrid | Maximum number of random generation attempts and hybrid threshold input |
-| `random_seed` | `None` | Louvain, random, genetic | Seeds the corresponding stochastic operations when set |
-| `min_equipment_density` | `0.0` | Loader only | Absolute minimum `stat_weight`, despite the historical field name |
-| `dedup_overlap_threshold` | `0.7` | Committee only | Equipment-set Jaccard at or above this value rejects a later proposal |
-| `portfolio_quality_weights` | `0.65/0.35/0.50` | Summary and tuner | Group-quality reward, coverage reward, and overlap penalty |
+
+### Group Acceptance
+
+| Field | Default | Consumed by | Exact behavior |
+| --- | ---: | --- | --- |
+| `group_min_size` | `2` | All experts | Minimum accepted group size |
+| `group_max_size` | `12` | All experts | Upper bound on group size; reached at `max_line_items=32` |
+| `group_min_shared_resources` | `3` | All experts | Minimum number of non-excluded resource IDs used by at least two items |
+| `group_efficiency_threshold` | `0.15` | Acceptance policy | Minimum legacy `sharing_efficiency`, applied only when `group_size <= 3` |
+| `group_quality_threshold` | `0.0` | Acceptance policy | Minimum item-only `quality_score` |
+| `group_max_set_share` | `0.5` | Acceptance policy and greedy expert | Maximum share of a group coming from one panoplie |
+| `max_line_items` | `32` | Acceptance policy | Maximum distinct resources in the shopping list |
+| `max_total_units` | `2000` | Acceptance policy | Maximum total recipe units in the shopping list |
+| `use_inclusive_mapping` | `False` | Graph expert | Split oversized communities instead of rejecting them whole; currently unreachable |
+
+`group_max_size=12` is deliberately below the historical `32`: at `max_line_items`
+32 the value 32 admitted groups that could never pass the shopping caps.
+`max_total_units=2000` is a real constraint, not a secondary one — on snapshot
+3.7.7.6 it is the sole rejection reason for 53 grown groups (see "Measured
+Coverage" below).
+
+### Filters
+
+| Field | Default | Consumed by | Exact behavior |
+| --- | ---: | --- | --- |
+| `set_exclusion_min_size` | `5` | `SetExclusionFilter` | Panoplie items in a set of at least this many pool members are dropped before any expert runs; `>= 99` disables |
+| `excluded_resource_ids` | `{14635}` | Group filters, quality, random affinity, greedy growth | Resource IDs ignored where explicitly described below |
+| `density_percentile` | `0.0` | `data.loaders` only | Within-level-band stat-density percentile; zero disables the gate |
+| `density_level_band` | `20` | `data.loaders` only | Level width used for percentile bands |
+| `min_equipment_density` | `0.0` | **inert** | Declared as an absolute minimum `stat_weight`; read nowhere |
+| `use_density_filtering` | `True` | **inert** | Declared; the runtime pipeline never reads it |
+| `equipment_density_level_ratio` | `2.0` | **inert** | Declared; the runtime pipeline never reads it |
+| `fallback_to_unfiltered` | `False` | **inert** | Declared; the runtime pipeline never reads it |
+| `min_filtered_pool_size` | `10` | **inert** | Declared; read nowhere |
+| `use_job_level_filter` | `False` | `main.py` | When true and `job_levels` is populated, drop equipment whose crafting job is below the item level |
+| `job_levels` | `{}` | `main.py` | Player job levels by job name (e.g. `{"forgeron": 100}`) |
+
+### Objective, Metrics, And Tools
+
+| Field | Default | Consumed by | Exact behavior |
+| --- | ---: | --- | --- |
+| `acquisition_cost` | `0.0` | `ProfitObjective` | Kama-equivalent fixed cost per distinct resource |
+| `flat_taux` | `1.0` | **inert** | Placeholder constant; `ProfitObjective` uses `FlatTauxModel()` directly, not this field |
+| `price_max_age_seconds` | `3600.0` | **inert** | Declared; read nowhere |
+| `group_quality_weights` | `0.45 / 0.0 / 0.15 / 0.15` + `0.45` penalty | `GroupQualityEvaluator` | Raw weights for compression, reuse, shared quantity, and set-free share, plus the same-set concentration penalty; see the normalized score below |
+| `portfolio_quality_weights` | `0.65 / 0.35 / 0.50` | `ProcessingReporter`, tuner | Group-quality reward, coverage reward, and overlap penalty |
+| `dedup_overlap_threshold` | `0.7` | **inert** | Declared for survey de-duplication; `run_survey` de-duplicates by exact equipment fingerprint instead |
 
 The reward fields in both weight dataclasses must be non-negative. Group-quality
 weights are normalized to sum to one. Portfolio group-quality and coverage
 weights are normalized together; the overlap penalty is not normalized.
+
+### Inert Filters
+
+`processing/filters/equipment_filter.py::EquipmentFilteringStrategy` implements
+density-ratio filtering (`filter_by_density_ratio`, `get_active_pool`) with a
+small-pool fallback. It is exercised by tests and by
+`processing/tools/tuner.py`, but **no runtime path calls it**: `RuneMaster` does
+not apply it, and no expert applies it. `use_density_filtering`,
+`equipment_density_level_ratio`, and `fallback_to_unfiltered` therefore have no
+effect on a `main.py` run. Density gating in production happens only through
+`data.loaders` and `density_percentile`.
 
 ## Recipe And Resource Semantics
 
@@ -95,13 +209,10 @@ even if malformed input repeats it in that recipe. Across a group:
 - graph construction ignores recipe quantities;
 - ingredient aggregation sums recipe quantities.
 
-There are two intentionally distinct resource metrics:
-
 Exclusions are not applied uniformly during candidate discovery. The Jaccard
 similarity graph and BiLouvain projection include every recipe resource,
-including configured exclusions. The random expert removes exclusions before
-seed-companion matching. The genetic expert's graph includes them, while its
-conflict-affinity resource sets remove them. Final group filters and item-only
+including configured exclusions. The random expert and the greedy expert remove
+exclusions before seed-companion matching. Final group filters and item-only
 quality then apply the metric-specific rules below.
 
 ### Legacy Sharing Efficiency
@@ -134,27 +245,44 @@ It emits:
 | `shared_resource_count` | Non-excluded resource IDs used by at least two equipment |
 | `resource_occurrence_count` | Sum of distinct resource occurrences across equipment |
 | `repeated_resource_occurrence_count` | Sum of `max(usage_count - 1, 0)` over resources |
-| `resource_reuse_ratio` | `shared_resource_count / unique_resource_count` |
+| `resource_reuse_ratio` | `shared_resource_count / unique_resource_count` (reported, not scored) |
 | `resource_reuse_depth` | Repeated occurrences divided by `unique_resource_count * (group_size - 1)` |
 | `compression` | `1 - unique_resource_count / resource_occurrence_count` |
 | `shared_quantity_ratio` | Quantity belonging to shared IDs divided by all non-excluded quantity |
+| `set_free_count` | Number of group members with no panoplie |
+| `set_free_ratio` | `set_free_count / group_size` |
+| `largest_set_share` | Members from the largest single panoplie, divided by `group_size` |
 | `mean_pairwise_jaccard` | Mean recipe-set Jaccard over every equipment pair |
 | `minimum_pairwise_jaccard` | Lowest pairwise Jaccard, or zero without a pair |
 | `overlapping_pair_ratio` | Fraction of equipment pairs with positive Jaccard |
 | `quality_score` | Configured weighted score defined below |
 
-Pairwise Jaccard and overlap remain diagnostics, but are not scored. With
-default normalized weights:
+With default normalized weights:
 
 ```text
-quality_score = 0.50 * compression
-              + 0.30 * resource_reuse_ratio
-              + 0.20 * shared_quantity_ratio
+quality_score = clip(
+    0.60 * compression
+  + 0.20 * shared_quantity_ratio
+  + 0.20 * set_free_ratio
+  - 0.45 * largest_set_share,
+    0,
+    1,
+)
 ```
 
-Identical two-item non-empty recipes score `0.75`; disjoint recipes score
-`0.0`. The score is a heuristic shortlist target, not observed
-utility, profit, savings, or a trained prediction.
+`resource_reuse_ratio` carries a weight of `0.0` and is normalized out of the
+reward sum, so it no longer contributes to the score; it is still computed and
+reported. The three non-zero rewards are normalized together
+(`0.45 / 0.60 = 0.60`, `0.15 / 0.60 = 0.20`, `0.15 / 0.60 = 0.20`), and the
+set-concentration penalty is applied afterward without normalization.
+
+The `k=5` panoplie exclusion removes large sets from the pool, but smaller
+panoplies (2–4 members present) survive, so groups still contain set items.
+Measured over the 179 default greedy groups: 94 have `set_free_ratio == 1.0`
+and 85 have a non-zero `largest_set_share`; the median `set_free_ratio` is
+`1.0` and the median `largest_set_share` is `0.0`, with median `compression`
+`0.5`, median `shared_quantity_ratio` `0.8316`, and median `quality_score`
+`0.5725`.
 
 ## Canonical Group Schema
 
@@ -167,12 +295,13 @@ All experts ultimately produce the following common fields:
     "total_shared_resources": set[int],
     "sharing_efficiency": float,
     "average_density": float,
-   "break_density": dict[int, float],
-   "items_per_line_item": float,
+    "break_density": dict[int, float],
+    "items_per_line_item": float,
     "total_ingredients": dict[int, dict],
     "unique_ingredients_count": int,
     "total_items_needed": int,
     "group_size": int,
+    "largest_set_share": float,
     "quality_metrics": dict[str, int | float],
     "quality_score": float,
 }
@@ -188,19 +317,39 @@ quantities by equipment ID. Missing resource metadata falls back to
 
 Expert metadata:
 
-Genetic groups additionally include `provenance`, set to `evolved` for
-warm-started re-evaluation and `newly_discovered` for cold-start search.
-
 | Source | Additional fields |
 | --- | --- |
 | Deterministic | `selection_method="deterministic"`, `expert_name="GraphExpert"` |
 | Random | `selection_method="random"`, `expert_name="RandomExpert"`, `seed_equipment_id`, `randomness_seed` |
-| Genetic | `selection_method="genetic"`, `expert_name="GeneticExpert"` |
-| Committee-selected proposal | Existing expert fields plus `fitness_score` |
+| Greedy | `selection_method="greedy"`, `expert_name="GreedyExpert"` |
+| Survey | `origins`/`origin` tagging the expert(s) that proposed the group |
 
 `quality_metrics` contains every feature in the previous table, including a
 second copy of `quality_score`. The top-level copy is the common expert ranking
 field.
+
+## Acceptance Policy
+
+`GroupAcceptancePolicy` (`processing/policy.py`) is the single gate every expert
+consults. `rejection_reason()` returns the first failed check, in this order:
+
+1. `group_min_size <= size <= group_max_size` → `group_size`;
+2. `shared_resources_count >= group_min_shared_resources` → `shared_resources_count`;
+3. `sharing_efficiency >= group_efficiency_threshold`, **only when
+   `group_size <= efficiency_threshold_max_size` (3)** → `sharing_efficiency`;
+4. `quality_score >= group_quality_threshold` → `quality_score`;
+5. `largest_set_share <= group_max_set_share` → `largest_set_share`;
+6. `unique_ingredients_count <= max_line_items` → `max_line_items`;
+7. `total_items_needed <= max_total_units` → `max_total_units`.
+
+The efficiency floor is gated on small groups because `sharing_efficiency` only
+discriminates there: at `group_size=2` it is exactly pairwise Jaccard, while
+only 8.5% of 4-item groups fall below the floor. Gating keeps the check
+meaningful without rejecting large cohesive groups.
+
+`from_values(...)` builds a policy from explicit thresholds for the legacy
+mapper entry points; it sets `max_set_share=1.0` and both shopping caps to
+infinity, so those three checks are inert on that path.
 
 ## Deterministic Graph Expert
 
@@ -239,39 +388,32 @@ approach, not a dedicated bipartite-modularity optimizer.
 
 ### Community Mapping
 
-With `use_inclusive_mapping=False`, each community is one candidate. It is
-accepted only if the shared `GroupAcceptancePolicy` accepts it, with these
-checks evaluated in order:
-
-1. `group_min_size <= size <= group_max_size`;
-2. `shared_resources_count >= group_min_shared_resources`;
-3. `sharing_efficiency >= group_efficiency_threshold`;
-4. `quality_score >= group_quality_threshold`.
-
-Oversized communities are rejected whole.
+With `use_inclusive_mapping=False`, each community is one candidate. Communities
+larger than `policy.max_size` are split first (see below); otherwise the
+community is accepted only if `GroupAcceptancePolicy.accepts()` returns true.
+Accepted groups are sorted by `quality_score` descending.
 
 With `use_inclusive_mapping=True`, communities below `group_min_size` are
-rejected. Oversized communities are split into sequential list chunks of
-`group_max_size`; splitting is not graph-aware or re-optimized. Each chunk is
-then checked by the same policy. The policy applies the minimum-size check to
-each chunk as well as shared-resource count, legacy efficiency, and quality.
+rejected and oversized communities are split by the same routine; each chunk is
+then checked by the same policy. This path is currently unreachable:
+`config.use_inclusive_mapping` defaults to `False` and nothing sets it `True`.
 
-Accepted groups are sorted by `quality_score` descending.
+`_split_large_community()` packs resource-cohesive subgroups greedily, seeding
+each chunk from the member with the highest remaining resource degree. An
+earlier contiguous-slice implementation was removed: Louvain returns community
+members in arbitrary order, so consecutive items frequently shared no resources
+and every chunk failed the policy (probe R1 measured 100% loss on an 869-item
+community split at `max_size=8`).
 
 ## Random Expert
 
-Random and genetic searches use process-local `random.Random` instances seeded
-from `random_seed`; they do not mutate Python's module-level random state.
+Random search uses a process-local `random.Random` instance seeded
+from `random_seed`; it does not mutate Python's module-level random state.
 
-1. If density filtering is disabled, use the complete input pool.
-2. Otherwise retain equipment satisfying
-   `stat_weight >= level * equipment_density_level_ratio`. Equipment with a
-   `None` weight is excluded.
-3. If the filtered pool is smaller than `min_filtered_pool_size` and
-   `fallback_to_unfiltered=True`, use the original pool. Otherwise keep the
-   filtered pool, even when it is empty or small.
-4. Build an inverted resource index for the active pool.
-5. Perform at most `random_group_count` generation attempts.
+1. Use the pool exactly as supplied. The expert does not filter by density —
+   `active_pool = equipments` (`processing/experts/random_expert.py`).
+2. Build an inverted resource index for the active pool.
+3. Perform at most `random_group_count` generation attempts.
 
 For each attempt, the builder randomly selects a seed not previously used by a
 successful group. Companion candidates must share at least
@@ -287,130 +429,51 @@ successful group has a distinct seed. The requested count is therefore a target
 and the result may contain fewer groups.
 
 The builder rejects groups smaller than two. The expert then applies the common
-minimum size, maximum size, shared-resource, legacy-efficiency, and quality
-thresholds. It does not de-duplicate overlapping equipment across groups.
+acceptance policy. It does not de-duplicate overlapping equipment across groups.
 `graph_min_shared_ratio`, `graph_min_shared_count`, and
 `graph_min_component_size` do not affect standalone random grouping.
 
-## Baseline And Comparison Harness
+## Greedy Expert
 
-`BaselineExpert` ranks items by break density and greedily packs them using the
-injected objective. `processing.harness.run_comparison()` runs the baseline and
-all named production methods offline, returning group-size, line-item, score,
-portfolio, and runtime columns suitable for JSON persistence.
+The graph experts can only propose communities of the resource-similarity
+graph, so items below the shared-resource threshold are never grouped at all.
+The greedy expert grows groups directly against the objective instead, which
+reaches items the graph discards. It is the default method.
 
-`ProfitObjective` reports theoretical values in kamas, records each selected
-focus, excludes partially priced items from the profit term, and falls back
-explicitly to the compression overlap score when no item can be valued.
+1. Build a neighbour index from `recipe_resource_ids(e) - excluded_resource_ids`
+   for the whole pool. It is independent of the similarity graph.
+2. Order seeds by `break_density` descending (optionally truncated to
+   `greedy_seed_limit`).
+3. Skip a seed already covered, or one whose resource set is empty.
+4. Grow from the seed: repeatedly shortlist the candidates sharing the most
+   resources with the pooled set (capped at `greedy_candidate_limit`), score each
+   via `objective.score(candidate.with_item(item))`, and add the best-scoring
+   item while its score strictly exceeds the current score. Stop at
+   `group_max_size` or when nothing improves the score.
+5. Reject an item that would push one panoplie past `group_max_set_share`.
+6. Drop the group when it is smaller than `group_min_size`; drop it when its
+   fingerprint was already seen; drop it when the acceptance policy rejects it.
+7. Mark accepted members as covered, so groups stay disjoint.
 
-`break_log` is append-only user data, separate from cache invalidation. Use
-`python break_log.py` for manual observations; each row stores UTC time, source,
-runes received, and observed density so taux can be computed later.
+Groups are kept disjoint because the portfolio evaluator penalises duplicate
+assignments, so an overlapping proposal scores worse than a small clean one.
 
-`PosteriorTauxModel` uses explicit half-life and planned-volume decay constants.
-It reports confidence and an exploration bonus; unseen items use the prior and
-are never treated as zero-value.
+The acceptance policy is the binding constraint, not reachability. On snapshot
+3.7.7.6 the greedy expert grows 179 accepted groups and leaves 958 items
+uncovered, but only 1 of those is truly isolated and only 2 have an empty
+recipe; 949 still have a free partner. 796 grown groups are discarded by the
+policy — 733 on `max_line_items`, 53 on `max_total_units`, and 10 on
+`shared_resources_count`.
 
-`processing.exploration.rank_exploration()` ranks items by theoretical density
-per recipe unit, expected taux, and exploration bonus. The HTML generator and
-`exploration_shortlist.py` expose the same candidates, including a direct
-manual-record command.
+## Survey Method
 
-## Genetic Expert
-
-The genetic expert first builds or reuses the same filtered Jaccard similarity
-graph used by the graph expert. An empty graph returns no groups. Excluded
-resource IDs are removed from resource sets used for conflict affinity.
-
-Default search parameters, now configurable through `ProcessingConfig`, are:
-
-| Parameter | Default |
-| --- | ---: |
-| Population size | `30` |
-| Maximum generations | `50` |
-| Mutation rate | `0.3` |
-| Elite count | `3` |
-| Stagnation limit | `15` |
-
-An individual is a list of non-overlapping equipment sets:
-
-1. Initialization targets between three and eight groups.
-2. Each group starts from a random surviving graph node and repeatedly adds an
-   available neighbor with maximum summed edge weight to current members.
-3. Target group size is sampled between configured minimum and maximum, but
-   growth stops early when no available neighbor remains.
-4. Equipment assigned to one initial group is removed from that individual's
-   available set.
-
-If growth stops below `group_min_size`, the candidate is not appended, but its
-nodes have already been removed from that individual's available set. Crossover
-conflict resolution may also leave empty or undersized sets; they remain in the
-individual but contribute zero fitness and cannot survive final filtering.
-
-Individual fitness is the sum of qualifying group `quality_score` values minus
-`1.0` for every duplicate equipment assignment. Groups outside size limits or
-below shared-resource, legacy-efficiency, or quality thresholds contribute
-zero. The overlap penalty is defensive because initialization, crossover
-conflict resolution, and mutation normally maintain unique assignments.
-
-Each generation:
-
-1. carries the `elite_count` highest-fitness individuals unchanged;
-2. selects parents by three-candidate tournament selection;
-3. pools parent groups and randomly sends each group to child one, child two,
-   or both;
-4. resolves duplicate equipment within a child by retaining it in the group
-   with greatest resource-set affinity;
-5. independently mutates each child with `mutation_rate` probability.
-
-Mutation chooses one operation:
-
-- `add`: add an unassigned graph neighbor when the group is below maximum size;
-- `remove`: remove one equipment when the group is above minimum size;
-- `merge`: merge two groups when the union does not exceed maximum size.
-
-Evolution stops after `generations` or after `stagnation_limit` consecutive
-generations without a strictly better best fitness. Final groups come from the
-best individual ever seen and are rebuilt canonically, then all common
-constraints are applied again. The final list is not explicitly sorted.
-
-When `random_seed` is set, the expert seeds Python's module-level random
-generator before initialization.
-
-## Hybrid Method
-
-Hybrid always runs the graph expert first. It calculates:
-
-```text
-supplement_threshold = max(5, int(random_group_count * 0.5))
-```
-
-If the deterministic result count is below that threshold, hybrid runs the
-random expert and concatenates `deterministic_groups + random_groups`.
-Otherwise it returns deterministic groups only. Hybrid performs no cross-source
-sorting or de-duplication, so equipment and near-identical groups may repeat.
-
-## Committee Method
-
-Committee is a greedy proposal ensemble, not a learned gating network:
-
-1. Build the configured Jaccard similarity graph once.
-2. Invoke graph, random, and genetic experts in that order, passing the shared
-   graph and resource map. The graph expert rebuilds a bipartite graph instead
-   when `algorithm="bilouvain"`; the random expert ignores the shared graph.
-3. Catch `IndexError`, `KeyError`, `RuntimeError`, `TypeError`, or `ValueError`
-   from each expert. Record the failure and continue with remaining experts.
-4. Set each proposal's `fitness_score` using its expert's evaluator. All current
-   experts use top-level `quality_score`.
-5. Sort all proposals by fitness descending. Python's stable sort preserves
-   expert production order for exact ties.
-6. Greedily scan proposals. Reject groups smaller than two. Reject a proposal
-   when its equipment-set Jaccard with any already accepted group is greater
-   than or equal to `dedup_overlap_threshold`; otherwise accept it.
-
-The committee does not optimize the portfolio score during selection and does
-not impose a maximum number of final groups. `get_expert_report()` returns
-recorded failures and the selected-group count.
+`run_survey()` is diagnostic, not a production method. It builds one shared
+graph, runs all three experts, and merges proposals by **exact equipment
+fingerprint** (`frozenset` of `ankama_id`), tagging each surviving group with the
+list of experts that proposed it (`origins`, plus a joined `origin` string). It
+performs no Jaccard-based near-duplicate merging — `dedup_overlap_threshold` is
+inert. The result is the union of all experts, sorted by `quality_score`
+descending, so its coverage is an upper bound rather than a method result.
 
 ## Portfolio Evaluation And Summary
 
@@ -484,6 +547,87 @@ returns:
 }
 ```
 
+## Measured Coverage
+
+Measured on snapshot 3.7.7.6 (2858 equipment, 1642 resources, 3646 set
+mappings; 2364 items after the `k=5` panoplie exclusion). `coverage` is
+`covered / 2364`. All runs use `ProcessingConfig()` defaults except the field
+named, and were executed through the shipped experts.
+
+**Only `greedy` is reproducible without a seed.** The graph expert's Louvain
+partition and the random expert both read `random_seed`, whose default is
+`None`; with `random_seed=None` their results differ on every run (measured:
+`deterministic` produced 97 and 109 groups on two consecutive runs, `random`
+16 and 8, `survey` 285 and 288). The table below therefore pins
+`random_seed=0` for the seeded methods. Greedy is seed-independent — it is
+identical under `None` and `0`.
+
+| Configuration | Groups | Covered | Coverage |
+| --- | ---: | ---: | ---: |
+| `greedy` (default, any seed) | 179 | 1406 | 59.48% |
+| `deterministic`, `random_seed=0` | 97 | 1118 | 47.29% |
+| `random`, `random_seed=0` | 11 | 52 | 2.20% |
+| `survey`, `random_seed=0` (union of experts) | 287 | 1561 | 66.03% |
+
+Any published per-method number for `deterministic`, `random`, or `survey` is
+only meaningful with its seed stated. Greedy coverage levers, one field changed
+at a time:
+
+| Change | Groups | Covered | Coverage |
+| --- | ---: | ---: | ---: |
+| baseline | 179 | 1406 | 59.48% |
+| `max_line_items=10000` | 217 | 1881 | 79.57% |
+| `max_total_units=10**9` | 188 | 1478 | 62.52% |
+| both shopping caps lifted | 241 | 2128 | 90.02% |
+| `group_min_size=1` | 179 | 1406 | 59.48% |
+| `group_max_size=24` + `max_line_items` lifted | 174 | 1880 | 79.53% |
+| `greedy_candidate_limit=200` | 159 | 1315 | 55.63% |
+
+The shopping budget — not singleton handling — sets coverage. `group_min_size=1`
+changes coverage by exactly 0.00pp, because the growth loop only yields a
+singleton where it had no admissible partner. `greedy_candidate_limit=200` is
+worse than the default 25: a wider shortlist lets a seed consume items that
+another seed would have grouped better.
+
+`scripts/challenge_coverage_gap.py` reproduces the gap attribution and asserts
+that coverage cannot exceed the pool size.
+
+## Comparison Harness And Objective Seam
+
+`processing.tools.harness.run_comparison()` runs the named production methods
+offline, returning group-size, line-item, score, portfolio, and runtime columns
+suitable for JSON persistence. Its `METHODS` tuple is
+`("deterministic", "random", "greedy")`.
+
+The objective seam is `processing/valuation/objective.py`: `GroupCandidate` is an
+immutable group plus its excluded resources, and `GroupObjective` is the
+protocol with `score()` and a default `marginal()`
+(`score(with_item) - score`). No objective overrides `marginal()`.
+`OverlapObjective` wraps `GroupQualityEvaluator` and is the only objective wired
+into the experts. Two call styles are in use: the greedy expert scores
+`objective.score(candidate.with_item(item))` directly, while
+`RandomGroupBuilder.find_companions()` ranks candidates with
+`objective.marginal(seed_group, item)` when an objective is injected.
+
+`ProfitObjective` reports theoretical values in kamas, records each selected
+focus, excludes partially priced items from the profit term, and falls back
+explicitly to the compression overlap score when no item can be valued. It is
+not active: it requires a `PriceSource`, and the default `NullPriceSource`
+returns no prices.
+
+`break_log` is append-only user data, separate from cache invalidation. Use
+`python break_log.py` for manual observations; each row stores UTC time, source,
+runes received, and observed density so taux can be computed later.
+
+`PosteriorTauxModel` uses explicit half-life and planned-volume decay constants.
+It reports confidence and an exploration bonus; unseen items use the prior and
+are never treated as zero-value.
+
+`processing.valuation.exploration.rank_exploration()` ranks items by theoretical density
+per recipe unit, expected taux, and exploration bonus. The HTML generator and
+`exploration_shortlist.py` expose the same candidates, including a direct
+manual-record command.
+
 ## Parameter Tuning
 
 `ParameterTuner` evaluates the Cartesian product:
@@ -493,7 +637,7 @@ returns:
 
 Each of the 12 configurations runs in a separate process with its own cache
 manager and a newly constructed config. Worker configs use processing defaults
-except for the two searched fields, requested method,
+except for the two searched fields, the requested method,
 `use_density_filtering=True`,
 `equipment_density_level_ratio=1.5`, and `random_seed=0`.
 
@@ -507,9 +651,8 @@ Parameter relevance depends on the method:
 | --- | --- | --- | --- |
 | `deterministic` | Yes | Yes | Deterministic with default Louvain |
 | `random` | No | Yes, for companions and final filtering | Random |
-| `committee` | Yes for graph/genetic; no for random | Yes | Committee with default Louvain |
-| `genetic` | Yes | Yes | Genetic |
-| Any other value, including `hybrid` | Yes | Yes | `run_all()`, therefore deterministic with default Louvain |
+| `greedy` | Yes | Yes | Greedy |
+| Any other value | Yes | Yes | `run_all()`, therefore deterministic with default Louvain |
 
 The tuner does not search or copy the caller's algorithm, quality weights,
 group sizes, density settings, resolution, seed, or overlap threshold into its
@@ -520,63 +663,93 @@ tuner statistics describe the worker config, not that merged final config.
 
 This is reproducible heuristic grid search, not model training or statistical
 validation. For random grouping, every ratio candidate is behaviorally
-irrelevant and therefore repeats equivalent work.
+irrelevant and therefore repeats equivalent work. The tuner's
+`use_density_filtering` / `equipment_density_level_ratio` arguments are inert
+for the same reason they are inert everywhere else.
 
 ## Reproducibility
 
 - Louvain receives `random_seed` as `random_state`.
-- Random and genetic experts seed Python's module-level random generator.
+- The random expert uses a process-local `random.Random` instance seeded from
+  `random_seed`; it does not mutate Python's module-level random state.
 - Tuner workers always override the seed to `0`.
 - `random_seed=None` leaves stochastic paths unseeded.
-- Random and genetic use the same process-level generator. A configured seed is
-   applied again when each expert starts; with `None`, earlier stochastic work
-   can affect later expert state in hybrid or committee execution.
 - API data, input ordering, library versions, and cache metadata are not part of
   the seed and must be captured separately for a reproducible run manifest.
+- The snapshot loader keeps equipment whose `stat_weight` is zero or negative,
+  while the live loader (`EquipmentLoader.from_raw_batch`) drops it. On snapshot
+  3.7.7.6 that is 86 items, so a snapshot run and a live run do not see the same
+  population.
 
 ## Architecture And Ownership
 
 ```text
 processing/
-|-- config_dataclass.py       ProcessingConfig and defaults
-|-- graph_builder.py          Bipartite and Jaccard similarity graphs
-|-- community_detector.py     Resolution search and community conversion
-|-- group_mapper.py           Community filtering and optional splitting
-|-- group_metrics.py          Canonical group dictionary and legacy metrics
-|-- quality_metrics.py        Item-only and portfolio feature evaluation
-|-- equipment_filter.py       Random-pool density filtering
-|-- random_group_builder.py   Seed-and-companion proposal construction
-|-- orchestrator.py           Method dispatch, hybrid, committee, summaries
-|-- tuner.py                  Parallel heuristic grid search
-|-- stat_calculator.py        Stat-weight calculation used upstream by data loaders
-|-- resource_optimizer.py     Empty placeholder; no runtime behavior
-`-- experts/
-    |-- base.py               Shared expert interface and default evaluator
-    |-- graph_expert.py       Deterministic graph/community path
-    |-- random_expert.py      Density-filtered random path
-    `-- genetic_expert.py     Evolutionary path
+|-- __init__.py            Package docstring and public re-exports
+|-- orchestrator.py        RuneMaster MoE coordinator and method dispatch
+|-- config.py              ProcessingConfig and defaults
+|-- policy.py              GroupAcceptancePolicy (single acceptance gate)
+|-- graph/
+|   |-- graph_builder.py        Bipartite and Jaccard similarity graphs
+|   |-- community_detector.py   Resolution search and community conversion
+|   `-- group_mapper.py         Community filtering and optional splitting
+|-- experts/
+|   |-- base.py                 GroupingExpert ABC (the interface for all experts)
+|   |-- graph_expert.py         Deterministic graph/community path
+|   |-- random_expert.py        Random path (no density filtering)
+|   |-- random_group_builder.py Seed-and-companion proposal construction
+|   `-- greedy_expert.py        Objective-driven greedy growth
+|-- filters/
+|   |-- equipment_filter.py     Panoplie set exclusion; density filtering (unused at runtime)
+|   `-- job_filter.py           Craftability filtering by player job levels
+|-- metrics/
+|   |-- quality_metrics.py      Item-only and portfolio feature evaluation
+|   |-- group_metrics.py        Canonical group dictionary and legacy metrics
+|   |-- break_log.py            Observed-taux and rune-density helpers
+|   `-- selection.py            ProcessingReporter (run summary)
+|-- valuation/
+|   |-- objective.py            GroupCandidate and GroupObjective protocol
+|   |-- overlap.py              OverlapObjective (the active objective)
+|   |-- economic.py             ProfitObjective and FlatTauxModel
+|   |-- focus.py                Break-density and focus formulas
+|   |-- density.py              RUNE_DENSITY table and stat-name resolution
+|   |-- taux.py                 PosteriorTauxModel
+|   |-- prices.py               PriceSource contracts
+|   |-- exploration.py          Break-exploration ranking
+|   `-- stat_calculator.py      Stat-weight calculation used by data loaders
+|-- blocks/
+|   |-- recipes.py              Recipe normalization helpers
+|   |-- shopping_list.py        Shopping-list arithmetic
+|   `-- similarity.py           Jaccard similarity
+`-- tools/
+    |-- harness.py              Offline method comparison
+    `-- tuner.py                Parallel heuristic grid search
 ```
 
 `api_client` is retained in several signatures for compatibility but is not
 used to create groups. Resource names and images come from `cache_manager` when
 available.
 
+Analysis-only code lives outside this package: `analysis/challenge_metrics.py`
+implements the API-only challenge metrics (M1–M9) and is never imported by the
+runtime pipeline.
+
 ## Known Behavioral Constraints
 
 - Recipe overlap is not economic value. Prices and rune outcomes are absent.
 - `sharing_efficiency` has legacy exclusion semantics different from the new
   quality features; do not treat the two ratios as interchangeable.
+- The acceptance policy's shopping caps, not reachability, bound greedy
+  coverage. Relaxing them raises coverage but also raises shopping effort.
 - Random grouping is seed-centric and can create groups whose companions do not
   share resources with one another.
-- Inclusive splitting is sequential, not graph-aware.
-- Hybrid concatenation can duplicate groups; committee de-duplication is greedy
-  and pairwise rather than globally optimal.
-- Committee selection ranks individual groups and only evaluates portfolio
-  quality afterward.
+- The `use_inclusive_mapping` split path is unreachable with shipped defaults.
+- Survey de-duplication is by exact equipment fingerprint; there is no
+  near-duplicate merging, and `dedup_overlap_threshold` is not consulted.
+- `EquipmentFilteringStrategy` and its config fields are inert at runtime.
+- Snapshot and live loading disagree on zero-`stat_weight` equipment.
 - `processing/valuation/density.py` owns the game's `RUNE_DENSITY` table; the
-   calculator retains a compatibility alias and uses it to populate equipment
-   stat weights.
-  filtering and reporting, not item-only recipe quality.
+  calculator uses it to populate equipment stat weights.
 
 ## Executable Contracts
 
@@ -584,14 +757,18 @@ The offline tests that protect this specification are:
 
 - `test/test_quality_metrics.py`: feature boundaries, exclusions, quantity
   sensitivity, portfolio overlap, random threshold parity, and BiLouvain;
-- `test/test_pipeline_contracts.py`: deterministic, random, hybrid, summary,
+- `test/test_pipeline_contracts.py`: deterministic, random, summary,
   and report integration contracts;
-- `test/test_group_structure.py`: canonical group and ingredient schema.
+- `test/test_group_structure.py`: canonical group and ingredient schema;
+- `test/test_policy.py` and `test/test_metrics_revision.py`: acceptance-policy
+  ordering, the small-group efficiency gate, and the score-term set;
+- `test/test_refactor_snapshot.py`: locked deterministic and random outputs plus
+  the density-filter fallback paths (which exercise the inert strategy directly).
 
 Validation gate:
 
 ```bash
 uv run pytest -q
-python3 -m compileall -q data processing main.py config.py test visualization
+python3 -m compileall -q data processing analysis main.py config.py test visualization scripts
 git diff --check
 ```

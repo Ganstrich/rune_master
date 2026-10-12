@@ -1,7 +1,7 @@
 """Regression tests for the greedy objective-driven expert."""
 
 from models import Equipment, ResourceRequirement
-from processing.config_dataclass import ProcessingConfig
+from processing.config import ProcessingConfig
 from processing.experts.greedy_expert import GreedyGroupingExpert
 
 

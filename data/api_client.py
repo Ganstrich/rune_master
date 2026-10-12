@@ -2,7 +2,26 @@
 
 Responsible ONLY for HTTP communication and raw response handling.
 NO dataclass conversions - returns raw dicts.
+
+Endpoints used (all verified against the live API, game 3.7.7.6):
+
+    GET /{game}/v1/{lang}/items/equipment/all     all equipment, full payload
+    GET /{game}/v1/{lang}/items/resources/all     all resources, full payload
+    GET /{game}/v1/{lang}/sets/all                all panoplies, with member ids
+    GET /{game}/v1/{lang}/items/{kind}/{id}       single item by ankama_id
+
+The ``/all`` variants accept the same ``filter[...]`` parameters as the
+paginated list endpoints but ignore ``page[...]``: every matching item comes
+back in a single response with the complete payload (effects, recipe, pods,
+weapon stats, conditions). They therefore need neither the ``fields[item]``
+projection nor page-size negotiation, so neither appears here. The counts are
+bounded (4095 equipment, 3521 resources, 940 sets on dofus3), so each is one
+request.
+
+The API is public: no authentication, no documented rate limit, and the
+responses carry no rate-limit headers.
 """
+
 import time
 from typing import Any, Dict, List, Optional
 
@@ -13,22 +32,21 @@ from config import Config
 
 class DofusAPIClient:
     """Low-level HTTP client for Dofus API.
-    
+
     Handles:
     - HTTP requests to api.dofusdu.de
     - Error handling and retries
     - Raw JSON response management
-    
+
     Does NOT handle:
     - Caching (handled by CacheManager)
     - Converting to dataclasses (handled by Loaders)
     """
-    
+
     BASE_URL = "https://api.dofusdu.de"
     DEFAULT_TIMEOUT = 30
-    DEFAULT_PAGE_SIZE = 100
     MAX_RETRIES = 3
-    
+
     def __init__(
         self,
         game: str = Config.GAME,
@@ -36,7 +54,7 @@ class DofusAPIClient:
         timeout: int = DEFAULT_TIMEOUT
     ):
         """Initialize API client.
-        
+
         Args:
             game: Game name (e.g., 'dofus3')
             language: Language code (e.g., 'fr')
@@ -46,19 +64,17 @@ class DofusAPIClient:
         self.language = language
         self.timeout = timeout
         self.last_request_status: Dict[str, Any] = {"status": "idle", "attempts": 0}
-    
+
     def _make_request(
-        self,
-        endpoint: str,
-        params: Optional[Dict[str, Any]] = None,
-        quiet: bool = False,
+        self, endpoint: str, params: Optional[Dict[str, Any]] = None, quiet: bool = False,
     ) -> Optional[Dict[str, Any]]:
         """Make HTTP request to API endpoint.
-        
+
         Args:
-            endpoint: API endpoint (e.g., '/dofus3/v1/fr/items/equipment')
+            endpoint: API endpoint (e.g., '/dofus3/v1/fr/items/equipment/all')
             params: Query parameters
-            
+            quiet: Suppress the permanent-failure log line (used by probes)
+
         Returns:
             Raw JSON response as dict, or None if request failed
         """
@@ -111,155 +127,155 @@ class DofusAPIClient:
                     return None
                 time.sleep(2**attempt)
         return None
-    
+
+    @staticmethod
+    def _rows(payload: Optional[Dict[str, Any]], key: str) -> List[Dict[str, Any]]:
+        """Extract the row list from an ``/all`` response, tolerating odd shapes."""
+        if not payload:
+            return []
+        rows = payload.get(key)
+        if not isinstance(rows, list):
+            return []
+        return [row for row in rows if isinstance(row, dict)]
+
+    def _scope_params(
+        self,
+        item_types: Optional[List[str]],
+        min_level: Optional[int],
+        max_level: Optional[int],
+    ) -> Dict[str, Any]:
+        """Build the shared filter params for an equipment ``/all`` request."""
+        return {
+            "filter[min_level]": min_level if min_level is not None else Config.MIN_LEVEL,
+            "filter[max_level]": max_level if max_level is not None else Config.MAX_LEVEL,
+            "filter[type.name_id]": ",".join(item_types or Config.ITEM_TYPES),
+        }
+
     def get_all_equipments(
         self,
         item_types: Optional[List[str]] = None,
         min_level: Optional[int] = None,
         max_level: Optional[int] = None
     ) -> List[Dict[str, Any]]:
-        """Fetch all equipments with recipes.
-        
+        """Fetch all equipment with recipes in one request.
+
+        The ``/all`` endpoint ignores pagination and returns the full payload
+        (effects, recipe, pods, weapon stats, conditions) per item, so neither
+        the ``fields[item]`` projection nor page-size negotiation is needed.
+
         Args:
             item_types: Equipment types to fetch (defaults to Config.ITEM_TYPES)
             min_level: Minimum equipment level (defaults to Config.MIN_LEVEL)
             max_level: Maximum equipment level (defaults to Config.MAX_LEVEL)
-            
+
         Returns:
-            List of raw equipment dicts from API (only those with recipes)
+            List of raw equipment dicts that actually carry a recipe. Items
+            without one cannot be crafted from resources and are dropped.
         """
-        item_types = item_types or Config.ITEM_TYPES
-        min_level = min_level if min_level is not None else Config.MIN_LEVEL
-        max_level = max_level if max_level is not None else Config.MAX_LEVEL
-        
-        endpoint = f"/{self.game}/v1/{self.language}/items/equipment"
-        
-        params = {
-            f'sort[{Config.SORT_BY}]': Config.SORT_ORDER,
-            'filter[min_level]': min_level,
-            'filter[max_level]': max_level,
-            'fields[item]': ','.join(Config.FIELDS),
-            'filter[type.name_id]': ','.join(item_types),
-        }
+        endpoint = f"/{self.game}/v1/{self.language}/items/equipment/all"
+        params = self._scope_params(item_types, min_level, max_level)
 
-        equipments: List[Dict[str, Any]] = []
-        page_size = self._negotiate_page_size(endpoint, params)
-        if page_size is None:
-            print("✅ Fetched 0 equipments with recipes")
-            return equipments
+        payload = self._make_request(endpoint, params)
+        rows = self._rows(payload, "items")
 
-        page = 1
-        while True:
-            page_params = {**params, "page[size]": page_size, "page[number]": page}
-            data = self._make_request(endpoint, page_params)
-            if not data:
-                break
-            items = data.get("items", [])
-            if not isinstance(items, list):
-                print("❌ API equipment response contained an invalid items field")
-                break
-            equipments.extend(item for item in items if isinstance(item, dict) and "recipe" in item)
-            if len(items) < page_size:
-                break
-            page += 1
-        
+        equipments = [item for item in rows if item.get("recipe")]
         print(f"✅ Fetched {len(equipments)} equipments with recipes")
         return equipments
 
-    def _negotiate_page_size(
-        self, endpoint: str, params: Dict[str, Any]
-    ) -> Optional[int]:
-        """Return the largest usable page size for a scope.
+    def get_all_resources(
+        self,
+        min_level: Optional[int] = None,
+        max_level: Optional[int] = None,
+    ) -> List[Dict[str, Any]]:
+        """Fetch every resource in one request.
 
-        The API rejects page[size] larger than the total number of matching
-        items, so narrow scopes must shrink the page before the first request.
-        Returns None when the scope genuinely has no results.
+        Args:
+            min_level: Minimum resource level
+            max_level: Maximum resource level
+
+        Returns:
+            List of raw resource dicts (name, description, type, level, pods).
         """
-        page_size = self.DEFAULT_PAGE_SIZE
-        while page_size >= 1:
-            probe = {**params, "page[size]": page_size, "page[number]": 1}
-            if self._make_request(endpoint, probe, quiet=True) is not None:
-                return page_size
-            if self.last_request_status.get("status") != "permanent_failure":
-                return None
-            if page_size == 1:
-                return None
-            page_size = max(1, page_size // 2)
-        return None
-    
+        endpoint = f"/{self.game}/v1/{self.language}/items/resources/all"
+        params: Dict[str, Any] = {}
+        if min_level is not None:
+            params["filter[min_level]"] = min_level
+        if max_level is not None:
+            params["filter[max_level]"] = max_level
+
+        payload = self._make_request(endpoint, params)
+        resources = self._rows(payload, "items")
+        print(f"✅ Fetched {len(resources)} resources")
+        return resources
+
+    def get_all_sets(self) -> List[Dict[str, Any]]:
+        """Fetch every panoplie with its member equipment ids.
+
+        The item endpoints carry no set field, so membership is only reachable
+        from the sets side. ``/sets/all`` returns ``equipment_ids`` directly,
+        which the paginated list endpoint omits unless explicitly projected.
+
+        Returns:
+            List of raw set dicts (name, level, equipment_ids, effects).
+        """
+        endpoint = f"/{self.game}/v1/{self.language}/sets/all"
+        payload = self._make_request(endpoint)
+        sets = self._rows(payload, "sets")
+        print(f"✅ Fetched {len(sets)} sets")
+        return sets
+
+    def get_equipment_set_index(self) -> Dict[int, int]:
+        """Fetch the equipment_id -> set_id map from every panoplie.
+
+        Returns:
+            Mapping of equipment ankama_id to its set ankama_id
+        """
+        index: Dict[int, int] = {}
+        for item_set in self.get_all_sets():
+            set_id = item_set.get("ankama_id")
+            equipment_ids = item_set.get("equipment_ids") or []
+            if set_id is None or not isinstance(equipment_ids, list):
+                continue
+            for equipment_id in equipment_ids:
+                index[int(equipment_id)] = int(set_id)
+
+        print(f"✅ Mapped {len(index)} equipments to a set")
+        return index
+
     def get_equipment(self, equipment_id: int) -> Optional[Dict[str, Any]]:
         """Fetch single equipment by ID.
-        
+
         Args:
             equipment_id: Ankama equipment ID
-            
+
         Returns:
             Raw equipment dict or None if not found
         """
         endpoint = f"/{self.game}/v1/{self.language}/items/equipment/{equipment_id}"
         return self._make_request(endpoint)
-    
-    def get_equipment_set_index(self) -> Dict[int, int]:
-        """Fetch the equipment_id → set_id map by walking the sets endpoint.
 
-        The item endpoints carry no set field, so membership is only reachable
-        from the sets side via ``fields[set]=equipment_ids``.
-
-        Returns:
-            Mapping of equipment ankama_id to its set ankama_id
-        """
-        endpoint = f"/{self.game}/v1/{self.language}/sets"
-        index: Dict[int, int] = {}
-        page = 1
-        while True:
-            params = {
-                "fields[set]": "equipment_ids",
-                "page[size]": self.DEFAULT_PAGE_SIZE,
-                "page[number]": page,
-            }
-            data = self._make_request(endpoint, params)
-            if not data:
-                break
-            item_sets = data.get("sets", [])
-            if not isinstance(item_sets, list):
-                print("❌ API sets response contained an invalid sets field")
-                break
-            for item_set in item_sets:
-                if not isinstance(item_set, dict):
-                    continue
-                set_id = item_set.get("ankama_id")
-                equipment_ids = item_set.get("equipment_ids") or []
-                if set_id is None or not isinstance(equipment_ids, list):
-                    continue
-                for equipment_id in equipment_ids:
-                    index[int(equipment_id)] = int(set_id)
-            if len(item_sets) < self.DEFAULT_PAGE_SIZE:
-                break
-            page += 1
-
-        print(f"✅ Mapped {len(index)} equipments to a set")
-        return index
-    
     def get_resource(self, resource_id: int) -> Optional[Dict[str, Any]]:
         """Fetch single resource by ID.
-        
+
         Args:
             resource_id: Ankama resource ID
-            
+
         Returns:
             Raw resource dict or None if not found
         """
         endpoint = f"/{self.game}/v1/{self.language}/items/resources/{resource_id}"
         return self._make_request(endpoint)
-    
+
     def get_resources_batch(self, resource_ids: List[int]) -> List[Dict[str, Any]]:
         """Fetch multiple resources by IDs (individually).
-        
-        WARNING: Makes multiple API calls. Consider caching!
-        
+
+        There is no bulk resource endpoint: each id needs its own request, so
+        prefer the SQLite cache (or get_all_resources for a full sweep) over
+        this in tight loops.
+
         Args:
             resource_ids: List of resource IDs
-            
+
         Returns:
             List of raw resource dicts
         """

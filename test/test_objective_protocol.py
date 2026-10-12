@@ -1,7 +1,7 @@
 import pytest
 
 from models import Equipment, ResourceRequirement
-from processing.quality_metrics import GroupQualityEvaluator, GroupQualityWeights
+from processing.metrics.quality_metrics import GroupQualityEvaluator, GroupQualityWeights
 from processing.valuation.objective import GroupCandidate, GroupObjective
 from processing.valuation.overlap import OverlapObjective
 

@@ -10,13 +10,12 @@ from typing import Any, Dict, List, Optional, Set
 
 from models import Equipment
 from processing.blocks.recipes import recipe_resource_ids
-from processing.config_dataclass import ProcessingConfig
+from processing.config import ProcessingConfig
 from processing.experts.base import GroupingExpert
-from processing.group_metrics import GroupMetrics
+from processing.metrics.group_metrics import GroupMetrics
 from processing.policy import GroupAcceptancePolicy
 from processing.valuation.objective import GroupCandidate, GroupObjective
 from processing.valuation.overlap import OverlapObjective
-from processing.valuation.focus import break_density
 
 
 class GreedyGroupingExpert(GroupingExpert):
@@ -53,7 +52,15 @@ class GreedyGroupingExpert(GroupingExpert):
             for resource_id in resource_ids:
                 neighbours.setdefault(resource_id, set()).add(equipment_id)
 
-        seeds = sorted(equipments, key=break_density, reverse=True)
+        # Seed by shared-resource count (groupability), not break density (value).
+        # Items that share the most resources with other items produce more groups
+        # and higher coverage; break density prioritizes valuable items over
+        # groupable ones and loses ~10pp coverage (measured 2026-10-11).
+        shared_counts: Dict[int, int] = {}
+        for eid, resource_ids in resources.items():
+            shared = sum(1 for rid in resource_ids if rid in neighbours and len(neighbours[rid]) > 1)
+            shared_counts[eid] = shared
+        seeds = sorted(equipments, key=lambda e: shared_counts.get(e.ankama_id, 0), reverse=True)
         if config.greedy_seed_limit:
             seeds = seeds[: config.greedy_seed_limit]
 

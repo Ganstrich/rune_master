@@ -169,9 +169,9 @@ The penalty applies to **equipment** overlap between groups, which is
 defensible. But there is no treatment of **resource** overlap between groups,
 and that is the one that matters: two groups needing the same resource is one
 bulk purchase serving two runs — strictly good.
-[../plans/04-combined-shopping-list.md](../plans/04-combined-shopping-list.md)
-exists specifically to let users combine groups, so the scoring is blind to the
-property that feature depends on.
+The combined shopping list feature (plan 04, completed) exists specifically to
+let users combine groups, so the scoring is blind to the property that feature
+depends on.
 
 Also, `normalized_rewards()` normalises only the two reward weights, so the 0.50
 penalty sits on a different scale and is effectively stronger than it appears.
@@ -183,9 +183,9 @@ Density filtering (`stat_weight >= level * ratio`,
 **only** inside the random expert. `use_density_filtering=True` reads as global;
 it is not.
 
-So `deterministic`, `hybrid`, `genetic`, and `committee` can all emit groups
+So `deterministic` can emit groups
 containing items that break into worthless runes. The default
-`grouping_method` is `hybrid`. Secondary: the filter is linear in level while
+`grouping_method` is `deterministic`. Secondary: the filter is linear in level while
 stat budgets scale super-linearly, so it over-retains high-level items.
 
 ## Failing 7 — Two Gates Measure The Same Thing Incompatibly

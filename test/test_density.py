@@ -1,4 +1,4 @@
-from processing.stat_calculator import STAT_WEIGHTS
+from processing.valuation.stat_calculator import STAT_WEIGHTS
 from processing.valuation.density import RUNE_DENSITY
 
 

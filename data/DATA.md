@@ -25,15 +25,51 @@ Low-level HTTP client for the Dofus API (`api.dofusdu.de`).
 
 | Method | Description |
 |--------|-------------|
-| `get_all_equipments()` | Fetch all craftable equipment with recipes |
+| `get_all_equipments()` | Fetch all craftable equipment with recipes (single request) |
+| `get_all_resources()` | Fetch every resource in one request |
+| `get_all_sets()` | Fetch every panoplie with its member equipment ids |
 | `get_equipment(id)` | Fetch single equipment by ID |
 | `get_resource(id)` | Fetch single resource by ID |
 | `get_resources_batch(ids)` | Fetch multiple resources (individual calls) |
+
+**Endpoint strategy:** the client uses the `/all` variants
+(`items/equipment/all`, `items/resources/all`, `sets/all`). They accept the
+same `filter[...]` parameters as the paginated endpoints but ignore
+`page[...]`, returning every match in one response with the complete payload
+(recipe, effects, pods, weapon stats, conditions). That removes the
+`fields[item]` projection and the page-size negotiation the paginated path
+needed. The API is public: no auth, no documented rate limit, and no
+rate-limit headers in responses.
 
 **Configuration:**
 - `game: str` - Game identifier (default: `'dofus3'`)
 - `language: str` - Language code (default: `'fr'`)
 - `timeout: int` - Request timeout in seconds (default: 30)
+
+## Data Sources
+
+Two independent data paths exist; they are not interchangeable.
+
+| Consumer | Source |
+|---|---|
+| `main.py` pipeline | frozen snapshot, gated on the live API version |
+| `scripts/profile_snapshot.py`, `challenge_*.py` | frozen snapshot directly |
+| `scripts/snapshot_data.py` | live API → writes a snapshot |
+
+`data/snapshot_source.py` decides between them. A snapshot is used only when
+its `manifest.json` records the same `game_version` that the live API
+advertises at `/{game}/v1/meta/version`; recipes, levels, and set membership
+all shift between patches, so a stale snapshot is never used silently. The
+version check is the only network call on the snapshot path.
+
+When no snapshot matches, the pipeline falls back to the live API with the
+SQLite `resource_cache.db` for resource names and icons.
+
+A snapshot carries recipes, effects, stat weights, the set index, and every
+resource, so the snapshot path needs no resource or set network access. Two
+small adapters in `data/snapshot_source.py` (`_ResourceCacheBridge`,
+`_NoOpAPI`) keep the rest of the pipeline unchanged by honouring exactly the
+surface it touches.
 
 ## Cache Manager (`cache_manager.py`)
 

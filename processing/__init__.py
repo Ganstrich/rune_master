@@ -1,18 +1,20 @@
 """Processing layer for equipment group discovery.
 
-Contains algorithms for graph building, community detection, 
-group mapping, and the Mixture of Experts (MoE) orchestrator.
+The greedy grouping expert (``RuneMaster``) discovers equipment groups.
+Submodules:
+
+- ``experts``   — the greedy grouping expert behind ``GroupingExpert``
+- ``filters``   — pool filters applied once, before the expert runs
+- ``metrics``   — group/portfolio metrics and the run reporter
+- ``valuation`` — swappable group objectives and their inputs
+- ``blocks``    — pure recipe/similarity/shopping-list helpers
+- ``tools``     — offline comparison and tuning (not the runtime pipeline)
 """
 
-from processing.config_dataclass import ProcessingConfig
+from processing.config import ProcessingConfig
 from processing.orchestrator import RuneMaster
-from processing.graph_builder import GraphBuilder
-from processing.community_detector import CommunityDetector
-from processing.group_mapper import GroupMapper
-from processing.group_metrics import GroupMetrics
-from processing.equipment_filter import EquipmentFilteringStrategy
-from processing.random_group_builder import RandomGroupBuilder
-from processing.quality_metrics import (
+from processing.metrics.group_metrics import GroupMetrics
+from processing.metrics.quality_metrics import (
     GroupQualityEvaluator,
     GroupQualityMetrics,
     GroupQualityWeights,
@@ -24,12 +26,7 @@ from processing.quality_metrics import (
 __all__ = [
     "ProcessingConfig",
     "RuneMaster",
-    "GraphBuilder",
-    "CommunityDetector",
-    "GroupMapper",
     "GroupMetrics",
-    "EquipmentFilteringStrategy",
-    "RandomGroupBuilder",
     "GroupQualityEvaluator",
     "GroupQualityMetrics",
     "GroupQualityWeights",

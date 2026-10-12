@@ -72,8 +72,8 @@ You are a frontier model with access to the RuneMaster codebase. Your job is
 to **iterate on the stated goal** by:
 
 1. **Forming hypotheses** about what would improve the system's ability to
-   discover high-taux items and maximize profit.
-2. **Testing those hypotheses** against the actual API and game data.
+   provide groups of items and maximize profit.
+2. **Testing those hypotheses** using the actual API and game data.
 3. **Analyzing the results** to confirm or refute the hypothesis.
 4. **Adapting the system** based on what you learn.
 

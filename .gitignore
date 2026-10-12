@@ -11,3 +11,4 @@ templates
 *.db-wal
 *.db-shm
 .aider*
+wiki

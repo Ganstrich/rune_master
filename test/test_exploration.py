@@ -1,7 +1,7 @@
 from datetime import datetime, timezone, timedelta
 
 from models import Equipment, EquipmentStat, ResourceRequirement
-from processing.exploration import rank_exploration
+from processing.valuation.exploration import rank_exploration
 
 
 def item(item_id: int) -> Equipment:

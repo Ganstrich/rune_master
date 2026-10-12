@@ -15,8 +15,8 @@ from models import Equipment, EquipmentStat, Resource, ResourceRequirement
 from models import StatType, ItemType, ImageURLs
 from .api_client import DofusAPIClient
 from .cache_manager import CacheManager
-from processing.stat_calculator import calculate_equipment_weight
-from processing.config_dataclass import ProcessingConfig
+from processing.valuation.stat_calculator import calculate_equipment_weight
+from processing.config import ProcessingConfig
 
 
 class EquipmentLoader:

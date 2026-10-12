@@ -65,7 +65,7 @@ are click-to-copy. Recalculation requires rerunning the CLI.
   connected-component mapping.
 - `random`: density-filtered stochastic seed selection and companion matching.
   The requested group count is a target and may not be reached.
-- `hybrid`: deterministic first, random supplementation only below the threshold
+
   `max(5, int(random_group_count * 0.5))`; results are concatenated without
   committee-style de-duplication.
 - `committee`: deterministic, random, and genetic proposals scored by expert
@@ -83,7 +83,7 @@ $$
 
 Configured excluded resources do not count in the numerator.
 
-The default method is `hybrid`. Other important defaults are Jaccard ratio
+The default method is `greedy`. Other important defaults are Jaccard ratio
 `0.3`, group size `2..18`, minimum three shared resources, efficiency threshold
 `0.15`, density ratio `3.0`, random target `50`, no density-filter fallback, and
 committee overlap threshold `0.7`.
@@ -96,17 +96,13 @@ committee overlap threshold `0.7`.
 - `serve.py`: standalone static server for previously generated reports.
 - `models/`: domain dataclasses and shared types.
 - `data/`: HTTP transport, SQLite cache, and payload loaders.
-- `processing/config_dataclass.py`: processing defaults.
+- `processing/config.py`: processing defaults.
 - `processing/orchestrator.py`: expert coordination and summary metrics.
-- `processing/graph_builder.py`: bipartite and Jaccard graphs.
-- `processing/community_detector.py`: Louvain and BiLouvain partitioning.
-- `processing/group_metrics.py`: canonical metrics and group dictionary shape.
-- `processing/group_mapper.py`: community filtering and group conversion.
-- `processing/equipment_filter.py`: density filtering.
-- `processing/random_group_builder.py`: random group construction.
-- `processing/experts/`: deterministic, random, and genetic adapters.
-- `processing/tuner.py`: narrow parallel grid search for graph ratio and minimum
-  shared-resource count.
+- `processing/graph/`: bipartite/Jaccard graphs, Louvain partitioning, community-to-group mapping.
+- `processing/metrics/`: canonical group metrics, portfolio metrics, reporter.
+- `processing/filters/`: density, panoplie-set, and job-level pool filters.
+- `processing/experts/`: deterministic, random, and greedy adapters.
+- `processing/tools/`: offline comparison harness and parameter tuner.
 - `visualization/html_generator.py`: report HTML generation.
 - `visualization/static/`: source CSS and JavaScript copied into reports.
 - `test/`: offline contracts and group-structure tests.
